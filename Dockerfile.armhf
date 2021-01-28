@@ -1,0 +1,46 @@
+#First ensure you've enabled Docker-Qemu-User. See below link
+#https://github.com/fkrull/docker-qemu-user-static
+#e.g. docker run --rm -it arm32v7/python:3.9-slim-buster /bin/bash
+
+FROM arm32v7/python:3.9-slim-buster
+
+RUN apt-get update -y
+
+RUN apt-get install python3-pandas -y
+RUN apt-get install python3-flask -y
+RUN apt-get install python3-lxml -y
+RUN apt-get install python3-requests -y
+
+RUN mkdir -p /app/WhiteStat/
+WORKDIR /app/WhiteStat/
+COPY WhiteStatServiceArmhf.sh ./WhiteStatServiceArmhf.sh
+COPY WhiteStat.py ./WhiteStat.py
+COPY WhiteStatAnalyzer.py ./WhiteStatAnalyzer.py
+COPY WhiteStatServer.py ./WhiteStatServer.py
+COPY WhiteStatUtils.py ./WhiteStatUtils.py
+ADD  Config ./Config
+RUN  chmod a+x /app/WhiteStat/WhiteStatServiceArmhf.sh
+
+EXPOSE 777
+EXPOSE 888
+EXPOSE 999
+
+CMD ["/app/WhiteStat/WhiteStatServiceArmhf.sh"]
+
+
+#Docker Build Sample:
+#docker build -f Dockerfile.armhf -t avarghesein/whitestat:v1_armhf .
+#docker tag avarghesein/whitestat:v1_armhf avarghesein/whitestat:v1_armhf
+#docker login
+#docker push avarghesein/whitestat:v1_armhf
+
+#Running Container Sample
+#docker run --name whitestatarmhf \
+#--env DATA_STORE="/mnt/whitestat/config/" \
+#--env DARKSTAT_URL="http://192.168.1.5:777" \
+#--env SERVER_PORT=777 \
+#--mount type=bind,source="/media/TMP-DSK/Python/WhiteStat/TestDockerConfig/",target="/mnt/whitestat/config/"  \
+#-p 5000:777 \
+#-d b610e2a74596
+#
+#Now Access Whitestat at http://localhost:5000
