@@ -1,2 +1,2 @@
 # WhiteStat
-Internet/Network Bandwidth Usage Analyser with Historic Data Persistence
+Internet/Network Bandwidth Daily Usage Analyser with Historic Data Persistence
