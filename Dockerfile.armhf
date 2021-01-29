@@ -29,6 +29,7 @@ CMD ["/app/WhiteStat/WhiteStatServiceArmhf.sh"]
 
 
 #Docker Build Sample:
+#docker run --rm --privileged fkrull/qemu-user-static enable
 #docker build -f Dockerfile.armhf -t avarghesein/whitestat:v1_armhf .
 #docker tag avarghesein/whitestat:v1_armhf avarghesein/whitestat:v1_armhf
 #docker login

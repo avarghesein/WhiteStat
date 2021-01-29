@@ -61,9 +61,12 @@ class WhiteStatUtils:
         self.url = jsonObj["DARKSTAT_URL"]
         self.ipfilter = jsonObj["IPFilter"]
         self.updateDBSeconds = int(jsonObj["UpdateDBSeconds"])
+        self.idleSeconds = int(jsonObj["IdleSeconds"])
         self.ServerPort = int(jsonObj["SERVER_PORT"])
         self.macmac = f"{self.configFolder}/{jsonObj['MAC_MAC_REWRITE']}"
+        self.macmacDict = self.__ToDictionary(f"{self.macmac}")
         self.ipmac = f"{self.configFolder}/{jsonObj['IP_MAC_REWRITE']}"
+        self.ipmacDict = self.__ToDictionary(f"{self.ipmac}")
 
         self.db = f"{self.configFolder}/{jsonObj['DBFile']}"
         self.log = f"{self.configFolder}/{jsonObj['LOGFile']}"
@@ -83,16 +86,19 @@ class WhiteStatUtils:
         return {}
 
     def GetMacMacDict(self):
-        return self.__ToDictionary(f"{self.macmac}")
+        return self.macmacDict
 
     def GetIpMacDict(self):
-        return self.__ToDictionary(f"{self.ipmac}")
+        return self.ipmacDict
 
     def GetUrl(self):
         return self.url
 
     def GetUpdateDBSeconds(self):
         return self.updateDBSeconds
+
+    def GetSleepSeconds(self):
+        return self.idleSeconds
 
     def GetServerPort(self):
         return self.ServerPort

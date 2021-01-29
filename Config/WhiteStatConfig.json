@@ -6,6 +6,7 @@
       "MAC_MAC_REWRITE": "MAC_MAC.txt",
       "DARKSTAT_URL": "http://192.168.1.5:777",
       "IPFilter": "([\\d]+\\.){3,3}\\d+",
+      "IdleSeconds": 15,
       "UpdateDBSeconds": 15,
       "SERVER_PORT":777
 }

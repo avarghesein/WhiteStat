@@ -101,13 +101,16 @@ class WhiteStat:
 
     def GetUsageFrame(self):
         try:
-            usage_data = pd.read_html(f'{self.url}/hosts/?full=yes&sort=in', header=1)
+            usage_data = pd.read_html(f'{self.url}/hosts/?full=yes&sort=in', header=None)
 
             if usage_data is None:
                     return None
 
             usageBytes = usage_data[0]
             #usageBytes.columns.values
+
+            if usage_data is None or usageBytes.empty:
+                    return None
 
             if usageBytes.columns[0] != "IP":
                 usageBytes.columns = [
@@ -119,7 +122,15 @@ class WhiteStat:
                     "Total",
                     "Last seen"]
 
-            usageBytes.rename(columns={"MAC Address": "MAC"},inplace=True)   
+
+            usageBytes.rename(columns={"MAC Address": "MAC"},inplace=True) 
+
+            usageBytes.drop(usageBytes[usageBytes.IP == "IP"].index, inplace = True) 
+
+            #filterV4 = usageBytes['IP'].str.contains("([\d]+\.){3,3}\d+")    
+            filterV4 = usageBytes['IP'].str.contains(self.utl.GetIPFilter())    
+            usageBytes.drop(usageBytes[~filterV4].index, inplace = True) 
+
             updMac= usageBytes.apply(lambda x: self.ReplaceMACs(x.MAC, x.IP), axis=1)
 
             lsSeconds = usageBytes["Last seen"].apply(lambda x: self.ConvertLastSeen(x))
@@ -135,9 +146,6 @@ class WhiteStat:
             utcDate=self.GetNowUtc()
             usageBytes.insert(6, "DATE", utcDate, allow_duplicates=True)
 
-            #filterV4 = usageBytes['IP'].str.contains("([\d]+\.){3,3}\d+")    
-            filterV4 = usageBytes['IP'].str.contains(self.utl.GetIPFilter())    
-            usageBytes.drop(usageBytes[~filterV4].index, inplace = True) 
             return usageBytes
         except Exception as e:
             self.utl.Log(e)
@@ -297,7 +305,8 @@ class WhiteStat:
             connection.execute("DELETE FROM dailyusage")
 
             connection.execute(f"INSERT INTO timeframe(DATE,LastSeen) VALUES('{timeframe[0]}',{timeframe[1]})")
-            frame.to_sql('dailyusage', con=connection, if_exists='replace',index=False)
+            frame[['IP', 'MAC','Hostname', 'LSSeconds','KBIn', 'KBOut', 'DATE',
+            'LSTDAY_KBIn', 'LSTDAY_KBOut']].to_sql('dailyusage', con=connection, if_exists='replace',index=False)
             connection.commit()
             connection.close()
         except Exception as e:
@@ -351,6 +360,9 @@ class WhiteStat:
 
             prevFrame=pd.read_sql_query(f"SELECT * FROM dailyusage WHERE date(DATE)<date('{utcDate}')", con=connection)
 
+            filterV4 = prevFrame['IP'].str.contains(self.utl.GetIPFilter())    
+            prevFrame.drop(prevFrame[~filterV4].index, inplace = True) 
+
             cursor = connection.execute(f"SELECT DATE,LastSeen AS CNT FROM timeframe WHERE date(DATE)=date('{utcDate}')")
             #cursor = connection.execute(f"SELECT DATE,LastSeen AS CNT FROM timeframe")
             timeframe = cursor.fetchone()
@@ -364,8 +376,12 @@ class WhiteStat:
             if count > 0:
                 frame=pd.read_sql_query(f"SELECT * FROM dailyusage WHERE date(DATE)=date('{utcDate}')", con=connection)
                 frame.fillna(value={'LSTDAY_KBIn': 0.0, 'LSTDAY_KBOut': 0.0},inplace=True)
+                filterV4 = frame['IP'].str.contains(self.utl.GetIPFilter())    
+                frame.drop(frame[~filterV4].index, inplace = True) 
                 #frame=pd.read_sql_query(f"SELECT * FROM dailyusage", con=connection)
                 
+                #filterV4 = usageBytes['IP'].str.contains("([\d]+\.){3,3}\d+")             
+
             connection.close()
 
         except Exception as e:
