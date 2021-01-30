@@ -52,5 +52,5 @@ Now You could view Daily Bandwidth Usage using
 
 Bandwidth Usage History couldbe viewed through
 
-    http://IP:888/start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
+    http://IP:888/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
 
