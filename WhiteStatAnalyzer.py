@@ -11,7 +11,7 @@ import WhiteStat as DE
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
-dataStore = UTL.GetEnv("DATA_STORE","/media/TMP-DSK/Python/WhiteStat/PiDockerConfig/whitestat")
+dataStore = UTL.GetEnv("DATA_STORE","/media/TMP-DSK/Python/WhiteStat_GitHub/RunConfig")
 #dataStore = UTL.GetEnv("DATA_STORE","/mnt/whitestat/Config")
 print(dataStore)
 url = UTL.GetEnv("DARKSTAT_URL","http://192.168.1.5:777")

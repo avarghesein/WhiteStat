@@ -22,6 +22,7 @@ def Initialize(configFolder, url, serverPort=777):
             copyfile(f"{scriptPath}/WhiteStat.db", f"{configFolder}/WhiteStat.db")
             copyfile(f"{scriptPath}/IP_MAC.txt", f"{configFolder}/IP_MAC.txt")
             copyfile(f"{scriptPath}/MAC_MAC.txt", f"{configFolder}/MAC_MAC.txt")
+            copyfile(f"{scriptPath}/MAC_MAC.txt", f"{configFolder}/MAC_HOST.txt")
 
             jsonObj = json.loads(open(f"{configFolder}/WhiteStatConfig.json", 'r').read())
             jsonObj["DARKSTAT_URL"] = url
@@ -67,6 +68,8 @@ class WhiteStatUtils:
         self.macmacDict = self.__ToDictionary(f"{self.macmac}")
         self.ipmac = f"{self.configFolder}/{jsonObj['IP_MAC_REWRITE']}"
         self.ipmacDict = self.__ToDictionary(f"{self.ipmac}")
+        self.macHost = f"{self.configFolder}/{jsonObj['MAC_HOST_MAP']}"
+        self.macHostDict = self.__ToDictionary(f"{self.macHost}")
 
         self.db = f"{self.configFolder}/{jsonObj['DBFile']}"
         self.log = f"{self.configFolder}/{jsonObj['LOGFile']}"
@@ -78,12 +81,15 @@ class WhiteStatUtils:
             with open(file) as f:
                 for line in f:
                     (key, val) = line.split('|')
-                    d[key] = val
+                    d[key.strip()] = val.strip()
             return d
         except Exception as e:
             self.Log(e)   
 
         return {}
+
+    def GetMacHostDict(self):
+        return self.macHostDict
 
     def GetMacMacDict(self):
         return self.macmacDict
