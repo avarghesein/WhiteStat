@@ -29,10 +29,10 @@ As “WhiteStat” built on top of “DarkStat”, you’ve to configure “Dark
 For X64 Hardware: e.g.
 
     docker run --name whitestat \
-    --env DATA_STORE="/mnt/whitestat/config/" \
+    --env DATA_STORE="/mnt/whitestat/" \
     --env DARKSTAT_URL="http://192.168.1.5:777" \
     --env SERVER_PORT=777 \
-    --mount type=bind,source="/media/TMP-DSK/Python/WhiteStat/TestDockerConfig/",target="/mnt/whitestat/config/"  \
+    --mount type=bind,source="/home/ubuntuuser/whitestat",target="/mnt/whitestat/"  \
     -p 5000:777 \
     -d avarghesein/whitestat:v3
 
@@ -42,7 +42,7 @@ For RaspberryPi2 (ARMV7 or armhf) Hardware: e.g.
     --env DATA_STORE="/mnt/whitestat/config/" \
     --env DARKSTAT_URL="http://192.168.1.5:777" \
     --env SERVER_PORT=777 \
-    --mount type=bind,source="/media/TMP-DSK/Python/WhiteStat/TestDockerConfig/",target="/mnt/whitestat/config/"  \
+    --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
     -p 5000:777 \
     -d avarghesein/whitestat:v3_armhf
     
