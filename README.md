@@ -117,7 +117,7 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
 For arm/armhf/armv7 (or RaspberryPi2) machines
 
     docker run --rm --privileged fkrull/qemu-user-static enable
-    docker build -f Dockerfile.armhf -t avarghesein/whitestat:v1_armhf .
+    docker build -f Dockerfile.armhf -t avarghesein/whitestat:v3_armhf .
 
  Note: The first docker command (for arm platform only) is to enable arm to X64 translations through [Qemu-User-Static](https://ownyourbits.com/2018/06/13/transparently-running-binaries-from-any-architecture-in-linux-with-qemu-and-binfmt_misc/)
  
