@@ -18,7 +18,7 @@ The Utility has been built using Python3 (Flask , Pandas and SQLite for persista
 
 ## Prerequisites : 
 
-As “WhiteStat” built on top of “DarkStat”, you’ve to configure “DarkStat” properly in your environment. A possible scenario has been mentioned here. 
+As “WhiteStat” built on top of “DarkStat”, you’ve to configure “DarkStat” properly in your environment. A possible scenario has been [mentioned here](https://github.com/avarghesein/-NIX/blob/main/Raspberry%20Pi%20II%20(Buster)/MinimalNetworkBandwidthMonitor.md). 
 
  
 
