@@ -55,7 +55,7 @@ Bandwidth Usage History couldbe viewed through
     http://IP:888/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
 
 
-We could feedback this URL to other Data Analysis system (e.g. An excel with PowerQuery, which automatically refresh in every minutes) for Intuitiveness. 
+We could feed these URLs to other Data Analysis systems (e.g. An excel with PowerQuery, which automatically refresh in every minute) for Intuitiveness. 
 A sample excel file has been provided in the root folder of the source code.
 
 ## Key Configuration Options:
