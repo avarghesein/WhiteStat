@@ -104,3 +104,21 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
              
              "SERVER_PORT":"The port at which WhiteStat will be available"
        }
+       
+       
+ ## How to Build
+ 
+ Docker files have been given in the root directory of the source, running which will create docker images, ready to be deployed.
+ 
+ For X64 machines
+ 
+    docker build -f Dockerfile -t avarghesein/whitestat:v3 .
+  
+For arm/armhf/armv7 (or RaspberryPi2) machines
+
+    docker run --rm --privileged fkrull/qemu-user-static enable
+    docker build -f Dockerfile.armhf -t avarghesein/whitestat:v1_armhf .
+
+ Note: The first docker command (for arm platform only) is to enable arm to X64 translations through [Qemu-User-Static](https://ownyourbits.com/2018/06/13/transparently-running-binaries-from-any-architecture-in-linux-with-qemu-and-binfmt_misc/)
+ 
+ Earlier I was trying to build Qemu Virtual machines for ARMV7 architectures, which is painstaking and much slower. By using qemu-User-Static, build your ARM Container images at least 2x faster (when compared to building the same in the original armv7 devices like RaspberryPi)
