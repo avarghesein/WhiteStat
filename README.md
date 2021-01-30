@@ -9,7 +9,7 @@ What about a utility, which is minimal enough to smoothly run on Pi hardware, an
 
 ## Extending DarkStat ! 
 
-While I came across “DarkStat”, I thought to extend the same, as it is much leaner (the entire source is in raw C, even the minimal HTTP Server built in) compared to other tools and with high performance. However It does not provide a daily statistics, and probably a friendlier way of configuring and listing my devices (used IP’s instead of Host Name) in the Network. But that’s just fine, and that’s why “WhiteStat” 
+While I came across [“DarkStat”](https://github.com/TomMichel/darkstat), I thought to extend the same, as it is much leaner (the entire source is in raw C, even the minimal HTTP Server built in) compared to other tools and with high performance. However It does not provide a daily statistics, and probably a friendlier way of configuring and listing my devices (used IP’s instead of Host Name) in the Network. But that’s just fine, and that’s why “WhiteStat” 
  
 
 ## Tools Used 
@@ -33,7 +33,7 @@ For X64 Hardware: e.g.
     --env DARKSTAT_URL="http://192.168.1.5:777" \
     --env SERVER_PORT=777 \
     --mount type=bind,source="/home/ubuntuuser/whitestat",target="/mnt/whitestat/"  \
-    -p 5000:777 \
+    -p 888:777 \
     -d avarghesein/whitestat:v3
 
 For RaspberryPi2 (ARMV7 or armhf) Hardware: e.g.
@@ -43,6 +43,14 @@ For RaspberryPi2 (ARMV7 or armhf) Hardware: e.g.
     --env DARKSTAT_URL="http://192.168.1.5:777" \
     --env SERVER_PORT=777 \
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
-    -p 5000:777 \
+    -p 888:777 \
     -d avarghesein/whitestat:v3_armhf
     
+Now You could view Daily Bandwidth Usage using
+
+    http://IP:888/
+
+Bandwidth Usage History couldbe viewed through
+
+    http://IP:888/start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
+
