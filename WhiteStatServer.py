@@ -55,5 +55,5 @@ def history():
         return "<html><body>No Historic Data</body></html>"
 
 if __name__ == '__main__':
-    app.run()
-    #app.run(host="0.0.0.0", port=utl.GetServerPort())
+    #app.run()
+    app.run(host="0.0.0.0", port=utl.GetServerPort())

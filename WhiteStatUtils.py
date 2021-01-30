@@ -124,10 +124,11 @@ class WhiteStatUtils:
             import sys
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            msg=f"{exc_type},{fname},{exc_tb.tb_lineno}"
             print(exc_type, fname, exc_tb.tb_lineno)
               
             with open(self.log, "a") as logFile:
-                logFile.write(str(exception))
+                logFile.write(str(exception)+ msg )
                 logFile.close()
         except Exception as e:
             print(e)  
