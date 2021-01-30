@@ -54,3 +54,53 @@ Bandwidth Usage History couldbe viewed through
 
     http://IP:888/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
 
+## Key Configuration Options:
+
+"Config/WhiteStatConfig.json", contains the key configuration parameters, which controls WhiteStat.
+A sample instance has been given below;
+
+     {
+           "DATA_STORE": "./WhiteStat/RunConfig",
+           "DBFile": "WhiteStat.db",
+           "LOGFile": "WhiteStatLog.txt",
+           "IP_MAC_REWRITE": "IP_MAC.txt",
+           "MAC_MAC_REWRITE": "MAC_MAC.txt",
+           "MAC_HOST_MAP": "MAC_HOST.txt",
+           "DARKSTAT_URL": "http://192.168.1.5:777",
+           "IPFilter": "([\\d]+\\.){3,3}\\d+",
+           "IdleSeconds": 30,
+           "UpdateDBSeconds": 40,
+           "SERVER_PORT":777
+     }
+
+This file will be automatically created, when you start the container for the first time. The only requirement would be, provide a writable path on the  Host machine as the bind mount through DATA-STORE, environment variable.  Also provide the DarkStat URL, with DARKSTAT_URL environment parameter. 
+
+Other parameters have been explained below; 
+The default values for all parameters will be filled by WhiteStat. You've to edit the values for advanced configuration for your network, if needed.
+
+     {
+             "DATA_STORE": "{Host Path provided in the DATA_STORE param docker command line}",
+             
+             "DBFile": "{Name of the SQLite File, Default: WhiteStat.db. Usage data will be stored here}",
+             
+             "LOGFile": "{Log File: Default name: WhiteStatLog.txt}",
+             
+             # In Key value format seperated by |, multiple entries are seperated by new line             
+             "IP_MAC_REWRITE": "{Default: IP_MAC.txt, Provide if you've to see a different MAC than original for an IP in daily usage reports}.",
+             
+             # In Key value format seperated by |, multiple entries are seperated by new line             
+             "MAC_MAC_REWRITE": "{Default: MAC_MAC.txt, Provide if you would like to change a MAC address to a different one}",
+             
+             # In Key value format seperated by |, multiple entries are seperated by new line
+             "MAC_HOST_MAP": "{Default: MAC_HOST.txt, maps a MAC to a user friendly Host Name, will be displayed in usage reports, for easy tracking}",
+             
+             "DARKSTAT_URL": "The Url of DarkStat",
+             
+             "IPFilter": "This filter define which all IP entries will be used for reporting. Default is only IPV4 addresses",
+             
+             "IdleSeconds": "Sleep interval for whitestat, after each data extraction from DarkStat",
+             
+             "UpdateDBSeconds": "How Often the DB should be updated. i.e in every 40 seconds",
+             
+             "SERVER_PORT":"The port at which WhiteStat will be available"
+       }
