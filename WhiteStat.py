@@ -69,7 +69,7 @@ class WhiteStat:
 
             totalSecs = self.GetTotalSeconds(match_object)
             
-            return  (date + timedelta(seconds=totalSecs)).strftime("%Y-%m-%d %H:%M:%S")
+            return  (date - timedelta(seconds=totalSecs)).strftime("%Y-%m-%d %H:%M:%S")
         
         except Exception as e:
             self.utl.Log(e)
@@ -188,11 +188,11 @@ class WhiteStat:
                 kbOut = startUsageFrame["KBOut"].apply(lambda x: x)
 
                 startUsageFrame.loc[
-                    startUsageFrame.KBIn > startUsageFrame.LSTDAY_KBIn  ,
+                    startUsageFrame.KBIn >= startUsageFrame.LSTDAY_KBIn  ,
                     'KBIn'] = startUsageFrame["KBIn"] - startUsageFrame["LSTDAY_KBIn"]
 
                 startUsageFrame.loc[
-                    startUsageFrame.KBOut > startUsageFrame.LSTDAY_KBOut  ,
+                    startUsageFrame.KBOut >= startUsageFrame.LSTDAY_KBOut  ,
                     'KBOut'] = startUsageFrame["KBOut"] - startUsageFrame["LSTDAY_KBOut"]
 
                 startUsageFrame.loc[

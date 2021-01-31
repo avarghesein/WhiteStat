@@ -2,11 +2,16 @@ import flask
 import os
 import warnings
 from flask import request
+from flask import Flask, request, send_from_directory
 
 warnings.filterwarnings('ignore')
 
+
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
+
+# set the project root directory as the static folder, you can set others.
+app = Flask(__name__, static_url_path='/media/TMP-DSK/Python/WhiteStat_GitHub/UI')
 
 import WhiteStatUtils as UTL
 import WhiteStat as DE
@@ -23,10 +28,21 @@ print(serverPort)
 
 import WhiteStatUtils as UTL
 import WhiteStat as DE
+import re
 
 UTL.Initialize(dataStore,url,serverPort)
 utl = UTL.WhiteStatUtils.getInstance()
 extender = DE.WhiteStat()
+
+#@app.route('/')
+#def root():
+#    return send_from_directory('./UI/dist', 'index.html')
+
+#@app.route('/<path:path>')
+#def send_static(path):
+#    if not bool(re.search('\.[^\./]{2,4}$', path)):
+#        path += "/index.html"
+#    return send_from_directory('./UI/dist', path)
 
 @app.route('/', methods=['GET'])
 def daily():
