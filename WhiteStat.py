@@ -170,6 +170,8 @@ class WhiteStat:
 
             ##Get last day LSTDAY values from PrevDataUsageFrame
             if not (prevDateUsageFrame is None) and not (prevDateUsageFrame.empty):
+
+                self.StabilizeIP(prevDateUsageFrame, startUsageFrame)
                 prevSubFrame = prevDateUsageFrame[["IP", "MAC","LSTDAY_KBIn","LSTDAY_KBOut"]]
                 startUsageFrame = startUsageFrame.merge(prevSubFrame, on=['IP', 'MAC'], how ="left")
                 startUsageFrame.fillna(value={'LSTDAY_KBIn': 0.0, 'LSTDAY_KBOut': 0.0}, inplace=True)
@@ -333,18 +335,18 @@ class WhiteStat:
             return (None,None)
     
 
-    def PersistToDailyDB(self, timeframe, frame):
+    def PersistToDailyDB(self, timeframe, frame, utcDate):
         connection = None
         try:            
             import sqlite3
             connection = sqlite3.connect(self.utl.GetDB())
 
             connection.execute("DELETE FROM timeframe")
-            connection.execute("DELETE FROM dailyusage")
+            connection.execute(f"DELETE FROM dailyusage WHERE date([DATE]) >= date('{utcDate}')")
 
             connection.execute(f"INSERT INTO timeframe(DATE,LastSeen) VALUES('{timeframe[0]}',{timeframe[1]})")
             frame[['IP', 'MAC','Hostname', 'LastSeen','KBIn', 'KBOut', 'DATE',
-            'LSTDAY_KBIn', 'LSTDAY_KBOut']].to_sql('dailyusage', con=connection, if_exists='replace',index=False)
+            'LSTDAY_KBIn', 'LSTDAY_KBOut']].to_sql('dailyusage', con=connection, if_exists='append',index=False)
             connection.commit()
             connection.close()
         except Exception as e:
@@ -355,13 +357,11 @@ class WhiteStat:
             self.utl.Log(e)
 
 
-    def ArchivePrevFrameToDB(self):
+    def ArchivePrevFrameToDB(self, utcDate):
         connection = None
         try:            
             import sqlite3
             connection = sqlite3.connect(self.utl.GetDB())  
-
-            utcDate=self.GetNowUtc()
 
             connection.execute("DELETE FROM usagehistory WHERE (IP,MAC,DATE) IN "
                                "(SELECT IP,MAC,[DATE] "
@@ -385,7 +385,7 @@ class WhiteStat:
             self.utl.Log(e)
 
 
-    def RestoreFromDailyDB(self):
+    def RestoreFromDailyDB(self, utcDate):
         connection = None
         frame = None
         prevFrame = None
@@ -393,8 +393,6 @@ class WhiteStat:
         try:            
             import sqlite3
             connection = sqlite3.connect(self.utl.GetDB())  
-
-            utcDate=self.GetNowUtc()
 
             prevFrame=pd.read_sql_query(f"SELECT * FROM dailyusage WHERE date(DATE)<date('{utcDate}')", con=connection)
 

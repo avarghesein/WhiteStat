@@ -36,7 +36,8 @@ while True:
     startTimeFrame, startUsageFrame = None,None
 
     if startTimeFrame is None:
-        startTimeFrame, startUsageFrame,prevUsageFrame = extender.RestoreFromDailyDB()
+        startTimeFrame, startUsageFrame,prevUsageFrame = extender.RestoreFromDailyDB(today)
+        (startTimeFrame, startUsageFrame) = (None, None)
 
     while today <= utcDate:
 
@@ -47,11 +48,15 @@ while True:
             startTimeFrame, startUsageFrame, prevUsageFrame = extender.GetDayFirstFrame(prevUsageFrame) 
                 
             if prevUsageFrame is None:
-                extender.ArchivePrevFrameToDB()
+                extender.ArchivePrevFrameToDB(today)
+            else:
+                (startTimeFrame, startUsageFrame) = (None, None)
+
             continue
         else:
+            prevUsageFrame = None
             if totalSleepSeconds >= dbRefreshSeconds:
-                extender.PersistToDailyDB(startTimeFrame, startUsageFrame)
+                extender.PersistToDailyDB(startTimeFrame, startUsageFrame,today)
                 totalSleepSeconds = 0
 
         nextTimeFrame,nextUsageFrame = extender.GetDayNextFrame(startTimeFrame, startUsageFrame)
@@ -63,7 +68,12 @@ while True:
 
         #print(nextUsageFrame)
 
+        today = datetime.strptime(extender.GetNowUtc(), '%Y-%m-%d %H:%M:%S')
+
+        if today > utcDate:
+            continue
+
         startTimeFrame, startUsageFrame = nextTimeFrame,nextUsageFrame
 
-        today = datetime.strptime(extender.GetNowUtc(), '%Y-%m-%d %H:%M:%S')
+       
     
