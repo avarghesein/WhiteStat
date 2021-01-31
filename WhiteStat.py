@@ -92,7 +92,7 @@ class WhiteStat:
 
     def GetNowUtc(self):
         #return (datetime.utcnow().date()+ timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
-        return datetime.utcnow().date().strftime("%Y-%m-%d %H:%M:%S")
+        return datetime.now().date().strftime("%Y-%m-%d %H:%M:%S")
         
     def ConvertToKB(self, bytes):
         try:
@@ -136,7 +136,7 @@ class WhiteStat:
 
             updMac= usageBytes.apply(lambda x: self.ReplaceMACs(x.MAC, x.IP), axis=1)
 
-            now = datetime.utcnow()
+            now = datetime.now()
             lastSeen = usageBytes["Last seen"].apply(lambda x: self.ConvertLastSeen(now, x))
 
             kbIn = usageBytes["In"].apply(lambda x: self.ConvertToKB(x))
