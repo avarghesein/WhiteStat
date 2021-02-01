@@ -16,6 +16,8 @@ EXPOSE 777
 EXPOSE 888
 EXPOSE 999
 
+#ENV TZ="Asia/Calcutta"
+
 CMD ["/app/WhiteStat/WhiteStatService.sh"]
 
 #Docker Build Sample:
@@ -26,6 +28,7 @@ CMD ["/app/WhiteStat/WhiteStatService.sh"]
 
 #Running Container Sample
 #docker run --name whitestat \
+#--env TZ="Asia/Calcutta" \
 #--env DATA_STORE="/mnt/whitestat/config/" \
 #--env DARKSTAT_URL="http://192.168.1.5:777" \
 #--env SERVER_PORT=777 \

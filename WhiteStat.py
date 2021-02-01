@@ -341,7 +341,7 @@ class WhiteStat:
             import sqlite3
             connection = sqlite3.connect(self.utl.GetDB())
 
-            connection.execute("DELETE FROM timeframe")
+            connection.execute(f"DELETE FROM timeframe WHERE date([DATE]) >= date('{utcDate}')")
             connection.execute(f"DELETE FROM dailyusage WHERE date([DATE]) >= date('{utcDate}')")
 
             connection.execute(f"INSERT INTO timeframe(DATE,LastSeen) VALUES('{timeframe[0]}',{timeframe[1]})")
@@ -375,6 +375,9 @@ class WhiteStat:
                 f"FROM dailyusage WHERE date([DATE]) < date('{utcDate}') AND "
                 "(IP,MAC,DATE) NOT IN (SELECT IP,MAC,DATE FROM usagehistory)")
 
+            connection.execute(f"DELETE FROM dailyusage WHERE date([DATE]) < date('{utcDate}')")            
+            connection.execute(f"DELETE FROM timeframe WHERE date([DATE]) < date('{utcDate}')")
+
             connection.commit()
             connection.close()
         except Exception as e:
@@ -385,6 +388,13 @@ class WhiteStat:
             self.utl.Log(e)
 
 
+    def ValidateDate(self, date_text):
+        try:
+            datetime.strptime(date_text, '%Y-%m-%d %H:%M:%S')
+            return True
+        except ValueError:
+            return False
+
     def RestoreFromDailyDB(self, utcDate):
         connection = None
         frame = None
@@ -394,12 +404,18 @@ class WhiteStat:
             import sqlite3
             connection = sqlite3.connect(self.utl.GetDB())  
 
-            prevFrame=pd.read_sql_query(f"SELECT * FROM dailyusage WHERE date(DATE)<date('{utcDate}')", con=connection)
+            cursor = connection.execute(f"SELECT MAX(DTE) FROM (SELECT DATE AS DTE FROM timeframe WHERE date(DATE) < date('{utcDate}'))")
+            #cursor = connection.execute(f"SELECT DATE,LastSeen AS CNT FROM timeframe")
+            prevTimeframe = cursor.fetchone()
+            cursor.close()
 
-            filterV4 = prevFrame['IP'].str.contains(self.utl.GetIPFilter())    
-            prevFrame.drop(prevFrame[~filterV4].index, inplace = True) 
+            if not (prevTimeframe is None) and self.ValidateDate(str(prevTimeframe[0])):
+                prevDate = prevTimeframe[0]
+                prevFrame=pd.read_sql_query(f"SELECT * FROM dailyusage WHERE date(DATE)=date('{prevDate}')", con=connection)
+                filterV4 = prevFrame['IP'].str.contains(self.utl.GetIPFilter())    
+                prevFrame.drop(prevFrame[~filterV4].index, inplace = True)                         
 
-            cursor = connection.execute(f"SELECT DATE,LastSeen AS CNT FROM timeframe WHERE date(DATE)=date('{utcDate}')")
+            cursor = connection.execute(f"SELECT DATE,LastSeen AS DTE FROM timeframe WHERE date(DATE)=date('{utcDate}')")
             #cursor = connection.execute(f"SELECT DATE,LastSeen AS CNT FROM timeframe")
             timeframe = cursor.fetchone()
             cursor.close()

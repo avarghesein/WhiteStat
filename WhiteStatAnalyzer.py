@@ -36,8 +36,7 @@ while True:
     startTimeFrame, startUsageFrame = None,None
 
     if startTimeFrame is None:
-        startTimeFrame, startUsageFrame,prevUsageFrame = extender.RestoreFromDailyDB(today)
-        (startTimeFrame, startUsageFrame) = (None, None)
+        startTimeFrame, startUsageFrame,prevUsageFrame = extender.RestoreFromDailyDB(today)       
 
     while today <= utcDate:
 
