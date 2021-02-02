@@ -19,7 +19,10 @@ print(url)
 serverPort = UTL.GetEnv("SERVER_PORT",777)
 print(serverPort)
 
-UTL.Initialize(dataStore,url,serverPort)
+lanSegments = UTL.GetEnv("LAN_SEGMENT_MASKS","192.168.1|192.168.0")
+print(lanSegments)
+
+UTL.Initialize(dataStore,url,serverPort,lanSegments)
 utl = UTL.WhiteStatUtils.getInstance()
 
 dbRefreshSeconds = utl.GetUpdateDBSeconds()

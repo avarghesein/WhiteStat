@@ -220,34 +220,44 @@ class WhiteStat:
 
     def StabilizeIP(self, prevFrame, frame):
         oldFrame = prevFrame
-        prevFrame = prevFrame[["IP","MAC", "LSTDAY_KBIn"]]
-        prevFrame.rename(columns = {'MAC':'MAC_OLD'}, inplace = True)
+        prevFrame = prevFrame[["IP","MAC", "LSTDAY_KBIn","LastSeen"]]
+        prevFrame.rename(columns = {'MAC':'MAC_OLD',"LastSeen":"LastSeen_OLD"}, inplace = True)
 
-        frame = frame[["IP","MAC", "KBIn"]]
+        frame = frame[["IP","MAC", "KBIn","LastSeen"]]
 
         #frame.loc[frame.IP == "192.168.1.21", 'MAC'] = "f8:c4:f3:50:53:68"
 
         newFrame = prevFrame.merge(frame, on=['IP'], how ="inner")
 
-        prevFrame.rename(columns = {'MAC_OLD':'MAC'}, inplace = True)
+        prevFrame.rename(columns = {'MAC_OLD':'MAC', "LastSeen_OLD":"LastSeen"}, inplace = True)
 
         dic = {}
     
-        def ReMapIpMac(ip,mac):
-            dic[ip] = mac
+        def ReMapIpMac(ip,mac_old,lastseen_old,new_mac):
+            dic[f"{ip},{mac_old},{lastseen_old}"] = new_mac
             return None
+
+        newFrame.drop(newFrame[(newFrame.LastSeen == 0) | (newFrame.LastSeen_OLD == 0)].index, inplace = True)
+        newFrame.drop(newFrame[(newFrame.LastSeen.str.strip() == "0") | (newFrame.LastSeen_OLD.str.strip() == "0")].index, inplace = True)
+
+        newFrame['DT_LastSeen'] = pd.to_datetime(newFrame['LastSeen'], format='%Y-%m-%d %H:%M:%S')
+        newFrame['DT_LastSeen_OLD'] = pd.to_datetime(newFrame['LastSeen_OLD'], format='%Y-%m-%d %H:%M:%S')
 
         newFrame = newFrame[
             (newFrame.MAC != newFrame.MAC_OLD) &
-            (newFrame.KBIn >= newFrame.LSTDAY_KBIn)]
+            #((newFrame.KBIn >= newFrame.LSTDAY_KBIn) |
+            ((newFrame.DT_LastSeen - newFrame.DT_LastSeen_OLD).dt.total_seconds() <= self.utl.GetIPStabilizeSeconds())]
         
         if not(newFrame is None or newFrame.empty):
-            newFrame.apply(lambda x: ReMapIpMac(x.IP, x.MAC),axis=1)
+            newFrame.apply(lambda x: ReMapIpMac(x.IP,x.MAC_OLD,x.LastSeen_OLD,x.MAC),axis=1)
 
-        updMac= oldFrame.apply(lambda x: dic.get(x.IP,x.MAC), axis=1)
+        updMac= oldFrame.apply(lambda x: dic.get(f"{x.IP},{x.MAC},{x.LastSeen}",x.MAC), axis=1)
 
         oldFrame.drop(["MAC"], axis=1, inplace=True)
         oldFrame.insert(2, "MAC", updMac, True)
+
+        self.EnsureIP_MAC_Combo(oldFrame,"From StabilizeIP")
+
         return
     
     def GetDayNextFrame(self, prevTimeFrame, prevUsageFrame):
@@ -278,6 +288,8 @@ class WhiteStat:
 
             newUsageFrame = nextUsageFrame.merge(startUsageFrame, on=['IP', 'MAC'], how ="outer")
 
+            self.EnsureIP_MAC_Combo(newUsageFrame,"From GetDayNextFrame, Just after Merge")
+            
             #for new records from Server, Start the Meter as new with same returned bytes
             # (will happen below while adding the bytes)
             #records exists newly in server, and not in local
@@ -328,12 +340,19 @@ class WhiteStat:
             newUsageFrame.drop('KBIn_NXT', inplace=True, axis=1)
             newUsageFrame.drop('KBOut_NXT', inplace=True, axis=1)        
             
+            self.EnsureIP_MAC_Combo(newUsageFrame,"From GetDayNextFrame, Just Before Return")
+
             return (nextTimeFrame,newUsageFrame)
         
         except Exception as e:
             self.utl.Log(e)
             return (None,None)
     
+    def EnsureIP_MAC_Combo(self,frame, msg):
+        group=frame[['IP','MAC']].groupby(['IP']).count()
+        count=group[group.MAC > 1].shape[0]
+        if count > 0:
+            raise Exception(f'Multiple IP/MAC combination, Critical error:{msg}')
 
     def PersistToDailyDB(self, timeframe, frame, utcDate):
         connection = None

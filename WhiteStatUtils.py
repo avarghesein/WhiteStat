@@ -14,7 +14,7 @@ def GetEnv(key, defaultVal=""):
 def get_script_path():
     return os.path.dirname(os.path.realpath(sys.argv[0]))
 
-def Initialize(configFolder, url, serverPort=777):
+def Initialize(configFolder, url, serverPort=777, lanSegMasks="192.168.0|192.168.1"):
     try:
         scriptPath = get_script_path() + "/Config/"
         if not os.path.exists(f"{configFolder}/WhiteStatConfig.json"):
@@ -28,6 +28,7 @@ def Initialize(configFolder, url, serverPort=777):
             jsonObj["DARKSTAT_URL"] = url
             jsonObj["SERVER_PORT"] = int(serverPort)
             jsonObj["DATA_STORE"] = configFolder
+            jsonObj["LAN_SEGMENT_MASKS"] = lanSegMasks
             
             f = open(f"{configFolder}/WhiteStatConfig.json", "w")
             json.dump(jsonObj, f, indent = 6) 
@@ -73,6 +74,8 @@ class WhiteStatUtils:
 
         self.db = f"{self.configFolder}/{jsonObj['DBFile']}"
         self.log = f"{self.configFolder}/{jsonObj['LOGFile']}"
+        self.lanSegMasks = f"{jsonObj['LAN_SEGMENT_MASKS']}"
+        
 
 
     def __ToDictionary(self,file):
@@ -87,6 +90,9 @@ class WhiteStatUtils:
             self.Log(e)   
 
         return {}
+
+    def GetLANSegments(self):
+        return self.lanSegMasks.split('|')
 
     def GetMacHostDict(self):
         return self.macHostDict
@@ -105,6 +111,11 @@ class WhiteStatUtils:
 
     def GetSleepSeconds(self):
         return self.idleSeconds
+
+    def GetIPStabilizeSeconds(self):
+        default = 60
+        conf = (self.idleSeconds * 2.5)
+        return default if conf < default else default
 
     def GetServerPort(self):
         return self.ServerPort

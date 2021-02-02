@@ -9,5 +9,6 @@
       "IPFilter": "([\\d]+\\.){3,3}\\d+",
       "IdleSeconds": 30,
       "UpdateDBSeconds": 40,
-      "SERVER_PORT":777
+      "SERVER_PORT":777,
+      "LAN_SEGMENT_MASKS":"192.168.1|192.168.0"
 }

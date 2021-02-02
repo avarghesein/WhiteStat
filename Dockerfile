@@ -32,6 +32,7 @@ CMD ["/app/WhiteStat/WhiteStatService.sh"]
 #--env DATA_STORE="/mnt/whitestat/config/" \
 #--env DARKSTAT_URL="http://192.168.1.5:777" \
 #--env SERVER_PORT=777 \
+#--env LAN_SEGMENT_MASKS="192.168.1|192.168.0" \
 #--mount type=bind,source="/media/TMP-DSK/Python/WhiteStat/TestDockerConfig/",target="/mnt/whitestat/config/"  \
 #-p 5000:777 \
 #-it avarghese.in/whitestat:v1 /bin/bash
