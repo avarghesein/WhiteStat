@@ -13,24 +13,24 @@ What about a utility, which is minimal enough to smoothly run on Pi hardware, an
  
 ## Features
 
-### 1. Entire Network Usage Analyzer is in a Docker Image and minimal enough to run on a Pi Hardware
+#### 1. Entire Network Usage Analyzer is in a Docker Image and minimal enough to run on a Pi Hardware
 
-### 2. Provides Daily Usage Levels per individual Host in the Network, Considering DHCP and the same Host could have different IP's on the same day
+#### 2. Provides Daily Usage Levels per individual Host in the Network, Considering DHCP and the same Host could have different IP's on the same day
    
    Note:
    DarkStat, provide Usage level per IP only, not per Host. Lacks the right reporting, when a Host takes a new IP under DHCP.
    
-### 3. Survival of Usage Data, in case of a System Crash (Router/Pi at which DarkStat or WhiteStat is running)
+#### 3. Survival of Usage Data, in case of a System Crash (Router/Pi at which DarkStat or WhiteStat is running)
    WhiteStat keeps checkpoints on data usage in every 30 Seconds by default, and use the same as the starting level, when the system comes up.
    DarkStat, though uses an internal DB, does not seems to survive system crashes, and data usage levels resets.
 
-### 4. Provides Historic Data, in SQL lite Database
+#### 4. Provides Historic Data, in SQL lite Database
 
-### 5. Responsive UI is provided, which all statistics in a single page (shows total download, upload, and sortable grid for usage records)
+#### 5. Responsive UI is provided, which all statistics in a single page (shows total download, upload, and sortable grid for usage records)
 
-### 6. JSON/HTML end points are given, so that it could be integrated with other Analytics tools for details analysis (like PowerBI, excel)
+#### 6. JSON/HTML end points are given, so that it could be integrated with other Analytics tools for detailed data analysis (like PowerBI, excel)
 
-## Tools Used 
+#### Tools Used 
 
 The Utility has been built using Python3 (Flask , Pandas and SQLite for persistance), and packaged as a Docker Container. As of now it supports both X64 and arm/Armhf (ArmV7) architectures, and container image for both has been available in Docker Hub. 
 
