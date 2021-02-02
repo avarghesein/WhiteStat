@@ -11,8 +11,26 @@ What about a utility, which is minimal enough to smoothly run on Pi hardware, an
 
 [“DarkStat”](https://github.com/TomMichel/darkstat) seems to be the obvious choice, and I've tried to extend the same, as it is much leaner (the entire source is in raw C, even the minimal HTTP Server built in) compared to other tools and with high performance. However It does not provide a daily statistics, and probably a friendlier way of configuring and listing my devices (used IP’s instead of Host Name) in the Network. But that’s just fine, and that’s why “WhiteStat” 
  
+## Features
 
-## Tools Used 
+#### 1. Entire Network Usage Analyzer is in a Docker Image and minimal enough to run on a Pi Hardware
+
+#### 2. Provides Daily Usage Levels per individual Host in the Network, Considering DHCP and the same Host could have different IP's on the same day
+   
+   Note:
+   DarkStat, provide Usage level per IP only, not per Host. Lacks the right reporting, when a Host takes a new IP under DHCP.
+   
+#### 3. Survival of Usage Data, in case of a System Crash (Router/Pi at which DarkStat or WhiteStat is running)
+   WhiteStat keeps checkpoints on data usage in every 30 Seconds by default, and use the same as the starting level, when the system comes up.
+   DarkStat, though uses an internal DB, does not seems to survive system crashes, and data usage levels resets.
+
+#### 4. Provides Historic Data, in SQL lite Database
+
+#### 5. Responsive UI is provided, which all statistics in a single page (shows total download, upload, and sortable grid for usage records)
+
+#### 6. JSON/HTML end points are given, so that it could be integrated with other Analytics tools for detailed data analysis (like PowerBI, excel)
+
+#### Tools Used 
 
 The Utility has been built using Python3 (Flask , Pandas and SQLite for persistance), and packaged as a Docker Container. As of now it supports both X64 and arm/Armhf (ArmV7) architectures, and container image for both has been available in Docker Hub. 
 
@@ -32,27 +50,33 @@ For X64 Hardware: e.g.
     --env DATA_STORE="/mnt/whitestat/" \
     --env DARKSTAT_URL="http://192.168.1.5:777" \
     --env SERVER_PORT=777 \
+    --env LAN_SEGMENT_MASKS="192.168.1|192.168.0" \
     --mount type=bind,source="/home/ubuntuuser/whitestat",target="/mnt/whitestat/"  \
     -p 888:777 \
-    -d avarghesein/whitestat:v3
+    -d avarghesein/whitestat:v5
 
 For RaspberryPi2 (ARMV7 or armhf) Hardware: e.g.
 
     docker run --name whitestatpi \
-    --env DATA_STORE="/mnt/whitestat/config/" \
+    --env DATA_STORE="/mnt/whitestat/" \
     --env DARKSTAT_URL="http://192.168.1.5:777" \
     --env SERVER_PORT=777 \
+    --env LAN_SEGMENT_MASKS="192.168.1|192.168.0" \
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
     -p 888:777 \
-    -d avarghesein/whitestat:v3_armhf
+    -d avarghesein/whitestat:v5_armhf
     
 Now You could view Daily Bandwidth Usage using
 
-    http://IP:888/
+    Default UI: http://IP:888/
+    Plan HTML: http://IP:888/table/
+    Plan JSON: http://IP:888/json/
 
 Bandwidth Usage History couldbe viewed through
 
-    http://IP:888/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
+    Default UI: http://IP:888/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
+    Plan HTML: http://IP:888/table/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
+    Plan JSON: http://IP:888/json/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
 
 
 We could feed these URLs to other Data Analysis systems (e.g. An excel with PowerQuery, which automatically refresh in every minute) for Intuitiveness. 
@@ -107,10 +131,20 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
              "UpdateDBSeconds": "How Often the DB should be updated. i.e in every 40 seconds",
              
              "SERVER_PORT":"The port at which WhiteStat will be available"
+             
+             "LAN_SEGMENT_MASKS":"LAN segments used inside your private network. NB: This is required for right representation of charts in the UX"
        }
        
        
  ## How to Build
+ 
+ ### Build UX
+ 
+ For Building UI, navigate to UX directory and run
+ 
+    npm run build
+ 
+ ### Build Docker Images
  
  Docker files have been given in the root directory of the source, running which will create docker images, ready to be deployed.
  
