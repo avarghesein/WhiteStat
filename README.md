@@ -53,7 +53,7 @@ For X64 Hardware: e.g.
     --env LAN_SEGMENT_MASKS="192.168.1|192.168.0" \
     --mount type=bind,source="/home/ubuntuuser/whitestat",target="/mnt/whitestat/"  \
     -p 888:777 \
-    -d avarghesein/whitestat:v3
+    -d avarghesein/whitestat:v5
 
 For RaspberryPi2 (ARMV7 or armhf) Hardware: e.g.
 
@@ -64,7 +64,7 @@ For RaspberryPi2 (ARMV7 or armhf) Hardware: e.g.
     --env LAN_SEGMENT_MASKS="192.168.1|192.168.0" \
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
     -p 888:777 \
-    -d avarghesein/whitestat:v3_armhf
+    -d avarghesein/whitestat:v5_armhf
     
 Now You could view Daily Bandwidth Usage using
 
