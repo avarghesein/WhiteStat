@@ -58,7 +58,7 @@ For X64 Hardware: e.g.
 For RaspberryPi2 (ARMV7 or armhf) Hardware: e.g.
 
     docker run --name whitestatpi \
-    --env DATA_STORE="/mnt/whitestat/config/" \
+    --env DATA_STORE="/mnt/whitestat/" \
     --env DARKSTAT_URL="http://192.168.1.5:777" \
     --env SERVER_PORT=777 \
     --env LAN_SEGMENT_MASKS="192.168.1|192.168.0" \
