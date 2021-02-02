@@ -349,10 +349,10 @@ class WhiteStat:
             return (None,None)
     
     def EnsureIP_MAC_Combo(self,frame, msg):
-        group=frame[['IP','MAC']].groupby(['IP']).count()
-        count=group[group.MAC > 1].shape[0]
+        group=frame[['IP','MAC','DATE']].groupby(['IP','MAC']).count()
+        count=group[group.DATE > 1].shape[0]
         if count > 0:
-            raise Exception(f'Multiple IP/MAC combination, Critical error:{msg}')
+            raise Exception(f'Multiple Same IP/MAC combination, Critical error:{msg}')
 
     def PersistToDailyDB(self, timeframe, frame, utcDate):
         connection = None
