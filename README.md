@@ -32,7 +32,7 @@ What about a utility, which is minimal enough to smoothly run on Pi hardware, an
 
 #### Tools Used 
 
-The Utility has been built using Python3 (Flask , Pandas and SQLite for persistance), and packaged as a Docker Container. As of now it supports both X64 and arm/Armhf (ArmV7) architectures, and container image for both has been available in Docker Hub. 
+The Utility has been built using Python3 (Flask , Pandas and SQLite for persistance, Bootstrap/JQuery for UX), and packaged as a Docker Container. As of now it supports both X64 and arm/Armhf (ArmV7) architectures, and container image for both has been available in Docker Hub. 
 
 ## Prerequisites : 
 
@@ -69,14 +69,14 @@ For RaspberryPi2 (ARMV7 or armhf) Hardware: e.g.
 Now You could view Daily Bandwidth Usage using
 
     Default UI: http://IP:888/
-    Plan HTML: http://IP:888/table/
-    Plan JSON: http://IP:888/json/
+    Plain HTML: http://IP:888/table/
+    Plain JSON: http://IP:888/json/
 
 Bandwidth Usage History couldbe viewed through
 
     Default UI: http://IP:888/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
-    Plan HTML: http://IP:888/table/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
-    Plan JSON: http://IP:888/json/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
+    Plain HTML: http://IP:888/table/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
+    Plain JSON: http://IP:888/json/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
 
 
 We could feed these URLs to other Data Analysis systems (e.g. An excel with PowerQuery, which automatically refresh in every minute) for Intuitiveness. 
