@@ -60,10 +60,16 @@ def daily():
 def dailyJson():
     #return "<html><body>test</body></html>"
     timeframe,frame = extender.GetDailyUsageRecords()
-    if not (frame is None):
-        return frame.to_json(orient="split",index=False)
+
+    response = None
+
+    if not (frame is None) and not frame.empty:
+        response = Response(frame.to_json(orient="split",index=False), mimetype='application/json')        
     else:
-        return "<html><body>No Data</body></html>"
+        response = Response("<html><body>No Historic Data</body></html>")
+    
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
 
 def GetHistory():
     startDate = request.args.get('start')
@@ -74,7 +80,7 @@ def GetHistory():
     
     if not endDate:
         endDate = extender.GetNowUtc()
-
+    
     return extender.GetHistoricRecords(startDate,endDate)
 
 @app.route('/table/history', methods=['GET'])
@@ -89,15 +95,22 @@ def history():
 def historyJson():
     frame = GetHistory()
 
+    response = None
+
     if not (frame is None) and not frame.empty:
-        return frame.to_json(orient="split",index=False)
+        response = Response(frame.to_json(orient="split",index=False), mimetype='application/json')        
     else:
-        return "<html><body>No Historic Data</body></html>"
+        response = Response("<html><body>No Historic Data</body></html>")
+    
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
 
 @app.route('/json/lansegments', methods=['GET'])
 def lanSegmentsJson():
         lans = utl.GetLANSegments()
-        return Response(json.dumps(lans),  mimetype='application/json')
+        response = Response(json.dumps(lans),  mimetype='application/json')
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
 
 if __name__ == '__main__':
     #app.run()

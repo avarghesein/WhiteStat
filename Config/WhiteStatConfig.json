@@ -2,6 +2,7 @@
       "DATA_STORE": "./WhiteStat/RunConfig",
       "DBFile": "WhiteStat.db",
       "LOGFile": "WhiteStatLog.txt",
+      "TRACEFile": "WhiteStatTrace.txt",
       "IP_MAC_REWRITE": "IP_MAC.txt",
       "MAC_MAC_REWRITE": "MAC_MAC.txt",
       "MAC_HOST_MAP": "MAC_HOST.txt",

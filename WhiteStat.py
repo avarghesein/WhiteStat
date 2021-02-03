@@ -101,7 +101,7 @@ class WhiteStat:
             print(bytes)
             raise
 
-    def GetUsageFrame(self):
+    def GetUsageFrame(self,date):
         try:
             usage_data = pd.read_html(f'{self.url}/hosts/?full=yes&sort=in', header=None)
 
@@ -151,19 +151,30 @@ class WhiteStat:
             utcDate=self.GetNowUtc()
             usageBytes.insert(6, "DATE", utcDate, allow_duplicates=True)
 
+            usageBytes.drop(usageBytes[(usageBytes.LastSeen == 0)].index, inplace = True)
+            usageBytes.drop(usageBytes[(usageBytes.LastSeen.str.strip() == "0")].index, inplace = True)
+
+            usageBytes['DT_LastSeen'] = pd.to_datetime(usageBytes['LastSeen'], format='%Y-%m-%d %H:%M:%S')
+
+            curDate = (date - timedelta(seconds=24 * 60 * 60))
+
+            usageBytes.drop(usageBytes[usageBytes.DT_LastSeen < curDate].index, inplace = True) 
+
+            usageBytes.drop(["DT_LastSeen"], axis=1, inplace=True)
+
             return usageBytes
         except Exception as e:
             self.utl.Log(e)
             return None
 
-    def GetDayFirstFrame(self, prevDateUsageFrame):
+    def GetDayFirstFrame(self, date, prevDateUsageFrame):
         try:
             startTimeFrame = self.RunningFor()
 
             if startTimeFrame is None:
                 return (None,None, prevDateUsageFrame)
 
-            startUsageFrame = self.GetUsageFrame()    
+            startUsageFrame = self.GetUsageFrame(date)    
 
             if startUsageFrame is None:
                 return (None,None, prevDateUsageFrame)    
@@ -171,9 +182,13 @@ class WhiteStat:
             ##Get last day LSTDAY values from PrevDataUsageFrame
             if not (prevDateUsageFrame is None) and not (prevDateUsageFrame.empty):
 
-                self.StabilizeIP(prevDateUsageFrame, startUsageFrame)
-                prevSubFrame = prevDateUsageFrame[["IP", "MAC","LSTDAY_KBIn","LSTDAY_KBOut"]]
+                prevDateUsageFrame = self.StabilizeIP(date, prevDateUsageFrame, startUsageFrame)
+
+                prevSubFrame = prevDateUsageFrame[["IP", "MAC", "LSTDAY_KBIn","LSTDAY_KBOut"]]
                 startUsageFrame = startUsageFrame.merge(prevSubFrame, on=['IP', 'MAC'], how ="left")
+
+                startUsageFrame = self.EnsureIP_MAC_Combo(date, startUsageFrame,"From GetDayFirstFrame",fix=True)
+
                 startUsageFrame.fillna(value={'LSTDAY_KBIn': 0.0, 'LSTDAY_KBOut': 0.0}, inplace=True)
                 
                 startUsageFrame.loc[
@@ -203,7 +218,6 @@ class WhiteStat:
                     kbOut > startUsageFrame.LSTDAY_KBOut  ,
                     'LSTDAY_KBOut'] = kbOut
 
-
                 prevDateUsageFrame = None
             else:
                 startUsageFrame.insert(0, "LSTDAY_KBIn", 0, allow_duplicates=True) 
@@ -218,12 +232,12 @@ class WhiteStat:
             self.utl.Log(e)
             return (None,None, prevDateUsageFrame)
 
-    def StabilizeIP(self, prevFrame, frame):
+    def StabilizeIP(self, date, prevFrame, frame):
         oldFrame = prevFrame
         prevFrame = prevFrame[["IP","MAC", "LSTDAY_KBIn","LastSeen"]]
         prevFrame.rename(columns = {'MAC':'MAC_OLD',"LastSeen":"LastSeen_OLD"}, inplace = True)
 
-        frame = frame[["IP","MAC", "KBIn","LastSeen"]]
+        frame = frame[["IP","MAC","KBIn","LastSeen"]]
 
         #frame.loc[frame.IP == "192.168.1.21", 'MAC'] = "f8:c4:f3:50:53:68"
 
@@ -256,11 +270,10 @@ class WhiteStat:
         oldFrame.drop(["MAC"], axis=1, inplace=True)
         oldFrame.insert(2, "MAC", updMac, True)
 
-        self.EnsureIP_MAC_Combo(oldFrame,"From StabilizeIP")
+        return self.EnsureIP_MAC_Combo(date, oldFrame,"From StabilizeIP",fix=True)
 
-        return
     
-    def GetDayNextFrame(self, prevTimeFrame, prevUsageFrame):
+    def GetDayNextFrame(self, date, prevTimeFrame, prevUsageFrame):
         try:
             startTimeFrame = prevTimeFrame
             startUsageFrame = prevUsageFrame
@@ -269,7 +282,7 @@ class WhiteStat:
             if nextTimeFrame is None:
                 return (None, None)
 
-            nextUsageFrame = self.GetUsageFrame()  
+            nextUsageFrame = self.GetUsageFrame(date)  
             
             if nextUsageFrame is None:
                 return (None, None)
@@ -278,41 +291,39 @@ class WhiteStat:
                 return (nextTimeFrame,nextUsageFrame)
     
 
-            self.StabilizeIP(startUsageFrame, nextUsageFrame)
+            startUsageFrame = self.StabilizeIP(date, startUsageFrame, nextUsageFrame)
 
             nextUsageFrame.rename(columns = {'LastSeen':'LastSeen_NXT'}, inplace = True)
             nextUsageFrame.rename(columns = {'KBIn':'KBIn_NXT'}, inplace = True)
             nextUsageFrame.rename(columns = {'KBOut':'KBOut_NXT'}, inplace = True)
             nextUsageFrame.rename(columns = {'Hostname':'Hostname_NXT'}, inplace = True)
-            nextUsageFrame.rename(columns = {'DATE':'DATE_NXT'}, inplace = True)
+            #nextUsageFrame.rename(columns = {'DATE':'DATE_NXT'}, inplace = True)
 
-            newUsageFrame = nextUsageFrame.merge(startUsageFrame, on=['IP', 'MAC'], how ="outer")
+            newUsageFrame = nextUsageFrame.merge(startUsageFrame, on=['IP', 'MAC', 'DATE'], how ="outer")
 
-            self.EnsureIP_MAC_Combo(newUsageFrame,"From GetDayNextFrame, Just after Merge")
+            #self.EnsureIP_MAC_Combo(newUsageFrame,"From GetDayNextFrame, Just after Merge")
             
             #for new records from Server, Start the Meter as new with same returned bytes
             # (will happen below while adding the bytes)
             #records exists newly in server, and not in local
             newUsageFrame.fillna(value={'LSTDAY_KBIn': 0.0, 'LSTDAY_KBOut': 0.0, 'KBIn': 0.0, 'KBOut': 0.0}, inplace=True)
+                       
+            #If the records already existing, update last seen and date, to reflect recent
+            #New Rows
             newUsageFrame['LastSeen'].fillna(newUsageFrame['LastSeen_NXT'],inplace=True)
             newUsageFrame['Hostname'].fillna(newUsageFrame['Hostname_NXT'],inplace=True)
+   
+            newUsageFrame.loc[(pd.notna(newUsageFrame.Hostname_NXT)) &
+            (pd.notna(newUsageFrame.Hostname)), 'Hostname'] = newUsageFrame["Hostname_NXT"]
 
-            newUsageFrame.loc[pd.isna(newUsageFrame.Hostname), 'Hostname'] = newUsageFrame["Hostname_NXT"]
-            newUsageFrame.loc[pd.isna(newUsageFrame.LastSeen), 'LastSeen'] = newUsageFrame["LastSeen_NXT"]
-            newUsageFrame.loc[pd.isna(newUsageFrame.DATE), 'DATE'] = newUsageFrame["DATE_NXT"]
-
-            newUsageFrame.drop('Hostname_NXT', inplace=True, axis=1)
-            newUsageFrame.drop('LastSeen_NXT', inplace=True, axis=1)
-            newUsageFrame.drop('DATE_NXT', inplace=True, axis=1)
-
+            #newUsageFrame.loc[(pd.notna(newUsageFrame.DATE_NXT)) &
+            #(pd.notna(newUsageFrame.DATE)), 'DATE'] = newUsageFrame["DATE_NXT"] 
+                        
             #for old records in local, retain the same value (will happen below while adding the bytes)
             #records exists only in local, and no more in server
             newUsageFrame.loc[pd.isna(newUsageFrame.KBIn_NXT), 'KBIn_NXT'] = newUsageFrame.LSTDAY_KBIn
-            newUsageFrame.loc[pd.isna(newUsageFrame.KBOut_NXT), 'KBOut_NXT'] = newUsageFrame.LSTDAY_KBOut   
-            
-            newUsageFrame.fillna(value={'Hostname': "(none)"}, inplace=True)
-
-
+            newUsageFrame.loc[pd.isna(newUsageFrame.KBOut_NXT), 'KBOut_NXT'] = newUsageFrame.LSTDAY_KBOut  
+                        
             #if nextTimeFrame[1] >= startTimeFrame[1]:    
             #    newUsageFrame["KBIn"] += newUsageFrame["KBIn_NXT"] - newUsageFrame["LSTDAY_KBIn"]
             #    newUsageFrame["KBOut"] += newUsageFrame["KBOut_NXT"] - newUsageFrame["LSTDAY_KBOut"]
@@ -340,7 +351,17 @@ class WhiteStat:
             newUsageFrame.drop('KBIn_NXT', inplace=True, axis=1)
             newUsageFrame.drop('KBOut_NXT', inplace=True, axis=1)        
             
-            self.EnsureIP_MAC_Combo(newUsageFrame,"From GetDayNextFrame, Just Before Return")
+            newUsageFrame = self.EnsureIP_MAC_Combo(date, newUsageFrame,"From GetDayNextFrame, Just Before Return",fix=True)
+
+            #New Rows, Existing Rows match. Inner Join, make the values recent
+            newUsageFrame.loc[(pd.notna(newUsageFrame.LastSeen_NXT)) &
+            (pd.notna(newUsageFrame.LastSeen)), 'LastSeen'] = newUsageFrame["LastSeen_NXT"]
+      
+            newUsageFrame.fillna(value={'Hostname': "(none)"}, inplace=True)
+
+            newUsageFrame.drop('Hostname_NXT', inplace=True, axis=1)
+            newUsageFrame.drop('LastSeen_NXT', inplace=True, axis=1)
+            #newUsageFrame.drop('DATE_NXT', inplace=True, axis=1)                        
 
             return (nextTimeFrame,newUsageFrame)
         
@@ -348,11 +369,38 @@ class WhiteStat:
             self.utl.Log(e)
             return (None,None)
     
-    def EnsureIP_MAC_Combo(self,frame, msg):
-        group=frame[['IP','MAC','DATE']].groupby(['IP','MAC']).count()
-        count=group[group.DATE > 1].shape[0]
-        if count > 0:
-            raise Exception(f'Multiple Same IP/MAC combination, Critical error:{msg}')
+    def EnsureIP_MAC_Combo(self,date, frame, msg=None,fix=False):
+
+        frame.drop(frame[(frame.LastSeen == 0)].index, inplace = True)
+        frame.drop(frame[(frame.LastSeen.str.strip() == "0")].index, inplace = True)
+        frame['DT_LastSeen'] = pd.to_datetime(frame['LastSeen'], format='%Y-%m-%d %H:%M:%S')
+        curDate = (date - timedelta(seconds=24 * 60 * 60))
+        frame.drop(frame[frame.DT_LastSeen < curDate].index, inplace = True) 
+
+        group=frame[['IP','MAC','DATE', 'LastSeen']].groupby(['IP','MAC','DATE'])
+        duplicates = group.count()
+        duplicates=duplicates[duplicates.LastSeen > 1]
+
+        if (not (duplicates is None)) and (not (duplicates.empty)) and  duplicates.shape[0] > 0:
+            if not fix:                
+                raise Exception(f'Multiple Same IP/MAC combination, Critical error:{msg}')
+            else:
+                self.utl.Trace(msg)
+
+                group=frame[['IP','MAC','DATE', 'DT_LastSeen']].groupby(['IP','MAC','DATE'])                
+                maxDate=group["DT_LastSeen"].min().to_frame(name = 'DT_LastSeen_Max').reset_index()               
+
+                newFrame = maxDate.merge(frame, on=['IP','MAC','DATE'], how ="left")
+
+                newFrame.drop(newFrame[newFrame.DT_LastSeen < newFrame.DT_LastSeen_Max].index, inplace = True) 
+                newFrame.drop_duplicates(subset=['IP','MAC','DATE'], keep='last',inplace=True)
+
+                newFrame.drop('DT_LastSeen_Max', inplace=True, axis=1)
+                newFrame.drop('DT_LastSeen', inplace=True, axis=1)
+                return newFrame
+        else:
+            return frame;
+
 
     def PersistToDailyDB(self, timeframe, frame, utcDate):
         connection = None

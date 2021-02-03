@@ -2,6 +2,7 @@ import os
 import sys
 from shutil import copyfile
 import json 
+from datetime import datetime
 
 
 def GetEnv(key, defaultVal=""):
@@ -74,6 +75,7 @@ class WhiteStatUtils:
 
         self.db = f"{self.configFolder}/{jsonObj['DBFile']}"
         self.log = f"{self.configFolder}/{jsonObj['LOGFile']}"
+        self.trace = f"{self.configFolder}/{jsonObj['TRACEFile']}"
         self.lanSegMasks = f"{jsonObj['LAN_SEGMENT_MASKS']}"
         
 
@@ -126,8 +128,21 @@ class WhiteStatUtils:
     def GeLog(self):
         return self.log
 
+    def GetTrace(self):
+        return self.trace
+
     def GetIPFilter(self):
         return self.ipfilter
+
+    def Trace(self, message):
+        try:
+            print(message)
+            date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            with open(self.trace, "a") as logFile:
+                logFile.write(date + ":" +message +"\n")
+                logFile.close()
+        except Exception as e:
+            Log(e) 
 
     def Log(self, exception):
         try:
@@ -137,9 +152,9 @@ class WhiteStatUtils:
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             msg=f"{exc_type},{fname},{exc_tb.tb_lineno}"
             print(exc_type, fname, exc_tb.tb_lineno)
-              
+            date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with open(self.log, "a") as logFile:
-                logFile.write(str(exception)+ msg )
+                logFile.write(date + ":" + str(exception) + ":" + msg +"\n")
                 logFile.close()
         except Exception as e:
             print(e)  

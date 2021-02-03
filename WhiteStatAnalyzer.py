@@ -47,7 +47,7 @@ while True:
         totalSleepSeconds += sleepSeconds
        
         if (startTimeFrame is None) or (startUsageFrame is None):
-            startTimeFrame, startUsageFrame, prevUsageFrame = extender.GetDayFirstFrame(prevUsageFrame) 
+            startTimeFrame, startUsageFrame, prevUsageFrame = extender.GetDayFirstFrame(today, prevUsageFrame) 
                 
             if prevUsageFrame is None:
                 extender.ArchivePrevFrameToDB(today)
@@ -61,7 +61,7 @@ while True:
                 extender.PersistToDailyDB(startTimeFrame, startUsageFrame,today)
                 totalSleepSeconds = 0
 
-        nextTimeFrame,nextUsageFrame = extender.GetDayNextFrame(startTimeFrame, startUsageFrame)
+        nextTimeFrame,nextUsageFrame = extender.GetDayNextFrame(today, startTimeFrame, startUsageFrame)
 
         if nextTimeFrame is None:
             continue
