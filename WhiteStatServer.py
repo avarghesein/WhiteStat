@@ -19,7 +19,7 @@ import WhiteStat as DE
 
 #os.system('cls' if os.name == 'nt' else 'clear')
 
-dataStore = UTL.GetEnv("DATA_STORE","/media/TMP-DSK/Python/WhiteStat_GitHub/RunConfig/")
+dataStore = UTL.GetEnv("DATA_STORE","/media/TMP-DSK/Python/WhiteStat_GitHub/PiDockerConfig")
 #dataStore = UTL.GetEnv("DATA_STORE","/mnt/whitestat/Config")
 print(dataStore)
 url = UTL.GetEnv("DARKSTAT_URL","http://192.168.1.5:777")
@@ -28,24 +28,27 @@ serverPort = UTL.GetEnv("SERVER_PORT",777)
 print(serverPort)
 lanSegments = UTL.GetEnv("LAN_SEGMENT_MASKS","192.168.1|192.168.0")
 print(lanSegments)
+lanRouters = UTL.GetEnv("LAN_ROUTERS_TO_SKIP","")
+print(lanSegments)
+
 
 import WhiteStatUtils as UTL
 import WhiteStat as DE
 import re
 
-UTL.Initialize(dataStore,url,serverPort,lanSegments)
+UTL.Initialize(dataStore,url,serverPort,lanSegments, lanRouters)
 utl = UTL.WhiteStatUtils.getInstance()
 extender = DE.WhiteStat()
 
 @app.route('/')
 def root():
-    return send_from_directory('./UI/dist', 'index.html')
+    return send_from_directory('./UX/dist', 'index.html')
 
 @app.route('/<path:path>')
 def send_static(path):
     if not bool(re.search('\.[^\./]{2,4}$', path)):
         path += "/index.html"
-    return send_from_directory('./UI/dist', path)
+    return send_from_directory('./UX/dist', path)
 
 @app.route('/table', methods=['GET'])
 def daily():

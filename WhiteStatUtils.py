@@ -15,7 +15,7 @@ def GetEnv(key, defaultVal=""):
 def get_script_path():
     return os.path.dirname(os.path.realpath(sys.argv[0]))
 
-def Initialize(configFolder, url, serverPort=777, lanSegMasks="192.168.0|192.168.1"):
+def Initialize(configFolder, url, serverPort=777, lanSegMasks="192.168.0|192.168.1", lanRouters=""):
     try:
         scriptPath = get_script_path() + "/Config/"
         if not os.path.exists(f"{configFolder}/WhiteStatConfig.json"):
@@ -30,6 +30,7 @@ def Initialize(configFolder, url, serverPort=777, lanSegMasks="192.168.0|192.168
             jsonObj["SERVER_PORT"] = int(serverPort)
             jsonObj["DATA_STORE"] = configFolder
             jsonObj["LAN_SEGMENT_MASKS"] = lanSegMasks
+            jsonObj["LAN_ROUTERS_TO_SKIP"] = lanRouters
             
             f = open(f"{configFolder}/WhiteStatConfig.json", "w")
             json.dump(jsonObj, f, indent = 6) 
@@ -77,7 +78,7 @@ class WhiteStatUtils:
         self.log = f"{self.configFolder}/{jsonObj['LOGFile']}"
         self.trace = f"{self.configFolder}/{jsonObj['TRACEFile']}"
         self.lanSegMasks = f"{jsonObj['LAN_SEGMENT_MASKS']}"
-        
+        self.lanRouters = f"{jsonObj['LAN_ROUTERS_TO_SKIP']}"
 
 
     def __ToDictionary(self,file):
@@ -95,6 +96,9 @@ class WhiteStatUtils:
 
     def GetLANSegments(self):
         return self.lanSegMasks.split('|')
+    
+    def GetLANRouters(self):
+        return self.lanRouters.split('|')
 
     def GetMacHostDict(self):
         return self.macHostDict

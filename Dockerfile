@@ -10,6 +10,7 @@ COPY WhiteStatAnalyzer.py ./WhiteStatAnalyzer.py
 COPY WhiteStatServer.py ./WhiteStatServer.py
 COPY WhiteStatUtils.py ./WhiteStatUtils.py
 ADD  Config ./Config
+ADD  UX/dist ./UX/dist
 RUN  chmod a+x /app/WhiteStat/WhiteStatService.sh
 
 EXPOSE 777
@@ -33,6 +34,7 @@ CMD ["/app/WhiteStat/WhiteStatService.sh"]
 #--env DARKSTAT_URL="http://192.168.1.5:777" \
 #--env SERVER_PORT=777 \
 #--env LAN_SEGMENT_MASKS="192.168.1|192.168.0" \
+#--env LAN_ROUTERS_TO_SKIP="b8:27:eb:8c:dc:bb|f8:c4:f3:50:53:68"
 #--mount type=bind,source="/media/TMP-DSK/Python/WhiteStat/TestDockerConfig/",target="/mnt/whitestat/config/"  \
 #-p 5000:777 \
 #-it avarghese.in/whitestat:v1 /bin/bash

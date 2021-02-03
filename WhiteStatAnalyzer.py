@@ -18,11 +18,12 @@ url = UTL.GetEnv("DARKSTAT_URL","http://192.168.1.5:777")
 print(url)
 serverPort = UTL.GetEnv("SERVER_PORT",777)
 print(serverPort)
-
 lanSegments = UTL.GetEnv("LAN_SEGMENT_MASKS","192.168.1|192.168.0")
 print(lanSegments)
+lanRouters = UTL.GetEnv("LAN_ROUTERS_TO_SKIP","")
+print(lanSegments)
 
-UTL.Initialize(dataStore,url,serverPort,lanSegments)
+UTL.Initialize(dataStore,url,serverPort,lanSegments,lanRouters)
 utl = UTL.WhiteStatUtils.getInstance()
 
 dbRefreshSeconds = utl.GetUpdateDBSeconds()

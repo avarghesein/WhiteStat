@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  
+  <title>WhiteStat</title>
+  
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/material-design-iconic-font/2.2.0/css/material-design-iconic-font.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/1.0.0/css/perfect-scrollbar.min.css">
+  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/smoothness/jquery-ui.min.css" />
+
+    <!-- choose a theme file -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.3/css/theme.default.min.css">
+
+</head>
+<body>
+  <header class="header">
+    <div class="header-navbar header-navbar-has-shadow">
+      
+      <div class="header-navbar-details">
+
+        <button type="button" data-toggle="sidebar">
+          <i class="zmdi zmdi-menu" aria-hidden="true"></i>
+          <span class="sr-only">Toggle navigation</span>
+        </button>
+        <a href="/" class="d-block no-underline">
+          <h1 class="header-navbar-logo">WhiteStat            
+          </h1>
+        </a>
+
+      </div> <!-- end of header-details -->
+ 
+    </div> <!-- end of header-navbar -->
+  </header>
+
+  <div class="d-flex align-items-start mt-10 mb-8">
+    <aside class="sidebar sidebar-fixed ps sidebar-open" data-scrollable="true">
+      <nav class="sidebar-main-nav">
+        <ul class="nav nav-pills flex-column">
+          <li class="nav-item">
+            <a class="nav-link d-flex align-items-center active" href="/">
+              <i class="zmdi zmdi-home icon icon-md mr-2" aria-hidden="true"></i>
+              Dashboard
+            </a>
+          </li>
+          <li class="nav-item">&nbsp;</li>
+          <li class="nav-item">
+            <span>Start Date</span>
+            <span><input type="text" class="form-control" id="idStart" value=""></span>
+          </li>
+          <li class="nav-item">&nbsp;</li>
+          <li class="nav-item">
+            <span>End Date</span>
+            <span><input type="text" class="form-control" id="idEnd" value=""></span>
+          </li>
+          <li class="nav-item">&nbsp;</li>
+          <li class="nav-item">
+            <span>
+              <button type="button" class="btn btn-primary" id="idSearch">
+                <i class="zmdi zmdi-search mr-1 icon" aria-hidden="true"></i>
+                Search
+              </button>
+            </span>
+          </li>
+      </nav>     
+    </aside>
+    <div class="sidebar-backdrop" data-toggle="sidebar"></div>
+
+    <main class="container-main container-main-full">
+
+      <div class="row">
+        <div class="col-12 col-xl-12">
+          <div class="row h-100">
+
+            
+
+            <div class="col-12 col-md-6 col-sm-12">
+              <div class="card">
+                <div class="card-body">
+                  <h2 class="text-md">Total Download (MB)</h2>
+                  <div class="d-flex align-items-baseline justify-content-between">
+                    <h3 class="mb-0 display-2" id="idTotalKBDown">0 MB</h3>
+                    <span class="text-success font-weight-bold">
+                      <i class="zmdi zmdi-long-arrow-down" aria-hidden="true"></i>
+                    </span>
+                  </div> <!-- end of d-flex -->
+                </div> <!-- end of card-body -->
+            
+              </div> <!-- end of card -->
+            </div> <!-- end of col -->
+
+            <div class="col-12 col-md-6 col-sm-12">
+              <div class="card">
+                <div class="card-body">
+                  <h2 class="text-md">Total Upload (MB)</h2>
+                   <div class="d-flex align-items-baseline justify-content-between">
+                    <h3 class="mb-0 display-2" id="idTotalKBUp">0 MB</h3>
+                    <span class="text-danger font-weight-bold">
+                      <i class="zmdi zmdi-long-arrow-up" aria-hidden="true"></i>
+                     </span>
+                  </div> <!-- end of d-flex -->
+                </div> <!-- end of card-body -->
+              </div> <!-- end of card -->
+            </div> <!-- end of col -->
+
+             
+          
+
+          </div> <!-- end of row -->
+        </div> <!-- end of col -->
+      </div> <!-- end of row -->
+
+      <div class="row">
+        <div class="col-12 col-xl-12 ">
+          <div class="row h-100">
+            <div class="col-12 col-md-6 col-sm-12">
+              <div class="card">
+                <div class="card-body">
+                  <h2 class="mb-6 text-md">Top Download% (Hosts)</h2>
+                  <div class="chart-compact-square">
+                    <canvas id="pieChart"></canvas>
+                  </div> <!-- end of chart-compact-square -->
+                </div> <!-- end of card-body -->
+              </div> <!-- end of card -->
+            </div> <!-- end of col -->  
+
+            <div class="col-12 col-md-6 col-sm-12">
+              <div class="card h-100">
+                <div class="card-body">
+                   <canvas id="barChart" class="h-100"></canvas>
+                </div> <!-- end of card-body -->
+              </div> <!-- end of card -->
+            </div> <!-- end of col -->
+          </div> <!-- end of row -->
+        </div> <!-- end of col -->
+      </div> <!-- end of row -->
+
+      <div class="row">
+        <div class="col">
+          <div class="card">
+            <div class="card-body pb-0">
+              <div class="d-flex align-items-center align-items-md-start justify-content-between mb-4">
+                <h2 class="text-md mb-0">Usage Records&nbsp;</h2>
+                <h2 class="text-md mb-0" id="idTotal">(0)</h2>
+                <button type="button" class="btn btn-text ml-auto">
+                  <span class="sr-only">Filter table</span>
+                  <i class="zmdi zmdi-filter-list icon icon-lg text-secondary" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn btn-text pr-0">
+                  <span class="sr-only">More options</span>
+                  <i class="zmdi zmdi-more-vert icon icon-lg text-secondary" aria-hidden="true"></i>
+                </button>
+              </div> <!-- end of d-flex -->
+            </div> <!-- end of card-body -->
+            <div class="table-responsive">
+              <table class="table table-hover mb-0" id="idRecords">
+                <thead>
+                  <tr style="font-weight: bolder;font-size: larger;">
+                    <th>IP</th>
+                    <th>Host Name</th>
+                    <th>Download(MB)</th>
+                    <th>Upload (MB)</th>
+                    <th>Date</th>                    
+                    <th>Last Seen</th>
+                    <th>MAC</th>
+                  </tr>
+                </thead>
+                <tbody  id="idRecordsBody">
+                  
+                </tbody>
+              </table>
+            </div> <!-- end of table-responsive -->
+          </div> <!-- end of card -->
+        </div> <!-- end of col -->
+      </div> <!-- end of row -->
+
+    </main> <!-- end of container-fluid -->
+  </div> <!-- end of d-flex -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+  <script
+  src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js"
+  integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E="
+  crossorigin="anonymous"></script>
+
+
+<!-- load jQuery and tablesorter scripts -->
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.3/js/jquery.tablesorter.min.js"></script>
+<!-- tablesorter widgets (optional) -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.3/js/jquery.tablesorter.widgets.min.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/1.3.0/perfect-scrollbar.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=NodeList.prototype.forEach"></script>
+</body>
+</html>

@@ -101,6 +101,25 @@ class WhiteStat:
             print(bytes)
             raise
 
+    def DiscardRoutersForLocalIP(self, frame):
+
+        def CheckRouterIP(mac,ip):     
+            ipInLan = list(filter(lambda x: ip.startswith(x), self.utl.GetLANSegments()))    
+            macOfRouter = list(filter(lambda x: mac.startswith(x), self.utl.GetLANRouters()))
+
+            if ((not (ipInLan is None )) and 
+                (len(ipInLan) > 0) and 
+                (not (macOfRouter is None )) and 
+                (len(macOfRouter) > 0)) :
+                return True
+            
+            return False;
+
+        #frame.loc[frame.IP == "192.168.1.21", 'MAC'] = "f8:c4:f3:50:53:68"
+        frame["routerFlag"]= frame.apply(lambda x: CheckRouterIP(x.MAC, x.IP), axis=1)
+        frame.drop(frame[frame.routerFlag == True].index, inplace = True) 
+        frame.drop(["routerFlag"], axis=1, inplace=True)
+
     def GetUsageFrame(self,date):
         try:
             usage_data = pd.read_html(f'{self.url}/hosts/?full=yes&sort=in', header=None)
@@ -161,6 +180,8 @@ class WhiteStat:
             usageBytes.drop(usageBytes[usageBytes.DT_LastSeen < curDate].index, inplace = True) 
 
             usageBytes.drop(["DT_LastSeen"], axis=1, inplace=True)
+
+            self.DiscardRoutersForLocalIP(usageBytes)
 
             return usageBytes
         except Exception as e:
@@ -371,6 +392,8 @@ class WhiteStat:
     
     def EnsureIP_MAC_Combo(self,date, frame, msg=None,fix=False):
 
+        self.DiscardRoutersForLocalIP(frame)
+
         frame.drop(frame[(frame.LastSeen == 0)].index, inplace = True)
         frame.drop(frame[(frame.LastSeen.str.strip() == "0")].index, inplace = True)
         frame['DT_LastSeen'] = pd.to_datetime(frame['LastSeen'], format='%Y-%m-%d %H:%M:%S')
@@ -388,7 +411,7 @@ class WhiteStat:
                 self.utl.Trace(msg)
 
                 group=frame[['IP','MAC','DATE', 'DT_LastSeen']].groupby(['IP','MAC','DATE'])                
-                maxDate=group["DT_LastSeen"].min().to_frame(name = 'DT_LastSeen_Max').reset_index()               
+                maxDate=group["DT_LastSeen"].max().to_frame(name = 'DT_LastSeen_Max').reset_index()               
 
                 newFrame = maxDate.merge(frame, on=['IP','MAC','DATE'], how ="left")
 
@@ -497,6 +520,7 @@ class WhiteStat:
                 frame.fillna(value={'LSTDAY_KBIn': 0.0, 'LSTDAY_KBOut': 0.0},inplace=True)
                 filterV4 = frame['IP'].str.contains(self.utl.GetIPFilter())    
                 frame.drop(frame[~filterV4].index, inplace = True) 
+                self.DiscardRoutersForLocalIP(frame)
                 #frame=pd.read_sql_query(f"SELECT * FROM dailyusage", con=connection)
                 
                 #filterV4 = usageBytes['IP'].str.contains("([\d]+\.){3,3}\d+")             
