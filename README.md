@@ -3,6 +3,16 @@ Internet/Network Bandwidth Daily Usage Analyser with Historic Data Persistence i
 
 ![alt UX](https://github.com/avarghesein/WhiteStat/blob/main/UX/UX3.png)
 
+Pull & Run: [View in DockerHub](https://hub.docker.com/r/avarghesein/whitestat)
+
+      docker run --name whitestat \
+      --env DATA_STORE="/mnt/whitestat/" \
+      --env DARKSTAT_URL="http://192.168.1.5:777" \
+      --env SERVER_PORT=777 \
+      --mount type=bind,source="/home/ubuntuuser/whitestat",target="/mnt/whitestat/"  \
+      -p 888:777 \
+      -d avarghesein/whitestat:v5
+
 # Why Whitestat? 
 
 I have been looking for a Network (Internet) Bandwidth Analyzer, which could easily run on my RaspberryPi hardware with minimal footprint and provides daily statistics which is easy to comprehend in a glance. 
