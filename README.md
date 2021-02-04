@@ -143,7 +143,7 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
        }
        
  
- ###### NOTE: Once you update this configuration while Restart Whitestat Container to get it applied. 
+ ###### NOTE: Once you update this configuration options and any of the related files, Restart the running Whitestat Container to get it applied. 
  
      e.g. > docker container restart whitestatpi
      
