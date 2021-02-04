@@ -60,6 +60,8 @@ class WhiteStatUtils:
         else:
             WhiteStatUtils.__instance = self
 
+        self.jsonObj = jsonObj
+
         self.configFolder = jsonObj["DATA_STORE"]
 
         self.url = jsonObj["DARKSTAT_URL"]
@@ -164,4 +166,36 @@ class WhiteStatUtils:
             print(e)  
 
 
+    def AssignRouterLanSegments(self, frame):
+        if len(self.GetLANRouters()) > 0 and len(self.GetLANSegments()) > 0:
+            return
+        
+        fullLanSeg = ["0.0.0.0","192.168.", "10."] + [f"172.{i}." for i in range(16,17)]
 
+        lanSegs = {}
+
+        def CheckLanSegment(mac,ip):     
+            ipInLan = list(filter(lambda x: ip.startswith(x), fullLanSeg))    
+
+            if ((not (ipInLan is None )) and (len(ipInLan) > 0)) :
+                lanSegs.update(dict(zip(ipInLan, [True]*len(ipInLan))))
+                return True
+            
+            return False;
+
+        frame["lanFlag"]= frame.apply(lambda x: CheckLanSegment(x.MAC, x.IP), axis=1)
+        frame=frame[frame.lanFlag == False]
+        frame=frame[['MAC']]  
+        frame=frame.drop_duplicates()
+        routers = frame['MAC'].tolist()
+
+        self.jsonObj['LAN_SEGMENT_MASKS'] = '|'.join(routers)
+        self.jsonObj['LAN_ROUTERS_TO_SKIP'] = '|'.join(list(lanSegs.keys()))
+        self.lanSegMasks = f"{self.jsonObj['LAN_SEGMENT_MASKS']}"
+        self.lanRouters = f"{self.jsonObj['LAN_ROUTERS_TO_SKIP']}"
+
+        f = open(f"{self.configFolder}/WhiteStatConfig.json", "w")
+        json.dump(self.jsonObj, f, indent = 6) 
+        f.close()
+
+        

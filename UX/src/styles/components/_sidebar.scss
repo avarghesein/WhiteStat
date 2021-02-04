@@ -45,7 +45,7 @@
     }
   }
 
-  &-backdrop {
+  /*&-backdrop {
     visibility: hidden;
     display: block;
     position: fixed;
@@ -59,12 +59,12 @@
     transition: opacity 0.25s ease-in-out;
   }
 
-  &-open {
+  /*&-open {
     box-shadow: 0 8px 10px -5px rgba(0, 0, 0, 0.02),
                 0 16px 24px 2px rgba(0, 0, 0, 0.14),
                 0 6px 30px 5px rgba(0, 0, 0, 0.12);
     transform: translateX(0);
-  }
+  }*/
 
   &-open + &-backdrop {
     visibility: visible;
@@ -77,9 +77,9 @@
     width: $sidebar-width + $spacer * 8;
     transform: translateX(-($sidebar-width + $spacer * 8));
 
-    &-open {
+    /*&-open {
       transform: translateX(0);
-    }
+    }*/
   }
 }
 

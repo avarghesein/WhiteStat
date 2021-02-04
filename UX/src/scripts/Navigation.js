@@ -1,3 +1,4 @@
+
 class Navigation {
   constructor () {
     this.body = document.querySelector('body');

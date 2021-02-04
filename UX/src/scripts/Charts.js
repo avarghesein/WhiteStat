@@ -94,6 +94,7 @@ class Charts {
   {
     const pieChartCanvas = document.getElementById('pieChart');
     if (pieChartCanvas) {
+      pieChartCanvas.destroy();
 
       chart.createChart(pieChartCanvas, {
         type: 'pie',
@@ -106,6 +107,8 @@ class Charts {
 
      const barChartCanvas = document.getElementById('barChart');
     if (barChartCanvas) {
+
+      barChartCanvas.destroy();
 
       chart.createChart(barChartCanvas, {
         type: 'bar',
@@ -172,8 +175,13 @@ class Charts {
     $("#idSearch").click(function(){
       var start = $('#idStart').val();
       var end = $('#idEnd').val();
+
       clearCharts(self);
+      $('#idTotalKBUp').text("(0 MB)");
+      $('#idTotalKBDown').text("(0 MB)");
+      $('#idTotal').text("(0)");
       $("#idRecordsBody tr").remove();
+
       api.SetDates(start,end);
     });
 
