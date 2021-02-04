@@ -142,7 +142,12 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
              "LAN_ROUTERS_TO_SKIP": "Router MAC's in the LAN to skip while reporting usage. Auto populated"
        }
        
-       
+ 
+ ###### NOTE: Once you update this configuration while Restart Whitestat Container to get it applied. 
+ 
+     e.g. > docker container restart whitestatpi
+     
+     
  ## How to Build
  
  ### Auto Build & Deploy
