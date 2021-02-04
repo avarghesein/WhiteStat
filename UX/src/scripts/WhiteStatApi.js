@@ -30,10 +30,15 @@ class WhiteStatApi
     {
       $('#idEnd').val($.datepicker.formatDate("mm/dd/yy",new Date()));
     }
+
+    jQuery.ajaxSetup({async:true});  
     
+    this.chart.init(this);
+    this.refresh(this.chart);
+  }
 
-    jQuery.ajaxSetup({async:true});
-
+  refresh (chart) 
+  {
     var self = this;
 
     var jqxhr = $.getJSON(self.url, function(data) {
@@ -43,6 +48,7 @@ class WhiteStatApi
             var lanRecord = data;
             self.lanRecord = lanRecord;    
             self.CalculateTotal();
+            self.chart.refresh(self);
           }); 
       });
   }
@@ -118,8 +124,7 @@ class WhiteStatApi
     });
 
     topFive.push(["Others", this.downloadTotal - topFiveKB]);
-    this.topFive = topFive;
-    this.chart.init(this);
+    this.topFive = topFive;    
   }
 
   isValidDate(d) {
@@ -144,6 +149,7 @@ class WhiteStatApi
           self.records = dataRecords;
           self.highFive = null;
           self.CalculateTotal();   
+          self.chart.refresh(self);
         });
   }
 

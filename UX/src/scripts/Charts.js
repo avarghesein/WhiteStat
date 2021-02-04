@@ -15,9 +15,6 @@ class Charts {
       grayLight: 'rgb(238, 238, 238)',
       grayDark: 'rgb(158, 158, 158)'
     };
-
-    $('#idStart').text($.datepicker.formatDate( "mm/dd/yy", new Date( )));
-    $('#idEnd').text($.datepicker.formatDate( "mm/dd/yy", new Date( )));
   }
 
   setGlobalOptions() {
@@ -92,6 +89,13 @@ class Charts {
 
   clearCharts(chart)
   {
+    $('#idTotalKBUp').text("(0 MB)");
+    $('#idTotalKBDown').text("(0 MB)");
+    $('#idTotal').text("(0)");
+    $("#idRecordsBody tr").remove();
+    var resort = true;
+    $("#idRecords").trigger("update", [resort]);
+
     const pieChartCanvas = document.getElementById('pieChart');
     if (pieChartCanvas) {
 
@@ -110,7 +114,7 @@ class Charts {
      const barChartCanvas = document.getElementById('barChart');
     if (barChartCanvas) {
 
-      if(this.pieChart != undefined &&  this.pieChart != null)
+      if(this.barChart != undefined &&  this.barChart != null)
         this.barChart.destroy();
 
        this.barChart = chart.createChart(barChartCanvas, {
@@ -129,11 +133,81 @@ class Charts {
       });
     }
     }
-  }  
-
+  } 
   
-  init(api) {
+  init(api)
+  {
     this.service = api;
+    $('#idStart').datepicker();
+    $('#idEnd').datepicker();
+    $('#idStart').text($.datepicker.formatDate( "mm/dd/yy", new Date( )));
+    $('#idEnd').text($.datepicker.formatDate( "mm/dd/yy", new Date( )));
+
+    var clearCharts = this.clearCharts;
+    var self = this;
+
+    $("#idSearch").click(function(){
+      $('#chkRefresh').prop('checked', false);
+
+      var start = $('#idStart').val();
+      var end = $('#idEnd').val();
+
+      this.service.SetDates(start,end);
+    });
+
+    $('#idRecords').tablesorter({
+      widgets: ["zebra", "filter"],
+      widgetOptions : {
+        // filter_anyMatch replaced! Instead use the filter_external option
+        // Set to use a jQuery selector (or jQuery object) pointing to the
+        // external filter (column specific or any match)
+        filter_external : '.search',
+        // add a default type search to the first name column
+        filter_defaultFilter: { 1 : '~{query}' },
+        // include column filters
+        filter_columnFilters: true,
+        filter_placeholder: { search : 'Search...' },
+        filter_saveFilters : true,
+        filter_reset: '.reset'
+      }
+    });
+
+    var autoRefreshFlag = this.autoRefreshFlag;
+
+    if(autoRefreshFlag == undefined)
+    {
+      self = this;
+
+      var autoRefreshFun = function() {            
+          if(self.autoRefreshTimer == undefined)
+          {
+              self.autoRefreshFlag = true;
+              self.autoRefreshTimer = setInterval(function() {
+              api.refresh(self);
+            }, 1000 * 50);
+          }
+      };
+
+      autoRefreshFun();
+
+      $("#chkRefresh").change(function(){
+        if(this.checked) {
+          autoRefreshFun();
+        }
+        else
+        {
+          clearInterval(self.autoRefreshTimer);
+          self.autoRefreshTimer = undefined;
+        }          
+      });
+    }
+  }
+
+  refresh(api) {
+    this.service = api;
+
+    this.clearCharts(this);
+
     // init bar chart
     const barChartCanvas = document.getElementById('barChart');
     if (barChartCanvas) {
@@ -170,24 +244,6 @@ class Charts {
 
     $('#idTotalKBUp').text(api.GetTotalUpload());
     $('#idTotalKBDown').text(api.GetTotalDownload());
-    $('#idStart').datepicker();
-    $('#idEnd').datepicker();
-
-    var clearCharts = this.clearCharts;
-    var self = this;
-
-    $("#idSearch").click(function(){
-      var start = $('#idStart').val();
-      var end = $('#idEnd').val();
-
-      clearCharts(self);
-      $('#idTotalKBUp').text("(0 MB)");
-      $('#idTotalKBDown').text("(0 MB)");
-      $('#idTotal').text("(0)");
-      $("#idRecordsBody tr").remove();
-
-      api.SetDates(start,end);
-    });
 
     var records = api.GetRecords();
 
@@ -207,54 +263,10 @@ class Charts {
           
           tr.appendTo('#idRecordsBody');
       });
-
-      $('#idRecords').tablesorter({
-        widgets: ["zebra", "filter"],
-        widgetOptions : {
-          // filter_anyMatch replaced! Instead use the filter_external option
-          // Set to use a jQuery selector (or jQuery object) pointing to the
-          // external filter (column specific or any match)
-          filter_external : '.search',
-          // add a default type search to the first name column
-          filter_defaultFilter: { 1 : '~{query}' },
-          // include column filters
-          filter_columnFilters: true,
-          filter_placeholder: { search : 'Search...' },
-          filter_saveFilters : true,
-          filter_reset: '.reset'
-        }
-      });
-
-      var resort = true;
-      $("#idRecords").trigger("update", [resort]);
-
-      var autoRefreshFlag = this.autoRefreshFlag;
-
-      if(autoRefreshFlag == undefined)
-      {
-        self = this;
-
-        var autoRefreshFun = function() {
-            self.autoRefreshFlag = true;
-            self.autoRefreshTimer = setInterval(function() {
-              api.init(self);
-            }, 1000 * 50);
-        };
-
-        autoRefreshFun();
-
-        $("#chkRefresh").change(function(){
-          if(this.checked) {
-            autoRefreshFun();
-          }
-          else
-          {
-            clearInterval(self.autoRefreshTimer);
-          }          
-        });
-      }
-
     }
+
+    var resort = true;
+    $("#idRecords").trigger("update", [resort]);
   }
 }
 
