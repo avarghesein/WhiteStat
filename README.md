@@ -18,17 +18,19 @@ What about a utility, which is minimal enough to smoothly run on Pi hardware, an
 #### 2. Provides Daily Usage Levels per individual Host in the Network, Considering DHCP and the same Host could have different IP's on the same day
    
    Note:
-   DarkStat, provide Usage level per IP only, not per Host. Lacks the right reporting, when a Host takes a new IP under DHCP.
-   
-#### 3. Survival of Usage Data, in case of a System Crash (Router/Pi at which DarkStat or WhiteStat is running)
+   DarkStat, provides cumulative usage levels only per Host/IP (from the day of install), not daily usage levels.
+
+#### 3. Single Responsive Dashboard (UX) to view all the daily/historic statistics. Supports searching/sorting on all usage record fields.
+
+#### 4. Survival of Usage Data, in case of a System Crash (Router/Pi at which DarkStat or WhiteStat is running)
    WhiteStat keeps checkpoints on data usage in every 30 Seconds by default, and use the same as the starting level, when the system comes up.
    DarkStat, though uses an internal DB, does not seems to survive system crashes, and data usage levels resets.
 
-#### 4. Provides Historic Data, in SQL lite Database
+#### 5. Provides Historic Data, in SQL lite Database
 
-#### 5. Responsive UI is provided, which all statistics in a single page (shows total download, upload, and sortable grid for usage records)
+#### 6. Responsive UI is provided, which all statistics in a single page (shows total download, upload, and sortable grid for usage records)
 
-#### 6. JSON/HTML end points are given, so that it could be integrated with other Analytics tools for detailed data analysis (like PowerBI, excel)
+#### 7. JSON/HTML end points are given, so that it could be integrated with other Analytics tools for detailed data analysis (like PowerBI, excel)
 
 #### Tools Used 
 
@@ -50,7 +52,6 @@ For X64 Hardware: e.g.
     --env DATA_STORE="/mnt/whitestat/" \
     --env DARKSTAT_URL="http://192.168.1.5:777" \
     --env SERVER_PORT=777 \
-    --env LAN_SEGMENT_MASKS="192.168.1|192.168.0" \
     --mount type=bind,source="/home/ubuntuuser/whitestat",target="/mnt/whitestat/"  \
     -p 888:777 \
     -d avarghesein/whitestat:v5
@@ -61,7 +62,6 @@ For RaspberryPi2 (ARMV7 or armhf) Hardware: e.g.
     --env DATA_STORE="/mnt/whitestat/" \
     --env DARKSTAT_URL="http://192.168.1.5:777" \
     --env SERVER_PORT=777 \
-    --env LAN_SEGMENT_MASKS="192.168.1|192.168.0" \
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
     -p 888:777 \
     -d avarghesein/whitestat:v5_armhf
@@ -132,11 +132,19 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
              
              "SERVER_PORT":"The port at which WhiteStat will be available"
              
-             "LAN_SEGMENT_MASKS":"LAN segments used inside your private network. NB: This is required for right representation of charts in the UX"
+             "LAN_SEGMENT_MASKS":"LAN segments used inside your private network. Auto populated"
+             
+             "LAN_ROUTERS_TO_SKIP": "Router MAC's in the LAN to skip while reporting usage. Auto populated"
        }
        
        
  ## How to Build
+ 
+ ### Auto Build & Deploy
+ 
+ Refer :
+ WhitestatAutoBuildAll.sh  
+ WhitestatAutoDockerDeploy.sh
  
  ### Build UX
  
@@ -160,3 +168,5 @@ For arm/armhf/armv7 (or RaspberryPi2) machines
  Note: The first docker command (for arm platform only) is to enable arm to X64 translations through [Qemu-User-Static](https://ownyourbits.com/2018/06/13/transparently-running-binaries-from-any-architecture-in-linux-with-qemu-and-binfmt_misc/)
  
  Earlier I was trying to build Qemu Virtual machines for ARMV7 architectures, which is painstaking and much slower. By using qemu-User-Static, build your ARM Container images at least 2x faster (when compared to building the same in the original armv7 devices like RaspberryPi)
+ 
+
