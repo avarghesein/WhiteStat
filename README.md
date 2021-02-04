@@ -11,10 +11,9 @@ What about a utility, which is minimal enough to smoothly run on a Pi hardware, 
 
 ## Extending DarkStat ! 
 
-[“DarkStat”](https://github.com/TomMichel/darkstat) seems to be the obvious choice, and I've tried to extend the same, as it is much leaner (the entire source is in raw C, even the minimal HTTP Server built in) compared to other tools and with high performance. However It does not provides a daily statistics, and probably a friendlier way of configuring/listing my devices (uses IP’s instead of Host Name) in the Network. 
+WhiteStat pulls the raw network usage data (per IP and MAC) as the source from [“DarkStat”](https://github.com/TomMichel/darkstat) and 
+process for daily usage reporting in every 30 seconds by default, which is then refreshed to a SQLite DB.
 
-But that’s just fine, and that’s why “WhiteStat” 
- 
 ## Features
 
 #### 1. Entire Network Usage Analyzer is in a Docker Image and minimal enough to run on a Pi Hardware
@@ -36,6 +35,7 @@ But that’s just fine, and that’s why “WhiteStat”
 
 ![alt UX2](https://github.com/avarghesein/WhiteStat/blob/main/UX/UX1.png)
 
+
 #### Tools Used 
 
 The Utility has been built using Python3 (Flask , Pandas and SQLite for persistance, Bootstrap/JQuery for UX), and packaged as a Docker Container. 
@@ -43,7 +43,12 @@ As of now it supports both X64 and arm/Armhf (ArmV7) architectures, and containe
 
 ## Prerequisites : 
 
-As “WhiteStat” built on top of “DarkStat”, you’ve to configure “DarkStat” properly in your environment. A possible scenario has been [mentioned here](https://github.com/avarghesein/-NIX/blob/main/Raspberry%20Pi%20II%20(Buster)/MinimalNetworkBandwidthMonitor.md). 
+As “WhiteStat” pulls the source network statistics from  “DarkStat”, you’ve to configure “DarkStat” properly in your environment. 
+A possible configuration has been [mentioned here](https://github.com/avarghesein/-NIX/blob/main/Raspberry%20Pi%20II%20(Buster)/MinimalNetworkBandwidthMonitor.md). 
+
+Find more more information on DarkStat below:
+https://unix4lyfe.org/darkstat/
+https://www.tecmint.com/darkstat-web-based-linux-network-traffic-analyzer/
 
  
 
