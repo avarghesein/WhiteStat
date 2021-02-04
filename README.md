@@ -38,7 +38,7 @@ process for daily usage reporting in every 30 seconds by default, which is then 
 
 #### 3. Single Responsive Dashboard (UX) to view all the daily/historic statistics. Supports searching/sorting on all usage record fields.
 
-#### 4. Survival of Usage Data, in case of a System Crash (Router/Pi at which DarkStat or WhiteStat is running)
+#### 4. Survival of Usage Data, in case of a System Crash (Router/Pi at which WhiteStat or DarkStat is running)
    WhiteStat keeps checkpoints on data usage in every 30 Seconds by default, and use the same as the starting level, when the system comes up.
    DarkStat, though uses an internal DB, does not seems to survive system crashes, and data usage levels resets.
 
