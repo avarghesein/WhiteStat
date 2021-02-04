@@ -19,8 +19,18 @@ class WhiteStatApi
     //this.lanUrl = "http://192.168.1.5:888/json/lansegments";
     this.lanUrl = "/json/lansegments";
 
-    $('#idStart').val($.datepicker.formatDate("mm/dd/yy",new Date()));
-    $('#idEnd').val($.datepicker.formatDate("mm/dd/yy",new Date()));
+    var start = $('#idStart').val();
+    if(start == undefined || start == "")
+    {
+      $('#idStart').val($.datepicker.formatDate("mm/dd/yy",new Date()));
+    }
+    
+    var end = $('#idEnd').val();
+    if(end == undefined || end == "")
+    {
+      $('#idEnd').val($.datepicker.formatDate("mm/dd/yy",new Date()));
+    }
+    
 
     jQuery.ajaxSetup({async:true});
 

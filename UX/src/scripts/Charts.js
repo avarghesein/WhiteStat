@@ -94,9 +94,11 @@ class Charts {
   {
     const pieChartCanvas = document.getElementById('pieChart');
     if (pieChartCanvas) {
-      pieChartCanvas.destroy();
 
-      chart.createChart(pieChartCanvas, {
+      if(this.pieChart != undefined &&  this.pieChart != null)
+        this.pieChart.destroy();
+
+      this.pieChart = chart.createChart(pieChartCanvas, {
         type: 'pie',
         data: [],
         options: {
@@ -108,9 +110,10 @@ class Charts {
      const barChartCanvas = document.getElementById('barChart');
     if (barChartCanvas) {
 
-      barChartCanvas.destroy();
+      if(this.pieChart != undefined &&  this.pieChart != null)
+        this.barChart.destroy();
 
-      chart.createChart(barChartCanvas, {
+       this.barChart = chart.createChart(barChartCanvas, {
         type: 'bar',
         data: [],
         options: {
@@ -126,8 +129,9 @@ class Charts {
       });
     }
     }
-  }
+  }  
 
+  
   init(api) {
     this.service = api;
     // init bar chart
@@ -223,6 +227,33 @@ class Charts {
 
       var resort = true;
       $("#idRecords").trigger("update", [resort]);
+
+      var autoRefreshFlag = this.autoRefreshFlag;
+
+      if(autoRefreshFlag == undefined)
+      {
+        self = this;
+
+        var autoRefreshFun = function() {
+            self.autoRefreshFlag = true;
+            self.autoRefreshTimer = setInterval(function() {
+              api.init(self);
+            }, 1000 * 50);
+        };
+
+        autoRefreshFun();
+
+        $("#chkRefresh").change(function(){
+          if(this.checked) {
+            autoRefreshFun();
+          }
+          else
+          {
+            clearInterval(self.autoRefreshTimer);
+          }          
+        });
+      }
+
     }
   }
 }
