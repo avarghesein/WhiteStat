@@ -3,11 +3,14 @@ Internet/Network Bandwidth Daily Usage Analyser with Historic Data Persistence i
 
 ![alt UX](https://github.com/avarghesein/WhiteStat/blob/main/UX/UX3.png)
 
-# The Purpose... 
+# Why Whitestat? 
 
-I have been looking for a Network (Internet) Bandwidth Analyzer, which could easily run in a RaspberryPi hardware with minimal footprint. Most of the tools I came across (like ‘ntopng’), are much heavier and flood the storage with data in every minutes/hour, though those tools provide a hourly statistics. It could held up  PI’s resocues and makes the entire network slower (as Pi serves as the Default Gateway for my Private Network).
+I have been looking for a Network (Internet) Bandwidth Analyzer, which could easily run in a RaspberryPi hardware with minimal footprint and provides daily statistics which is easy to comprehend in a glance. 
 
-What about a utility, which is minimal enough to smoothly run on a Pi hardware, and yet provide features similar to aformentioned tools? 
+Most of the tools, I came across are much heavier for the purpose and the information shown in the UI is pretty difficult grasp for an average user.
+Mostly these tools also store the flow data in every minutes, and your storage could be piled up with Gig(s) of data in a matter of days.
+
+What about a utility, which is minimal enough to smoothly run on a Pi hardware, efficiently uses the storage and yet provide features similar to aformentioned tools? 
 
 ## Extending DarkStat ! 
 
