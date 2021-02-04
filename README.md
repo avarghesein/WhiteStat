@@ -154,7 +154,9 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
  ### Auto Build & Deploy
  
  Refer :
- WhitestatAutoBuildAll.sh  
+ 
+ WhitestatAutoBuildPublish.sh
+ 
  WhitestatAutoDockerDeploy.sh
  
  ### Build UX
