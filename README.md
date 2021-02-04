@@ -111,13 +111,14 @@ Bandwidth Usage History couldbe viewed through
     Plain JSON: http://IP:888/json/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
 
 
-We could feed these URLs to other Data Analysis systems (e.g. An excel with PowerQuery, which automatically refresh in every minute) for Intuitiveness. 
+We could feed these URLs to other Data Analysis systems (e.g. An excel with PowerQuery, PowerBI), using the above end points.
 
 ![alt UX2](https://github.com/avarghesein/WhiteStat/blob/main/UX/UX2.png)
 
 ## Key Configuration Options:
 
 "Config/WhiteStatConfig.json", contains the key configuration parameters, which controls WhiteStat.
+
 A sample instance has been given below;
 
      {
