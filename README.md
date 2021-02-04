@@ -22,7 +22,7 @@ Mostly these tools also store the flow data in every minutes, and your storage c
 
 What about a utility, which is minimal enough to smoothly run on a Pi hardware, efficiently uses the storage and yet provide features similar to aformentioned tools? 
 
-## Extending DarkStat ! 
+## Leveraging DarkStat.
 
 WhiteStat pulls the raw network usage data (per IP and MAC) as the source from [“DarkStat”](https://github.com/TomMichel/darkstat) and 
 process for daily usage reporting in every 30 seconds by default, which is then refreshed to a SQLite DB.
