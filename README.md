@@ -1,6 +1,8 @@
 # WhiteStat
 Internet/Network Bandwidth Daily Usage Analyser with Historic Data Persistence, in a Docker Container, with added support for RaspberryPi2.
 
+![alt UX](https://github.com/avarghesein/WhiteStat/blob/main/UX/UX3.png)
+
 # The Purpose... 
 
 I have been looking for a Network (Internet) Bandwidth Analyzer, which could easily run in a RaspberryPi hardware with minimal footprint. Most of the tools I came across (like ‘ntopng’), are much heavier and flood the storage with data in every minutes/hour, though those tools provide a hourly statistics. It could held up the PI’s resocues and makes the entire network slower (as Pi serves as the Default Gateway for my Private Network).
@@ -31,6 +33,8 @@ What about a utility, which is minimal enough to smoothly run on Pi hardware, an
 #### 6. Responsive UI is provided, which all statistics in a single page (shows total download, upload, and sortable grid for usage records)
 
 #### 7. JSON/HTML end points are given, so that it could be integrated with other Analytics tools for detailed data analysis (like PowerBI, excel)
+
+![alt UX2](https://github.com/avarghesein/WhiteStat/blob/main/UX/UX1.png)
 
 #### Tools Used 
 
@@ -80,7 +84,8 @@ Bandwidth Usage History couldbe viewed through
 
 
 We could feed these URLs to other Data Analysis systems (e.g. An excel with PowerQuery, which automatically refresh in every minute) for Intuitiveness. 
-A sample excel file has been provided in the root folder of the source code.
+
+![alt UX2](https://github.com/avarghesein/WhiteStat/blob/main/UX/UX2.png)
 
 ## Key Configuration Options:
 
