@@ -51,8 +51,13 @@ process for daily usage reporting in every 30 seconds by default, which is then 
 
 #### Tools Used 
 
-The Utility has been built using Python3 (Flask , Pandas and SQLite for persistance, Bootstrap/JQuery for UX), and packaged as a Docker Container. 
-As of now it supports both X64 and arm/Armhf (ArmV7) architectures, and container image for both has been available in Docker Hub. 
+Front End(UX): Python Flask, BootStrap, JQuery, SASS
+Middle Ware: Python, Python Pandas
+BackEnd: SQLite
+
+The entire components are built and packaged as Docker Images, and run as Containers in the Host System.
+Supports both X64 and arm/Armhf (ArmV7) architectures. 
+Docker Images are available in Docker Hub.
 
 ## Prerequisites : 
 
