@@ -52,7 +52,9 @@ process for daily usage reporting in every 30 seconds by default, which is then 
 #### Tools Used 
 
 Front End(UX): Python Flask, BootStrap, JQuery, SASS
+
 Middle Ware: Python, Python Pandas
+
 BackEnd: SQLite
 
 The entire components are built and packaged as Docker Images, and run as Containers in the Host System.
