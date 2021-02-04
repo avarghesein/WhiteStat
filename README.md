@@ -5,7 +5,7 @@ Internet/Network Bandwidth Daily Usage Analyser with Historic Data Persistence i
 
 # Why Whitestat? 
 
-I have been looking for a Network (Internet) Bandwidth Analyzer, which could easily run in a RaspberryPi hardware with minimal footprint and provides daily statistics which is easy to comprehend in a glance. 
+I have been looking for a Network (Internet) Bandwidth Analyzer, which could easily run on a RaspberryPi hardware with minimal footprint and provides daily statistics which is easy to comprehend in a glance. 
 
 Most of the tools, I came across are much heavier for the purpose and the information shown in the UI is pretty difficult grasp for an average user.
 Mostly these tools also store the flow data in every minutes, and your storage could be piled up with Gig(s) of data in a matter of days.
