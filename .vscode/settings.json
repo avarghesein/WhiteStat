@@ -1,0 +1,9 @@
+{
+    "python.pythonPath": ".env/bin/python",
+    "editor.minimap.enabled": false,
+    "files.watcherExclude": {
+        "**/": true
+    },
+
+    "python.envFile": "${workspaceFolder}/.pythonenv"
+}

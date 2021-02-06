@@ -37,28 +37,28 @@ def Initialize(configFolder, url, serverPort=777, lanSegMasks="192.168.0|192.168
             f.close()
         
         jsonObj = json.loads(open(f"{configFolder}/WhiteStatConfig.json", 'r').read())
-        utl = WhiteStatUtils.getInstance(jsonObj)
+        utl = Utility.getInstance(jsonObj)
 
     except Exception as e:
         print(e)  
 
 
-class WhiteStatUtils:
+class Utility:
     __instance = None
 
     @staticmethod 
     def getInstance(jsonObj=None):
         """ Static access method. """
-        if WhiteStatUtils.__instance == None:
-            WhiteStatUtils(jsonObj)
-        return WhiteStatUtils.__instance
+        if Utility.__instance == None:
+            Utility(jsonObj)
+        return Utility.__instance
 
     def __init__(self,jsonObj=None):
         """ Virtually private constructor. """
-        if WhiteStatUtils.__instance != None:
+        if Utility.__instance != None:
             raise Exception("This class is a singleton!")
         else:
-            WhiteStatUtils.__instance = self
+            Utility.__instance = self
 
         self.jsonObj = jsonObj
 
@@ -165,6 +165,14 @@ class WhiteStatUtils:
         except Exception as e:
             print(e)  
 
+
+    def IsLANIP(self,ip):
+        fullLanSeg = ["0.0.0.0","192.168.", "10."] + [f"172.{i}." for i in range(16,17)]
+        ipInLan = list(filter(lambda x: ip.startswith(x), fullLanSeg))    
+        if ((not (ipInLan is None )) and (len(ipInLan) > 0)) :
+            return True    
+        return False;   
+            
 
     def AssignRouterLanSegments(self, frame):
         if len(self.GetLANRouters()) > 0 and len(self.GetLANSegments()) > 0:
