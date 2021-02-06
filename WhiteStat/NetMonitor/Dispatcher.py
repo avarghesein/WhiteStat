@@ -4,9 +4,10 @@ import os
 import threading, queue
 import pandas as pd
 import WhiteStat.Common.Utility as UTL
+from multiprocessing.managers import BaseManager
 
 
-class Dispatcher(threading.Thread):
+class Dispatcher(threading.Thread,):
 
     def __init__(self, dispatcherQueue):
         
@@ -18,7 +19,6 @@ class Dispatcher(threading.Thread):
 
         self.dataFrame = pd.DataFrame(None, columns = [
                 "IP",
-                "Hostname",
                 "MAC",
                 "In",
                 "Out",
@@ -27,6 +27,11 @@ class Dispatcher(threading.Thread):
     def start(self):
         self.startFlag = True
         super().start()
+
+        Dispatcher.register('usage_data', callable=lambda:self.dataFrame)
+        self.remotePipe = Dispatcher(address=('', 888), authkey=b'whitestat')
+        self.remotingServer = remotePipe.get_server()
+        self.remotingServer.serve_forever()
 
     def run(self):
 
@@ -48,7 +53,7 @@ class Dispatcher(threading.Thread):
                 self.PopulateFrame(frame,srcMac,srcIP,sizeInBytes,lastSeen,True)
                 self.PopulateFrame(frame,dstMac,dstIP,sizeInBytes,lastSeen,False)               
                 packet = None
-                
+
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print(frame)
 
@@ -65,7 +70,7 @@ class Dispatcher(threading.Thread):
                 frame.at[index,'IP'] = ip                
                 frame.at[index,'LastSeen'] = lastSeen
             else:
-                frame.loc[len(frame.index)] = [ip,"(none)",mac,0,0,lastSeen]
+                frame.loc[len(frame.index)] = [ip,mac,0,0,lastSeen]
                 index = len(frame.index) - 1
         else:
             if (frame.IP == ip).any():
@@ -73,7 +78,7 @@ class Dispatcher(threading.Thread):
                 frame.at[index,'MAC'] = mac
                 frame.at[index,'LastSeen'] = lastSeen
             else:
-                frame.loc[len(frame.index)] = [ip,"(none)",mac,0,0,lastSeen]
+                frame.loc[len(frame.index)] = [ip,mac,0,0,lastSeen]
                 index = len(frame.index) - 1
 
 
