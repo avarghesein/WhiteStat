@@ -47,6 +47,7 @@ class Dispatcher(threading.Thread):
                 frame = self.dataFrame
                 self.PopulateFrame(frame,srcMac,srcIP,sizeInBytes,lastSeen,True)
                 self.PopulateFrame(frame,dstMac,dstIP,sizeInBytes,lastSeen,False)               
+                packet = None
                 
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print(frame)

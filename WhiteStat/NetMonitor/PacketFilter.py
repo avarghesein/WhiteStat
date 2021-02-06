@@ -21,7 +21,7 @@ class PacketFilter(threading.Thread):
         self.startFlag = False
 
         self.dispatcherQueue = queue.Queue()
-        self.dispatcher = WD.WhiteStatDispatcher(self.dispatcherQueue)
+        self.dispatcher = WD.Dispatcher(self.dispatcherQueue)
 
         super().__init__()
 

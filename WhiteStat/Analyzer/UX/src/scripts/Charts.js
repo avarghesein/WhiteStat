@@ -152,7 +152,7 @@ class Charts {
       var start = $('#idStart').val();
       var end = $('#idEnd').val();
 
-      this.service.SetDates(start,end);
+      self.service.SetDates(start,end);
     });
 
     $('#idRecords').tablesorter({

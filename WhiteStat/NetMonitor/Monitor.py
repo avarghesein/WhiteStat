@@ -35,13 +35,6 @@ def main(argv):
 
     #list all devices
     #devices = pcapy.findalldevs()
-
-    #errbuf = ""
-
-    dev = "eth0"
-
-    #print("Sniffing device " + dev)
-
     '''
     open device
     # Arguments here are:
@@ -52,20 +45,16 @@ def main(argv):
     '''
     socket.setdefaulttimeout(2)
     socket.socket();
-    #s.settimeout(100);   
-    #dev = 'eth0' 
-    cap = pcapy.open_live(dev , 65536 , 1 , 1000)
+    #s.settimeout(100); 
 
     lans = ["192.168", "10", "172.16","172.17"]
     srcLanRange = "or".join([f" src net {net} " for net in lans])
     dstLanRange = "or".join([f" dst net {net} " for net in lans])
     lanOnlyFilter = f"not ( ({srcLanRange}) and ({dstLanRange}) )" 
 
+    dev = "eth0"
+    cap = pcapy.open_live(dev , 65536 , 1 , 1000)
     cap.filter = lanOnlyFilter
-
-    packetQueue = queue.Queue()
-    packetFilter = WF.WhiteStatPacketFilter(packetQueue)
-    packetFilter.start()
 
     def CapCallBack(userData, header, packet):
         packetQueue.put_nowait(packet)
@@ -73,6 +62,10 @@ def main(argv):
 
     #start sniffing packets
     #cap.loop(-1, CapCallBack, None)
+
+    packetQueue = queue.Queue()
+    packetFilter = WF.PacketFilter(packetQueue)
+    packetFilter.start()
 
     try:        
         while(True) :
