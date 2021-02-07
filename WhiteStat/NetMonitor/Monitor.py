@@ -56,16 +56,16 @@ def main(argv):
     cap = pcapy.open_live(dev , 65536 , 1 , 1000)
     cap.filter = lanOnlyFilter
 
+    packetQueue = queue.Queue()
+    packetFilter = WF.PacketFilter(packetQueue)
+    packetFilter.start()
+
     def CapCallBack(userData, header, packet):
         packetQueue.put_nowait(packet)
         packet = None
 
     #start sniffing packets
-    #cap.loop(-1, CapCallBack, None)
-
-    packetQueue = queue.Queue()
-    packetFilter = WF.PacketFilter(packetQueue)
-    packetFilter.start()
+    #cap.loop(-1, CapCallBack, None)  
 
     try:        
         while(True) :

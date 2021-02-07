@@ -3,6 +3,8 @@ import sys
 from shutil import copyfile
 import json 
 from datetime import datetime
+import socket
+from socket import AF_INET6
 
 
 def GetEnv(key, defaultVal=""):
@@ -166,13 +168,60 @@ class Utility:
             print(e)  
 
 
-    def IsLANIP(self,ip):
-        fullLanSeg = ["0.0.0.0","192.168.", "10."] + [f"172.{i}." for i in range(16,17)]
+    def IsLANIPBytes(self,ipPackedBytes:int):
+
+        lanV4Nets = [
+            bytearray([0,0,0,0]),
+            bytearray([192,168]),
+            bytearray([10]),
+            bytearray([172,16]),
+            bytearray([172,17])
+        ]
+
+        lanV6Nets = [
+            bytearray.fromhex('fe80'),
+            bytearray.fromhex('fec0'),
+            bytearray.fromhex('fd'),
+        ]
+        
+        ipBytes = bytes(ipPackedBytes)
+        lanNets = lanV4Nets if len(ipBytes) <= 4 else lanV6Nets
+
+        ipInLan = list(filter(lambda lanNet: lanNet == ipBytes[0:len(lanNet)], lanNets)) 
+
+        if ((not (ipInLan is None )) and (len(ipInLan) > 0)) :
+            return True    
+        return False;
+ 
+        """ fullLanSeg = ["0.0.0.0","192.168.", "10."] + [f"172.{i}." for i in range(16,17)]
         ipInLan = list(filter(lambda x: ip.startswith(x), fullLanSeg))    
         if ((not (ipInLan is None )) and (len(ipInLan) > 0)) :
             return True    
-        return False;   
+        return False;   """ 
             
+
+    def PackMacBytes(self, macByte):
+        packedBytes = 0  
+
+        for index, byte in enumerate(macByte, start=0):
+            packedBytes = (packedBytes << 8) | byte 
+        
+        return packedBytes
+
+    def UnPackMacBytes(self,packedBytes):
+        unpackedMac = ""
+        for index in range(bytes(packedBytes) - 1,-1,-1):
+            byte = ((255 << (index * 8)) & packedBytes) >> (index * 8)
+            unpackedMac += '%02x:' % byte
+
+        return unpackedMac.rstrip(':') 
+
+    def UnPackIPToString(self, ipByte):
+        ipBytes = bytes(ipByte)
+        if(len(ipBytes) > 4):
+            return socket.inet_ntop(AF_INET6,ipByte);
+        else:
+            return socket.inet_ntoa(ipByte)
 
     def AssignRouterLanSegments(self, frame):
         if len(self.GetLANRouters()) > 0 and len(self.GetLANSegments()) > 0:
