@@ -2,6 +2,7 @@ import multiprocessing.managers as MP
 import pandas as pd
 import threading
 import time
+import WhiteStat.Common.Utility as UTL
 
 class RemoteServer(threading.Thread):
 
@@ -27,7 +28,9 @@ class RemoteServer(threading.Thread):
 
 class RemoteManager(MP.SyncManager):
     def __init__(self):
-        super().__init__(address=('', 888), authkey=b'whitestat')
+        self.utl = UTL.Utility.getInstance()
+        (ip,port) = self.utl.url.split(':')
+        super().__init__(address=(ip, int(port)), authkey=b'whitestat')
 
     def Serve(self):
         RemoteManager.register("RemoteUsageFrame",  callable = RemoteUsageFrame.getInstance)
@@ -54,34 +57,14 @@ class RemoteUsageFrame:
         else:
             RemoteUsageFrame.__instance = self
 
-
         self._lock = threading.Lock()
-        self._dataFrame = pd.DataFrame(None, columns = [
-                "IP",
-                "MAC",
-                "In",
-                "Out",
-                "LastSeen"]) 
-    
-    @property
-    def CurrentFrame(self):
-        return self._dataFrame
-
-    @CurrentFrame.setter
-    def CurrentFrame(self, value):
-        self._dataFrame = value
-
-    @CurrentFrame.deleter
-    def CurrentFrame(self):
-        del self._dataFrame
+        self._localIPs = {}
+        self._remoteIPs = {}
 
     def GetFrame(self):
-        return self._dataFrame
+        return (self._localIPs, self._remoteIPs)
 
-    def SetFrame(self, frame):
+    def SetFrame(self, localIPs, remoteIPs):
         with self._lock:
-            # Extract column names into a list
-            cols = [col for col in self._dataFrame.columns]
-            # Create empty DataFrame with those column names
-            newFrame = pd.DataFrame(columns=cols).append(frame)
-            self._dataFrame = newFrame
+            self._localIPs = localIPs;
+            self._remoteIPs = remoteIPs;

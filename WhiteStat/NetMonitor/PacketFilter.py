@@ -4,7 +4,6 @@ import time
 #import pcapy
 
 from struct import pack, unpack
-import pcapy
 import sys
 import socket
 from socket import AF_INET6
@@ -31,12 +30,13 @@ class PacketFilter(threading.Thread):
         super().start()
         self.dispatcher.start()
 
-    def run(self):       
+    def run(self):               
 
         while(self.startFlag):
+            packCount = 0
 
-            while((not self.packetQueue.empty()) and self.startFlag):
-
+            while((not self.packetQueue.empty()) and packCount <= 2000 and self.startFlag):
+                packCount += 1    
                 packet = None
 
                 try:
@@ -54,22 +54,17 @@ class PacketFilter(threading.Thread):
 
                     self.dispatcherQueue.put_nowait(processedPacket)
 
-            time.sleep(1)
+            time.sleep(2)
 
 
     def stop(self):
 
         self.dispatcher.stop()
         self.dispatcher.join()
-        self.dispatcherQueue.join()
+        #self.dispatcherQueue.join()
 
         self.startFlag = False
         super().join()
-
-        #Convert a string of 6 characters of ethernet address into a dash separated hex string
-    def ParseMac (self,macByte) :
-        return self.utl.PackMacBytes(macByte);
-
 
     #function to parse a packet
     def ParsePacket(self,packet) :
@@ -90,8 +85,10 @@ class PacketFilter(threading.Thread):
         eth = unpack('!6s6sH' , eth_header)
         eth_protocol = socket.ntohs(eth[2])
 
-        dstMac = self.ParseMac(packet[0:6])
-        srcMac = self.ParseMac(packet[6:12]) 
+        dstMac = self.utl.PackBytesToInt(packet[0:6])
+        srcMac = self.utl.PackBytesToInt(packet[6:12])
+
+        sizeInBytes = len(packet)
 
         #protocolInt = str(eth_protocol)
         #Parse IP V6 packets, 
@@ -99,9 +96,9 @@ class PacketFilter(threading.Thread):
             #IP V6 (https://github.com/Arturogv15/sniffer/blob/master/main.py)
             ip_header = packet[eth_length:40+eth_length]
             iph = unpack('!4sHBB16s16s' , ip_header)
-            srcIP = iph[4]
-            dstIP = iph[5]
-            sizeInBytes = len(packet)
+            srcIP = self.utl.PackBytesToInt(iph[4])
+            dstIP = self.utl.PackBytesToInt(iph[5])           
+            
         #Parse IP V4 packets, IP Protocol number = 8
         if eth_protocol == 8 :
             #https://github.com/allfro/pcappy
@@ -110,8 +107,10 @@ class PacketFilter(threading.Thread):
             #take first 20 characters for the ip header
             ip_header = packet[eth_length:20+eth_length]
             iph = unpack('!BBHHHBBH4s4s' , ip_header)
-            srcIP = iph[8]
-            dstIP = iph[9]
+            srcIP = self.utl.PackBytesToInt(iph[8])
+            dstIP = self.utl.PackBytesToInt(iph[9])
             sizeInBytes = len(packet)
+            #unpack('!BBH' , ip_header[0:4])[2] #is the total length from IP header
+
 
         return (srcMac,srcIP,srcPort, dstMac,dstIP, dstPort,sizeInBytes,eth_protocol)

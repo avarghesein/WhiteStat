@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 import socket
 from socket import AF_INET6
-
+import threading
 
 def GetEnv(key, defaultVal=""):
     try:
@@ -17,7 +17,7 @@ def GetEnv(key, defaultVal=""):
 def get_script_path():
     return os.path.dirname(os.path.realpath(sys.argv[0]))
 
-def Initialize(configFolder, url, serverPort=777, lanSegMasks="192.168.0|192.168.1", lanRouters=""):
+def Initialize(configFolder, url, serverPort=777):
     try:
         scriptPath = get_script_path() + "/Config/"
         if not os.path.exists(f"{configFolder}/WhiteStatConfig.json"):
@@ -28,11 +28,9 @@ def Initialize(configFolder, url, serverPort=777, lanSegMasks="192.168.0|192.168
             copyfile(f"{scriptPath}/MAC_MAC.txt", f"{configFolder}/MAC_HOST.txt")
 
             jsonObj = json.loads(open(f"{configFolder}/WhiteStatConfig.json", 'r').read())
-            jsonObj["DARKSTAT_URL"] = url
+            jsonObj["MONITOR"] = url
             jsonObj["SERVER_PORT"] = int(serverPort)
             jsonObj["DATA_STORE"] = configFolder
-            jsonObj["LAN_SEGMENT_MASKS"] = lanSegMasks
-            jsonObj["LAN_ROUTERS_TO_SKIP"] = lanRouters
             
             f = open(f"{configFolder}/WhiteStatConfig.json", "w")
             json.dump(jsonObj, f, indent = 6) 
@@ -66,7 +64,7 @@ class Utility:
 
         self.configFolder = jsonObj["DATA_STORE"]
 
-        self.url = jsonObj["DARKSTAT_URL"]
+        self.url = jsonObj["MONITOR"]
         self.ipfilter = jsonObj["IPFilter"]
         self.updateDBSeconds = int(jsonObj["UpdateDBSeconds"])
         self.idleSeconds = int(jsonObj["IdleSeconds"])
@@ -81,8 +79,15 @@ class Utility:
         self.db = f"{self.configFolder}/{jsonObj['DBFile']}"
         self.log = f"{self.configFolder}/{jsonObj['LOGFile']}"
         self.trace = f"{self.configFolder}/{jsonObj['TRACEFile']}"
-        self.lanSegMasks = f"{jsonObj['LAN_SEGMENT_MASKS']}"
+        self.lanSegMasks = f"{jsonObj['LAN_SEGMENT_V4_MASKS']}"
+        self.lanSegV6Masks = f"{jsonObj['LAN_SEGMENT_V6_MASKS']}"
         self.lanRouters = f"{jsonObj['LAN_ROUTERS_TO_SKIP']}"
+        self.extraPcapFilter = f"{jsonObj['EXTRA_PCAP_FILTER']}"
+        
+        self._lock = threading.Lock()
+        self.ipTypeLocal = {}
+        self.macStrings = {}
+        self.ipStrings = {}
 
 
     def __ToDictionary(self,file):
@@ -168,60 +173,89 @@ class Utility:
             print(e)  
 
 
-    def IsLANIPBytes(self,ipPackedBytes:int):
+    def PackBytesToInt(self, listOfBytes):
+        packedBytesInt = 0  
 
-        lanV4Nets = [
-            bytearray([0,0,0,0]),
-            bytearray([192,168]),
-            bytearray([10]),
-            bytearray([172,16]),
-            bytearray([172,17])
-        ]
+        for index, byte in enumerate(listOfBytes, start=0):
+            packedBytesInt = (packedBytesInt << 8) | byte 
+        #x_int = int.from_bytes(x_bytes, byteorder='big')
+        return packedBytesInt
 
-        lanV6Nets = [
-            bytearray.fromhex('fe80'),
-            bytearray.fromhex('fec0'),
-            bytearray.fromhex('fd'),
-        ]
-        
-        ipBytes = bytes(ipPackedBytes)
+    def UnpackIntToBytes(self,packedBytesInt):
+        import math
+        number_of_bytes = int(math.ceil(packedBytesInt.bit_length() / 8))
+
+        return bytearray([(((255 << (index * 8)) & packedBytesInt) >> (index * 8)) for 
+                index in range(number_of_bytes - 1,-1,-1)])
+
+        # import math
+        # number_of_bytes = int(math.ceil(packedBytesInt.bit_length() / 8))
+        # byteList = packedBytesInt.to_bytes(number_of_bytes, byteorder='big')
+        # return ":".join(['%02x' % byte for byte in byteList])
+
+    def UnPackPackedIntToString(self, packedBytesInt,sep = ":"):
+        if packedBytesInt in self.macStrings.keys():
+            return self.macStrings[packedBytesInt]
+
+        #Add support for IPas well, change sep and formatter
+        byteList = self.UnpackIntToBytes(packedBytesInt)
+        macString = sep.join(['%02x' % byte for byte in byteList])
+
+        with self._lock:
+            if not( packedBytesInt in self.macStrings.keys()):
+                self.macStrings[packedBytesInt] = macString
+
+        return macString
+
+    def UnPackIPPackedIntToString(self, packedBytesInt):
+        if packedBytesInt in self.ipStrings.keys():
+            return self.ipStrings[packedBytesInt]
+
+        ipBytes = bytes(self.UnpackIntToBytes(packedBytesInt))
+        ipString = ""
+        if(len(ipBytes) > 4):
+            ipString = socket.inet_ntop(AF_INET6,ipBytes);
+        else:
+            ipString = socket.inet_ntoa(ipBytes)
+
+        with self._lock:
+            if not( packedBytesInt in self.ipStrings.keys()):
+                self.ipStrings[packedBytesInt] = ipString
+
+        return ipString
+
+    def GetV4LANMasks(self):
+        return self.lanSegMasks.split("|")
+    
+    def GetV6LANMasks(self):
+        return [hexval.strip(':') for hexval in self.lanSegV6Masks.split("|")]
+
+    def IsLANIPBytes(self,packedBytesInt:int):
+
+        if packedBytesInt in self.ipTypeLocal.keys():
+            return self.ipTypeLocal[packedBytesInt]
+
+        lanV4Nets = [bytearray([int(byte) for byte in lan.split(".")]) for lan in self.GetV4LANMasks()]
+        lanV6Nets = [bytearray.fromhex(lan.strip(':')) for lan in self.GetV6LANMasks()]
+
+        ipBytes = self.UnpackIntToBytes(packedBytesInt)
         lanNets = lanV4Nets if len(ipBytes) <= 4 else lanV6Nets
 
         ipInLan = list(filter(lambda lanNet: lanNet == ipBytes[0:len(lanNet)], lanNets)) 
 
-        if ((not (ipInLan is None )) and (len(ipInLan) > 0)) :
-            return True    
-        return False;
+        flag = ((not (ipInLan is None )) and (len(ipInLan) > 0))
+
+        with self._lock:
+            if not( packedBytesInt in self.ipTypeLocal.keys()):
+                self.ipTypeLocal[packedBytesInt] = flag
+
+        return flag        
  
         """ fullLanSeg = ["0.0.0.0","192.168.", "10."] + [f"172.{i}." for i in range(16,17)]
         ipInLan = list(filter(lambda x: ip.startswith(x), fullLanSeg))    
         if ((not (ipInLan is None )) and (len(ipInLan) > 0)) :
             return True    
         return False;   """ 
-            
-
-    def PackMacBytes(self, macByte):
-        packedBytes = 0  
-
-        for index, byte in enumerate(macByte, start=0):
-            packedBytes = (packedBytes << 8) | byte 
-        
-        return packedBytes
-
-    def UnPackMacBytes(self,packedBytes):
-        unpackedMac = ""
-        for index in range(bytes(packedBytes) - 1,-1,-1):
-            byte = ((255 << (index * 8)) & packedBytes) >> (index * 8)
-            unpackedMac += '%02x:' % byte
-
-        return unpackedMac.rstrip(':') 
-
-    def UnPackIPToString(self, ipByte):
-        ipBytes = bytes(ipByte)
-        if(len(ipBytes) > 4):
-            return socket.inet_ntop(AF_INET6,ipByte);
-        else:
-            return socket.inet_ntoa(ipByte)
 
     def AssignRouterLanSegments(self, frame):
         if len(self.GetLANRouters()) > 0 and len(self.GetLANSegments()) > 0:
@@ -246,9 +280,9 @@ class Utility:
         frame=frame.drop_duplicates()
         routers = frame['MAC'].tolist()
 
-        self.jsonObj['LAN_SEGMENT_MASKS'] = '|'.join(routers)
+        self.jsonObj['LAN_SEGMENT_V4_MASKS'] = '|'.join(routers)
         self.jsonObj['LAN_ROUTERS_TO_SKIP'] = '|'.join(list(lanSegs.keys()))
-        self.lanSegMasks = f"{self.jsonObj['LAN_SEGMENT_MASKS']}"
+        self.lanSegMasks = f"{self.jsonObj['LAN_SEGMENT_V4_MASKS']}"
         self.lanRouters = f"{self.jsonObj['LAN_ROUTERS_TO_SKIP']}"
 
         f = open(f"{self.configFolder}/WhiteStatConfig.json", "w")

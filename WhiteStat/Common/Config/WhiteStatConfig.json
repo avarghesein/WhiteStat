@@ -1,16 +1,22 @@
 {
       "DATA_STORE": "./WhiteStat/RunConfig",
-      "DBFile": "WhiteStat.db",
-      "LOGFile": "WhiteStatLog.txt",
-      "TRACEFile": "WhiteStatTrace.txt",
+
+      "DBFile": "WhiteStat.db",      
       "IP_MAC_REWRITE": "IP_MAC.txt",
       "MAC_MAC_REWRITE": "MAC_MAC.txt",
       "MAC_HOST_MAP": "MAC_HOST.txt",
-      "DARKSTAT_URL": "http://192.168.1.5:777",
-      "IPFilter": "([\\d]+\\.){3,3}\\d+",
-      "IdleSeconds": 30,
-      "UpdateDBSeconds": 40,
+      "LOGFile": "WhiteStatLog.txt",
+      "TRACEFile": "WhiteStatTrace.txt",   
+      
+      "MONITOR": ":888",
       "SERVER_PORT":777,
-      "LAN_SEGMENT_MASKS":"192.168.1|192.168.0",
+      
+      "IdleSeconds": 30,
+      "UpdateDBSeconds": 40,      
+
+      "IPFilter": "([\\d]+\\.){3,3}\\d+",
+      "EXTRA_PCAP_FILTER": "",
+      "LAN_SEGMENT_V4_MASKS":"0.0.0.0|10|192.168|172.16|172.17",
+      "LAN_SEGMENT_V6_MASKS":"fe80|fec0|fd",
       "LAN_ROUTERS_TO_SKIP":"b8:27:eb:8c:dc:bb|f8:c4:f3:50:53:68"
 }
