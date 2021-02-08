@@ -22,10 +22,7 @@ class Monitor(threading.Thread):
         super().start()
         self.packetFilter.start()
 
-    def run(self):   
-
-        socket.setdefaulttimeout(2)
-        socket.socket();
+    def run(self):  
 
         lans = self.utl.GetV4LANMasks()
 
@@ -45,35 +42,34 @@ class Monitor(threading.Thread):
 
         pcaps = [ PCAPY.open_live(dev , 65536 , 1 , 1000) for dev in interfaces]  
 
-        def ApplyCapFilter(cap):
-          cap.filter = lanOnlyFilter
-          return None
+        def SniffPackets(cap):
+            socket.setdefaulttimeout(2)
+            socket.socket();
+            cap.filter = lanOnlyFilter
 
-        list(map(lambda cap: ApplyCapFilter(cap), pcaps))
+            def CapCallBack(userData, header, packet):
+                self.packetQueue.put_nowait(packet)
+                packet = None            
 
-        def CapCallBack(userData, header, packet):
-            self.packetQueue.put_nowait(packet)
-            packet = None            
-
-        try:
-            while(self.startFlag):
-
-                def LoopCap(cap):
+            try:
+                while(self.startFlag):
                     cap.loop(-1, CapCallBack, None)
-                    return None
-
-                list(map(lambda cap: LoopCap(cap), pcaps))       
-
-                #cap.dispatch(-1, CapCallBack, None)
-                time.sleep(10)
-        finally:
-            def StopCap(cap):
+                    #cap.dispatch(-1, CapCallBack, None)
+                    time.sleep(10)
+            finally:
                 cap.breakloop()
                 cap.close()
-                return None
-
-            list(map(lambda cap: StopCap(cap), pcaps))
  
+        if(len(pcaps) > 1):
+            pThreads = [threading.Thread(target=SniffPackets, args=(cap,),daemon=True) for cap in pcaps[1:]]
+
+            def StartThread(thread):
+                thread.start()
+                return None
+            
+            list(map(lambda t:StartThread(t),pThreads))
+
+        SniffPackets(pcaps[0])
 
     def stop(self):        
         self.packetFilter.stop()
