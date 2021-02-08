@@ -8,6 +8,7 @@
       "LOGFile": "WhiteStatLog.txt",
       "TRACEFile": "WhiteStatTrace.txt",   
       
+      "HOST_INTERFACE":"eth0",
       "MONITOR": ":888",
       "SERVER_PORT":777,
       

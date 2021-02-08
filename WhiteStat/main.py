@@ -15,8 +15,11 @@ def main(argv):
     url = UTL.GetEnv("MONITOR",":888")
     print(url)
     serverPort = UTL.GetEnv("SERVER_PORT",777)
+    print(serverPort)
+    hostIface = UTL.GetEnv("HOST_INTERFACE","eth0")
+    print(hostIface)
 
-    UTL.Initialize(dataStore,url,serverPort)
+    UTL.Initialize(dataStore,url,serverPort,hostIface)
     utl = UTL.Utility.getInstance()
 
     monitor = MTR.Monitor()
@@ -25,7 +28,7 @@ def main(argv):
     try:
         while True:
             time.sleep(15) 
-    except:
+    finally:
         monitor.stop()
 
 if __name__ == "__main__":

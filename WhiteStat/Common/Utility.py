@@ -17,7 +17,7 @@ def GetEnv(key, defaultVal=""):
 def get_script_path():
     return os.path.dirname(os.path.realpath(sys.argv[0]))
 
-def Initialize(configFolder, url, serverPort=777):
+def Initialize(configFolder, url, serverPort=777,hostIface = "eth0"):
     try:
         scriptPath = get_script_path() + "/Config/"
         if not os.path.exists(f"{configFolder}/WhiteStatConfig.json"):
@@ -31,6 +31,7 @@ def Initialize(configFolder, url, serverPort=777):
             jsonObj["MONITOR"] = url
             jsonObj["SERVER_PORT"] = int(serverPort)
             jsonObj["DATA_STORE"] = configFolder
+            jsonObj["HOST_INTERFACE"] = hostIface
             
             f = open(f"{configFolder}/WhiteStatConfig.json", "w")
             json.dump(jsonObj, f, indent = 6) 
@@ -64,6 +65,7 @@ class Utility:
 
         self.configFolder = jsonObj["DATA_STORE"]
 
+        self.hostInterfaces = jsonObj["HOST_INTERFACE"]
         self.url = jsonObj["MONITOR"]
         self.ipfilter = jsonObj["IPFilter"]
         self.updateDBSeconds = int(jsonObj["UpdateDBSeconds"])
@@ -223,6 +225,16 @@ class Utility:
                 self.ipStrings[packedBytesInt] = ipString
 
         return ipString
+
+
+    def GetAllV4LANMasks(self):
+        return "0.0.0.0|10|192.168|172.16|172.17".split("|")
+    
+    def GetExtraPcapFilter(self):
+        return self.extraPcapFilter
+
+    def GetHostInterfaces(self):
+        return self.hostInterfaces.split("|")
 
     def GetV4LANMasks(self):
         return self.lanSegMasks.split("|")

@@ -31,8 +31,9 @@ class Dispatcher(threading.Thread):
     def run(self):
 
         sleepSeconds = 1
-        remoteRefreshSeconds = 10
+        remoteRefreshSeconds = self.utl.GetSleepSeconds()
         sleptSeconds = 0
+        curDate = datetime.datetime.now().date()
 
         while(self.startFlag):
             packCount = 0
@@ -64,6 +65,13 @@ class Dispatcher(threading.Thread):
                    
                     os.system('cls' if os.name == 'nt' else 'clear')
                     self.PrintFrame(remoteFrame[0],remoteFrame[1])
+
+                    today = datetime.datetime.now().date()
+
+                    if today > curDate:
+                        self.localIPs.clear()
+                        self.remoteIPs.clear()
+                        curDate = today
 
             time.sleep(sleepSeconds)
             sleptSeconds += sleepSeconds
