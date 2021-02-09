@@ -1,79 +1,22 @@
 import requests
-import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta
-import WhiteStatUtils as UTL
+import WhiteStat.Common.Utility as UTL
+import WhiteStat.NetMonitor.RemoteServer as RS
 
-class WhiteStat:
+LOCAL_IP_SET = 0
+REMOTE_IP_SET = 1
+
+class Analyzer:
 
     def __init__(self):
 
-        self.utl = UTL.WhiteStatUtils.getInstance()
-        self.url = self.utl.GetUrl()
+        self.utl = UTL.Utility.getInstance()
+        self.remoteManager = RS.RemoteManager()
         self.IpMacDic = self.utl.GetIpMacDict()
         self.MacMacDic = self.utl.GetMacMacDict()
         self.MacHostDic = self.utl.GetMacHostDict()
 
-    def GetTotalSeconds(self, match_object):
-        try:
-            totalSecs = 0         
-            
-            if not (match_object.group('DAY') is None):
-                totalSecs += 24 * 60 * 60 * int(match_object.group('DAY'))
-            if not (match_object.group('HRS')  is None):
-                totalSecs += 60 * 60 * int(match_object.group('HRS'))
-            if not (match_object.group('MIN')  is None):
-                totalSecs += 60 * int(match_object.group('MIN'))
-            if not (match_object.group('SEC') is None):
-                totalSecs += int(match_object.group('SEC'))
-
-            return totalSecs
-        except Exception as e:
-            self.utl.Log(e)
-            return 0
-
-    def RunningFor(self):
-
-        import re 
-        try:
-
-            page = requests.get(self.url)
-            x=page.text
-
-            if x == '(never)':
-                return (None,None)
-            
-            match_object = re.search(
-                (r"((?P<DAY>\d+) days?, )?((?P<HRS>\d+) hrs?, )?((?P<MIN>\d+) mins?, )?" 
-                r"((?P<SEC>\d+) secs?).*since[^\d]*(?P<DTE>\d+\-\d+\-\d+ \d+:\d+:\d+)"),
-                x)     
-                
-            totalSecs = self.GetTotalSeconds(match_object)
-            dateSince = match_object.group('DTE')
-
-            dateSince=self.GetNowUtc()
-
-            return (dateSince, totalSecs)
-        
-        except Exception as e:
-            self.utl.Log(e)
-            return (None,None)
-
-
-    def ConvertLastSeen(self, date, x):
-        import re 
-        try:
-            if x == '(never)':
-                return 0
-            
-            match_object = re.match(r'((?P<DAY>\d+) days?, )?((?P<HRS>\d+) hrs?, )?((?P<MIN>\d+) mins?, )?((?P<SEC>\d+) secs?)', x)     
-
-            totalSecs = self.GetTotalSeconds(match_object)
-            
-            return  (date - timedelta(seconds=totalSecs)).strftime("%Y-%m-%d %H:%M:%S")
-        
-        except Exception as e:
-            self.utl.Log(e)
-            return 0
 
     def ReplaceMACs(self, mac, ip):
         new_mac = self.IpMacDic.get(ip, mac)
@@ -81,14 +24,6 @@ class WhiteStat:
 
         return new_mac
 
-    #def CustomIPMACProcess(self, df):        
-        
-        #df["MAC"].replace(self.MacMacDic, inplace=True)
-        #df["MAC"].where(df.IP in self.IpMacDic,self.IpMacDic.get(df.IP),inplace=True)
-        #df.loc[df.IP  in  self.IpMacDic, 'MAC'] =  self.IpMacDic[df['IP']]
-
-        #df.loc[df['MAC'] == "b8:27:eb:8c:dc:bb", 'MAC'] = "f8:c4:f3:50:53:68"
-        #df.loc[df.IP == "192.168.1.54", 'MAC'] = "52:54:00:f3:a3:2b"
 
     def GetNowUtc(self):
         #return (datetime.utcnow().date()+ timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
@@ -122,31 +57,22 @@ class WhiteStat:
 
     def GetUsageFrame(self,date):
         try:
-            usage_data = pd.read_html(f'{self.url}/hosts/?full=yes&sort=in', header=None)
+            self.remoteManager.connect()
+            curFrame = self.remoteManager.RemoteUsageFrame()
+            usageFrame = curFrame.GetFrame()
 
-            if usage_data is None:
+            if usageFrame is None:
+                    return None
+            
+            usageBytes =  [[key] + value + [True] for key, value in usageFrame[LOCAL_IP_SET].items()]  
+            usageBytes += [[key] + value + [False] for key, value in usageFrame[REMOTE_IP_SET].items()]
+
+            usageBytes = np.array(usageBytes)
+
+            if usageBytes is None or len(usageBytes) <= 0:
                     return None
 
-            usageBytes = usage_data[0]
-            #usageBytes.columns.values
-
-            if usage_data is None or usageBytes.empty:
-                    return None
-
-            if usageBytes.columns[0] != "IP":
-                usageBytes.columns = [
-                    "IP",
-                    "Hostname",
-                    "MAC Address",
-                    "In",
-                    "Out",
-                    "Total",
-                    "Last seen"]
-
-
-            usageBytes.rename(columns={"MAC Address": "MAC"},inplace=True) 
-
-            usageBytes.drop(usageBytes[usageBytes.IP == "IP"].index, inplace = True) 
+ 
 
             #filterV4 = usageBytes['IP'].str.contains("([\d]+\.){3,3}\d+")    
             filterV4 = usageBytes['IP'].str.contains(self.utl.GetIPFilter())    
@@ -192,10 +118,6 @@ class WhiteStat:
 
     def GetDayFirstFrame(self, date, prevDateUsageFrame):
         try:
-            startTimeFrame = self.RunningFor()
-
-            if startTimeFrame is None:
-                return (None,None, prevDateUsageFrame)
 
             startUsageFrame = self.GetUsageFrame(date)    
 
@@ -491,45 +413,42 @@ class WhiteStat:
         except ValueError:
             return False
 
-    def RestoreFromDailyDB(self, utcDate):
+    def RestoreFromDailyDB(self, today):
         connection = None
         frame = None
         prevFrame = None
-        timeframe = None
+
         try:            
             import sqlite3
             connection = sqlite3.connect(self.utl.GetDB())  
 
-            cursor = connection.execute(f"SELECT MAX(DTE) FROM (SELECT DATE AS DTE FROM timeframe WHERE date(DATE) < date('{utcDate}'))")
+            cursor = connection.execute(f"SELECT MAX(DTE) FROM (SELECT DATE AS DTE FROM DailyUsage WHERE date(DATE) < date('{today}'))")
             #cursor = connection.execute(f"SELECT DATE,LastSeen AS CNT FROM timeframe")
             prevTimeframe = cursor.fetchone()
             cursor.close()
 
             if not (prevTimeframe is None) and self.ValidateDate(str(prevTimeframe[0])):
                 prevDate = prevTimeframe[0]
-                prevFrame=pd.read_sql_query(f"SELECT * FROM dailyusage WHERE date(DATE)=date('{prevDate}')", con=connection)
-                filterV4 = prevFrame['IP'].str.contains(self.utl.GetIPFilter())    
-                prevFrame.drop(prevFrame[~filterV4].index, inplace = True)                         
 
-            cursor = connection.execute(f"SELECT DATE,LastSeen AS DTE FROM timeframe WHERE date(DATE)=date('{utcDate}')")
-            #cursor = connection.execute(f"SELECT DATE,LastSeen AS CNT FROM timeframe")
-            timeframe = cursor.fetchone()
-            cursor.close()
+                cursor = connection.execute(f"SELECT IP, MAC, Hostname, LastSeen, KBIn, KBOut, DATE, LSTDAY_KBIn, LSTDAY_KBOut, IS_LOCAL "
+                " FROM dailyusage WHERE date(DATE)=date('{prevDate}')")
 
-            cursor = connection.execute(f"SELECT COUNT(*) AS CNT FROM dailyusage WHERE date(DATE)=date('{utcDate}')")            
+                results = cursor.fetchall()                
+                prevFrame = np.array(list(results))
+
+            cursor = connection.execute(f"SELECT COUNT(*) AS CNT FROM dailyusage WHERE date(DATE)=date('{today}')")            
             #cursor = connection.execute(f"SELECT COUNT(*) AS CNT FROM dailyusage") 
             count=int(cursor.fetchone()[0])
             cursor.close()
 
+
+
             if count > 0:
-                frame=pd.read_sql_query(f"SELECT * FROM dailyusage WHERE date(DATE)=date('{utcDate}')", con=connection)
-                frame.fillna(value={'LSTDAY_KBIn': 0.0, 'LSTDAY_KBOut': 0.0},inplace=True)
-                filterV4 = frame['IP'].str.contains(self.utl.GetIPFilter())    
-                frame.drop(frame[~filterV4].index, inplace = True) 
-                self.DiscardRoutersForLocalIP(frame)
-                #frame=pd.read_sql_query(f"SELECT * FROM dailyusage", con=connection)
-                
-                #filterV4 = usageBytes['IP'].str.contains("([\d]+\.){3,3}\d+")             
+                cursor = connection.execute(f"SELECT IP, MAC, Hostname, LastSeen, KBIn, KBOut, DATE, LSTDAY_KBIn, LSTDAY_KBOut, IS_LOCAL "
+                f" FROM dailyusage WHERE date(DATE)=date('{today}')")
+
+                results = cursor.fetchall()                
+                frame = np.array(list(results))
 
             connection.close()
 
@@ -539,7 +458,7 @@ class WhiteStat:
 
             self.utl.Log(e)
         
-        return (timeframe,frame,prevFrame)
+        return (frame,prevFrame)
 
 
     def ReplaceHostName(self, frame):

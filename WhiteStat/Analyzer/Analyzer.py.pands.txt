@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import WhiteStatUtils as UTL
 
-class WhiteStat_V1:
+class Analyzer:
 
     def __init__(self):
 
@@ -181,6 +181,8 @@ class WhiteStat_V1:
 
             usageBytes.drop(["DT_LastSeen"], axis=1, inplace=True)
 
+            self.utl.AssignRouterLanSegments(usageBytes[['IP','MAC']])
+
             self.DiscardRoutersForLocalIP(usageBytes)
 
             return usageBytes
@@ -254,42 +256,46 @@ class WhiteStat_V1:
             return (None,None, prevDateUsageFrame)
 
     def StabilizeIP(self, date, prevFrame, frame):
-        oldFrame = prevFrame
-        prevFrame = prevFrame[["IP","MAC", "LSTDAY_KBIn","LastSeen"]]
-        prevFrame.rename(columns = {'MAC':'MAC_OLD',"LastSeen":"LastSeen_OLD"}, inplace = True)
+        def CheckLanSegment(mac,ip):     
+            ipInLan = list(filter(lambda x: ip.startswith(x), self.utl.GetLANSegments()))    
 
+            if ((not (ipInLan is None )) and (len(ipInLan) > 0)) :
+                return True
+            
+            return False;
+
+        #frame.loc[frame.IP == "192.168.1.21", 'MAC'] = "f8:c4:f3:50:53:68"
+        oldFrame = prevFrame
+        prevFrame = prevFrame[["IP","MAC", "LSTDAY_KBIn","LastSeen"]]     
+        prevFrame["lanFlag"]= prevFrame.apply(lambda x: CheckLanSegment(x.MAC, x.IP), axis=1)  
+        prevFrame = prevFrame[prevFrame.lanFlag == True] 
+        prevFrame.rename(columns = {'IP':'IP_OLD',"LastSeen":"LastSeen_OLD"}, inplace = True)
+        
         frame = frame[["IP","MAC","KBIn","LastSeen"]]
+        frame["lanFlag"]= frame.apply(lambda x: CheckLanSegment(x.MAC, x.IP), axis=1)
+        frame = frame[frame.lanFlag == True]
 
         #frame.loc[frame.IP == "192.168.1.21", 'MAC'] = "f8:c4:f3:50:53:68"
 
-        newFrame = prevFrame.merge(frame, on=['IP'], how ="inner")
+        newFrame = prevFrame.merge(frame, on=['MAC'], how ="inner")
 
-        prevFrame.rename(columns = {'MAC_OLD':'MAC', "LastSeen_OLD":"LastSeen"}, inplace = True)
+        prevFrame.rename(columns = {'IP_OLD':'IP', "LastSeen_OLD":"LastSeen"}, inplace = True)
 
         dic = {}
     
-        def ReMapIpMac(ip,mac_old,lastseen_old,new_mac):
-            dic[f"{ip},{mac_old},{lastseen_old}"] = new_mac
+        def ReMapIpMac(mac,ip_old,new_ip):
+            dic[f"{mac},{ip_old}"] = new_ip
             return None
 
-        newFrame.drop(newFrame[(newFrame.LastSeen == 0) | (newFrame.LastSeen_OLD == 0)].index, inplace = True)
-        newFrame.drop(newFrame[(newFrame.LastSeen.str.strip() == "0") | (newFrame.LastSeen_OLD.str.strip() == "0")].index, inplace = True)
-
-        newFrame['DT_LastSeen'] = pd.to_datetime(newFrame['LastSeen'], format='%Y-%m-%d %H:%M:%S')
-        newFrame['DT_LastSeen_OLD'] = pd.to_datetime(newFrame['LastSeen_OLD'], format='%Y-%m-%d %H:%M:%S')
-
-        newFrame = newFrame[
-            (newFrame.MAC != newFrame.MAC_OLD) &
-            #((newFrame.KBIn >= newFrame.LSTDAY_KBIn) |
-            ((newFrame.DT_LastSeen - newFrame.DT_LastSeen_OLD).dt.total_seconds() <= self.utl.GetIPStabilizeSeconds())]
+        newFrame = newFrame[(newFrame.IP != newFrame.IP_OLD)]
         
         if not(newFrame is None or newFrame.empty):
-            newFrame.apply(lambda x: ReMapIpMac(x.IP,x.MAC_OLD,x.LastSeen_OLD,x.MAC),axis=1)
+            newFrame.apply(lambda x: ReMapIpMac(x.MAC,x.IP_OLD,x.IP),axis=1)
 
-        updMac= oldFrame.apply(lambda x: dic.get(f"{x.IP},{x.MAC},{x.LastSeen}",x.MAC), axis=1)
+        updIP= oldFrame.apply(lambda x: dic.get(f"{x.MAC},{x.IP}",x.IP), axis=1)
 
-        oldFrame.drop(["MAC"], axis=1, inplace=True)
-        oldFrame.insert(2, "MAC", updMac, True)
+        oldFrame.drop(["IP"], axis=1, inplace=True)
+        oldFrame.insert(0, "IP", updIP, True)
 
         return self.EnsureIP_MAC_Combo(date, oldFrame,"From StabilizeIP",fix=True)
 

@@ -213,6 +213,9 @@ class Utility:
         if packedBytesInt in self.ipStrings.keys():
             return self.ipStrings[packedBytesInt]
 
+        if packedBytesInt <= 0:
+            return "0.0.0.0"
+            
         ipBytes = bytes(self.UnpackIntToBytes(packedBytesInt))
         ipString = ""
         if(len(ipBytes) > 4):

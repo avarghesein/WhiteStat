@@ -1,5 +1,4 @@
 import multiprocessing.managers as MP
-import pandas as pd
 import threading
 import time
 import WhiteStat.Common.Utility as UTL
@@ -31,9 +30,11 @@ class RemoteManager(MP.SyncManager):
         self.utl = UTL.Utility.getInstance()
         (ip,port) = self.utl.url.split(':')
         super().__init__(address=(ip, int(port)), authkey=b'whitestat')
+        RemoteManager.register("RemoteUsageFrame",  callable = RemoteUsageFrame.getInstance)
+        #super().__init__(address=("127.0.0.1", int(port)), authkey=b'whitestat')
 
     def Serve(self):
-        RemoteManager.register("RemoteUsageFrame",  callable = RemoteUsageFrame.getInstance)
+        #RemoteManager.register("RemoteUsageFrame",  callable = RemoteUsageFrame.getInstance)
         self.start()
 
     def Shutdown(self):

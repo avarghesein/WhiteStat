@@ -45,11 +45,13 @@ class PacketFilter(threading.Thread):
                 except queue.Empty:
                     break
 
-                processedPacket = (srcMac,srcIP,srcPort, dstMac,dstIP, dstPort,sizeInBytes,protocol) = self.ParsePacket(packet)
+                processedPacket = (srcMac,srcIP,srcPort, dstMac,dstIP, dstPort,sizeInBytes,protocol) = self.ParsePacket(packet)                
+               
                 packet = None
-                
+
                 if (sizeInBytes > 0 and 
-                    (protocol == 56710 or protocol == 8)): #and 
+                    (protocol == 56710 or protocol == 8) and 
+                    not (srcIP <= 0 or dstIP <= 0)): #and 
                     #not (self.utl.IsLANIP(srcIP) and self.utl.IsLANIP(dstIP))):
 
                     self.dispatcherQueue.put_nowait(processedPacket)

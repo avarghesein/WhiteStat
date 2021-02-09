@@ -1,9 +1,13 @@
 
+import warnings
+warnings.filterwarnings('ignore')
+
 import os
 import sys
 import time
 import WhiteStat.Common.Utility as UTL
 import WhiteStat.NetMonitor.Monitor as MTR
+import WhiteStat.Analyzer.Manager as MR
 
 def main(argv):
 
@@ -23,13 +27,17 @@ def main(argv):
     utl = UTL.Utility.getInstance()
 
     monitor = MTR.Monitor()
+    analyzer = MR.Manager()
+
     monitor.start()
+    analyzer.start()
 
     try:
         while True:
             time.sleep(15) 
     finally:
         monitor.stop()
+        analyzer.stop()
 
 if __name__ == "__main__":
   main(sys.argv)

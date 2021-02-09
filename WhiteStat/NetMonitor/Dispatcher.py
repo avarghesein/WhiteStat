@@ -2,7 +2,6 @@ import datetime
 import time
 import os
 import threading, queue
-import pandas as pd
 import WhiteStat.Common.Utility as UTL
 import WhiteStat.NetMonitor.RemoteServer as RS
 
@@ -55,12 +54,13 @@ class Dispatcher(threading.Thread):
                 packet = None
 
                 if sleptSeconds >= remoteRefreshSeconds:
-                    self.remoteManager.connect()
-                    curFrame = self.remoteManager.RemoteUsageFrame()
+                    client = RS.RemoteManager()
+                    client.connect()
+                    curFrame = client.RemoteUsageFrame()
                     curFrame.SetFrame(self.localIPs,self.remoteIPs)
                     sleptSeconds = 0
 
-                    curFrame = self.remoteManager.RemoteUsageFrame()
+                    curFrame = client.RemoteUsageFrame()
                     remoteFrame = curFrame.GetFrame()
                    
                     os.system('cls' if os.name == 'nt' else 'clear')

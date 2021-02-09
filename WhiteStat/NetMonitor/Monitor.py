@@ -2,11 +2,10 @@
 import WhiteStat.NetMonitor.pcapy as PCAPY
 import sys
 import socket
-import threading, queue
 import time
 import WhiteStat.NetMonitor.PacketFilter as PF
 import WhiteStat.Common.Utility as UTL
-
+import threading, queue
 
 class Monitor(threading.Thread):
 
