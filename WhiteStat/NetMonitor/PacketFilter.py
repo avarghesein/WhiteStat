@@ -87,8 +87,8 @@ class PacketFilter(threading.Thread):
         eth = unpack('!6s6sH' , eth_header)
         eth_protocol = socket.ntohs(eth[2])
 
-        dstMac = self.utl.PackBytesToInt(packet[0:6])
-        srcMac = self.utl.PackBytesToInt(packet[6:12])
+        dstMac = self.utl.PackBytesToInt(packet[0:6])       
+        srcMac = self.utl.PackBytesToInt(packet[6:12])  
 
         sizeInBytes = len(packet)
 

@@ -37,6 +37,8 @@ class Monitor(threading.Thread):
         if (not pcapFilterExtra) and pcapFilterExtra != "":
             lanOnlyFilter += f" and ({pcapFilterExtra}) "
 
+        lanOnlyFilter += " and not (multicast or ip multicast or ip6 multicast)"
+
         interfaces = self.utl.GetHostInterfaces()        
 
         pcaps = [ PCAPY.open_live(dev , 65536 , 1 , 1000) for dev in interfaces]  

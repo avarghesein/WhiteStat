@@ -71,10 +71,13 @@ class Utility:
         self.updateDBSeconds = int(jsonObj["UpdateDBSeconds"])
         self.idleSeconds = int(jsonObj["IdleSeconds"])
         self.ServerPort = int(jsonObj["SERVER_PORT"])
+
         self.macmac = f"{self.configFolder}/{jsonObj['MAC_MAC_REWRITE']}"
-        self.macmacDict = self.__ToDictionary(f"{self.macmac}")
+        self.macmacDict = self.__ToDictionary(f"{self.macmac}",self.PackMacToInt, self.PackMacToInt)
+
         self.ipmac = f"{self.configFolder}/{jsonObj['IP_MAC_REWRITE']}"
-        self.ipmacDict = self.__ToDictionary(f"{self.ipmac}")
+        self.ipmacDict = self.__ToDictionary(f"{self.ipmac}", self.PackIpToInt, self.PackMacToInt)
+
         self.macHost = f"{self.configFolder}/{jsonObj['MAC_HOST_MAP']}"
         self.macHostDict = self.__ToDictionary(f"{self.macHost}")
 
@@ -83,7 +86,14 @@ class Utility:
         self.trace = f"{self.configFolder}/{jsonObj['TRACEFile']}"
         self.lanSegMasks = f"{jsonObj['LAN_SEGMENT_V4_MASKS']}"
         self.lanSegV6Masks = f"{jsonObj['LAN_SEGMENT_V6_MASKS']}"
-        self.lanRouters = f"{jsonObj['LAN_ROUTERS_TO_SKIP']}"
+
+        self.lanRouters = f"{jsonObj['LAN_ROUTERS_TO_SKIP'].strip()}"
+
+        if(self.lanRouters != ""):
+            self.lanRouters = [self.PackMacToInt(router.strip()) for router in self.lanRouters.split('|')]
+        else:
+            self.lanRouters = []
+
         self.extraPcapFilter = f"{jsonObj['EXTRA_PCAP_FILTER']}"
         
         self._lock = threading.Lock()
@@ -92,13 +102,21 @@ class Utility:
         self.ipStrings = {}
 
 
-    def __ToDictionary(self,file):
+    def __ToDictionary(self,file, keyConverter = None, valueConverter = None):
         try:
             d = {}
             with open(file) as f:
                 for line in f:
                     (key, val) = line.split('|')
-                    d[key.strip()] = val.strip()
+                    key = key.strip()
+                    val = val.strip()
+                    if not(keyConverter is None):
+                        key = keyConverter(key)
+
+                    if not(valueConverter is None):
+                        val = valueConverter(val)
+
+                    d[key] = val
             return d
         except Exception as e:
             self.Log(e)   
@@ -109,7 +127,7 @@ class Utility:
         return self.lanSegMasks.split('|')
     
     def GetLANRouters(self):
-        return self.lanRouters.split('|')
+        return self.lanRouters
 
     def GetMacHostDict(self):
         return self.macHostDict
@@ -173,6 +191,20 @@ class Utility:
                 logFile.close()
         except Exception as e:
             print(e)  
+
+
+    def PackMacToInt(self, macString):
+        return self.PackBytesToInt(bytearray.fromhex(macString.strip().replace(':','')))
+
+    def PackIpToInt(self, ipString):
+        ipBytes = None
+
+        if ":" in ipString:
+            ipBytes = bytearray.fromhex(ipString.strip().replace(':',''))
+        else:
+            ipBytes = bytearray([int(byte) for byte in ipString.split(".")]) 
+
+        return self.PackBytesToInt(ipBytes)
 
 
     def PackBytesToInt(self, listOfBytes):
@@ -240,10 +272,20 @@ class Utility:
         return self.hostInterfaces.split("|")
 
     def GetV4LANMasks(self):
-        return self.lanSegMasks.split("|")
+        lanMasks = self.lanSegMasks.split("|")
+
+        if lanMasks == None or len(lanMasks) <= 0:
+            lanMasks = self.GetAllV4LANMasks()
+        
+        return lanMasks
     
     def GetV6LANMasks(self):
-        return [hexval.strip(':') for hexval in self.lanSegV6Masks.split("|")]
+        lanMasks = self.lanSegV6Masks.split("|")
+
+        if lanMasks == None or len(lanMasks) <= 0:
+            lanMasks = "fe80|fec0|fd".split("|")
+        
+        return [hexval.replace(':','') for hexval in lanMasks]
 
     def IsLANIPBytes(self,packedBytesInt:int):
 
@@ -251,7 +293,7 @@ class Utility:
             return self.ipTypeLocal[packedBytesInt]
 
         lanV4Nets = [bytearray([int(byte) for byte in lan.split(".")]) for lan in self.GetV4LANMasks()]
-        lanV6Nets = [bytearray.fromhex(lan.strip(':')) for lan in self.GetV6LANMasks()]
+        lanV6Nets = [bytearray.fromhex(lan.strip().replace(':','')) for lan in self.GetV6LANMasks()]
 
         ipBytes = self.UnpackIntToBytes(packedBytesInt)
         lanNets = lanV4Nets if len(ipBytes) <= 4 else lanV6Nets
@@ -266,39 +308,14 @@ class Utility:
 
         return flag        
  
-        """ fullLanSeg = ["0.0.0.0","192.168.", "10."] + [f"172.{i}." for i in range(16,17)]
-        ipInLan = list(filter(lambda x: ip.startswith(x), fullLanSeg))    
-        if ((not (ipInLan is None )) and (len(ipInLan) > 0)) :
-            return True    
-        return False;   """ 
-
-    def AssignRouterLanSegments(self, frame):
-        if len(self.GetLANRouters()) > 0 and len(self.GetLANSegments()) > 0:
+    def AssignRouters(self, routerList):
+        if len(self.GetLANRouters()) > 0:
             return
         
-        fullLanSeg = ["0.0.0.0","192.168.", "10."] + [f"172.{i}." for i in range(16,17)]
+        routers = [self.UnPackPackedIntToString(router) for router in routerList]
 
-        lanSegs = {}
-
-        def CheckLanSegment(mac,ip):     
-            ipInLan = list(filter(lambda x: ip.startswith(x), fullLanSeg))    
-
-            if ((not (ipInLan is None )) and (len(ipInLan) > 0)) :
-                lanSegs.update(dict(zip(ipInLan, [True]*len(ipInLan))))
-                return True
-            
-            return False;
-
-        frame["lanFlag"]= frame.apply(lambda x: CheckLanSegment(x.MAC, x.IP), axis=1)
-        frame=frame[frame.lanFlag == False]
-        frame=frame[['MAC']]  
-        frame=frame.drop_duplicates()
-        routers = frame['MAC'].tolist()
-
-        self.jsonObj['LAN_SEGMENT_V4_MASKS'] = '|'.join(routers)
-        self.jsonObj['LAN_ROUTERS_TO_SKIP'] = '|'.join(list(lanSegs.keys()))
-        self.lanSegMasks = f"{self.jsonObj['LAN_SEGMENT_V4_MASKS']}"
-        self.lanRouters = f"{self.jsonObj['LAN_ROUTERS_TO_SKIP']}"
+        self.jsonObj['LAN_ROUTERS_TO_SKIP'] = '|'.join(list(routers))
+        self.lanRouters = routerList
 
         f = open(f"{self.configFolder}/WhiteStatConfig.json", "w")
         json.dump(self.jsonObj, f, indent = 6) 

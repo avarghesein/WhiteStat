@@ -3,6 +3,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import WhiteStat.Common.Utility as UTL
 import WhiteStat.NetMonitor.RemoteServer as RS
+import numpy.lib.recfunctions as NF
 
 LOCAL_IP_SET = 0
 REMOTE_IP_SET = 1
@@ -18,10 +19,9 @@ class Analyzer:
         self.MacHostDic = self.utl.GetMacHostDict()
 
 
-    def ReplaceMACs(self, mac, ip):
+    def ReplaceMACs(self, ip, mac):
         new_mac = self.IpMacDic.get(ip, mac)
         new_mac = self.MacMacDic.get(new_mac, new_mac)
-
         return new_mac
 
 
@@ -31,29 +31,26 @@ class Analyzer:
         
     def ConvertToKB(self, bytes):
         try:
-            return round(float(str(bytes).replace(",","")) / (1024),2)
+            return round(bytes / 1024,2)
         except Exception as e:
             print(bytes)
             raise
 
     def DiscardRoutersForLocalIP(self, frame):
 
-        def CheckRouterIP(mac,ip):     
-            ipInLan = list(filter(lambda x: ip.startswith(x), self.utl.GetLANSegments()))    
-            macOfRouter = list(filter(lambda x: mac.startswith(x), self.utl.GetLANRouters()))
+        routers = self.utl.GetLANRouters()
 
-            if ((not (ipInLan is None )) and 
-                (len(ipInLan) > 0) and 
-                (not (macOfRouter is None )) and 
-                (len(macOfRouter) > 0)) :
-                return True
-            
-            return False;
+        def CheckRouterIP(macInt):     
+            return macInt in routers
 
+        frame = NF.append_fields(frame, "routerFlag", [], dtypes=[('i8')], fill_value=False)
         #frame.loc[frame.IP == "192.168.1.21", 'MAC'] = "f8:c4:f3:50:53:68"
-        frame["routerFlag"]= frame.apply(lambda x: CheckRouterIP(x.MAC, x.IP), axis=1)
-        frame.drop(frame[frame.routerFlag == True].index, inplace = True) 
-        frame.drop(["routerFlag"], axis=1, inplace=True)
+
+        fnCheckRouterFlg = np.vectorize(CheckRouterIP)
+        frame["routerFlag"] = fnCheckRouterFlg(frame["MAC"])
+        frame = frame[frame["routerFlag"] == False]
+        frame = NF.drop_fields(frame, ['routerFlag'])
+        return frame
 
     def GetUsageFrame(self,date):
         try:
@@ -64,54 +61,57 @@ class Analyzer:
             if usageFrame is None:
                     return None
             
-            usageBytes =  [[key] + value + [True] for key, value in usageFrame[LOCAL_IP_SET].items()]  
-            usageBytes += [[key] + value + [False] for key, value in usageFrame[REMOTE_IP_SET].items()]
+            localIPs =  [tuple([key] + value + [True]) for key, value in usageFrame[LOCAL_IP_SET].items()]  
 
-            usageBytes = np.array(usageBytes)
+            localUsageBytes = np.array(localIPs, 
+                dtype=[
+                    ('MAC', 'object'),
+                    ('IP', 'object'),
+                    ('IN', 'i8'),
+                    ('OUT', 'i8'),
+                    ('SEEN', 'M8[ms]'),
+                    ('LOCAL', 'i8')
+                    ])
 
-            if usageBytes is None or len(usageBytes) <= 0:
-                    return None
+            fnReplaceMacs = np.vectorize(self.ReplaceMACs)
+            localUsageBytes["IP"]=fnReplaceMacs(localUsageBytes["IP"],localUsageBytes["MAC"])
 
- 
+            remoteIps = [tuple([key] + value + [False]) for key, value in usageFrame[REMOTE_IP_SET].items()]
 
-            #filterV4 = usageBytes['IP'].str.contains("([\d]+\.){3,3}\d+")    
-            filterV4 = usageBytes['IP'].str.contains(self.utl.GetIPFilter())    
-            usageBytes.drop(usageBytes[~filterV4].index, inplace = True) 
+            remoteUsageBytes = np.array(remoteIps, 
+                dtype=[
+                    ('IP', 'object'),
+                    ('MAC', 'object'),
+                    ('IN', 'i8'),
+                    ('OUT', 'i8'),
+                    ('SEEN', 'M8[ms]'),
+                     ('LOCAL', 'i8')
+                    ])
 
+            remoteUsageBytes["IP"]=fnReplaceMacs(remoteUsageBytes["IP"],remoteUsageBytes["MAC"])
+            
+            fnConvertToKB = np.vectorize(self.ConvertToKB)
+            localUsageBytes["IN"]=fnConvertToKB(localUsageBytes["IN"])
+            remoteUsageBytes["IN"]=fnConvertToKB(remoteUsageBytes["IN"])
 
-            updMac= usageBytes.apply(lambda x: self.ReplaceMACs(x.MAC, x.IP), axis=1)
-
-            now = datetime.now()
-            lastSeen = usageBytes["Last seen"].apply(lambda x: self.ConvertLastSeen(now, x))
-
-            kbIn = usageBytes["In"].apply(lambda x: self.ConvertToKB(x))
-            kbOut = usageBytes["Out"].apply(lambda x: self.ConvertToKB(x))
-
-            usageBytes.drop(usageBytes.columns[[2,3,4,5,6]], axis=1, inplace=True)
-            usageBytes.insert(2, "MAC", updMac, True)
-            usageBytes.insert(3,"LastSeen",lastSeen,True)
-            usageBytes.insert(4,"KBIn",kbIn,True)
-            usageBytes.insert(5,"KBOut",kbOut,True)
+            localUsageBytes["OUT"]=fnConvertToKB(localUsageBytes["OUT"])
+            remoteUsageBytes["OUT"]=fnConvertToKB(remoteUsageBytes["OUT"])
 
             utcDate=self.GetNowUtc()
-            usageBytes.insert(6, "DATE", utcDate, allow_duplicates=True)
-
-            usageBytes.drop(usageBytes[(usageBytes.LastSeen == 0)].index, inplace = True)
-            usageBytes.drop(usageBytes[(usageBytes.LastSeen.str.strip() == "0")].index, inplace = True)
-
-            usageBytes['DT_LastSeen'] = pd.to_datetime(usageBytes['LastSeen'], format='%Y-%m-%d %H:%M:%S')
+            localUsageBytes = NF.append_fields(localUsageBytes, "DATE", [], dtypes=[('M8[ms]')], fill_value=utcDate)
+            remoteUsageBytes = NF.append_fields(remoteUsageBytes, "DATE", [], dtypes=[('M8[ms]')], fill_value=utcDate)
 
             curDate = (date - timedelta(seconds=24 * 60 * 60))
+            localUsageBytes = localUsageBytes[localUsageBytes["SEEN"] >= curDate]
+            remoteUsageBytes = remoteUsageBytes[remoteUsageBytes["SEEN"] >= curDate]
 
-            usageBytes.drop(usageBytes[usageBytes.DT_LastSeen < curDate].index, inplace = True) 
+            routerMacs = np.unique(remoteUsageBytes["MAC"])
 
-            usageBytes.drop(["DT_LastSeen"], axis=1, inplace=True)
+            self.utl.AssignRouters(routerMacs)
 
-            self.utl.AssignRouterLanSegments(usageBytes[['IP','MAC']])
+            localUsageBytes = self.DiscardRoutersForLocalIP(localUsageBytes)
 
-            self.DiscardRoutersForLocalIP(usageBytes)
-
-            return usageBytes
+            return (localUsageBytes, remoteUsageBytes)
         except Exception as e:
             self.utl.Log(e)
             return None
