@@ -31,9 +31,9 @@ class Manager(threading.Thread):
             utcDate = datetime.strptime(extender.GetNowUtc(), '%Y-%m-%d %H:%M:%S')
             today=utcDate
 
-            startTimeFrame, startUsageFrame = None,None
+            startUsageFrame = None
 
-            if startTimeFrame is None:
+            if startUsageFrame is None:
                 startUsageFrame,prevUsageFrame = extender.RestoreFromDailyDB(today)       
 
             while today <= utcDate:
@@ -41,38 +41,40 @@ class Manager(threading.Thread):
                 time.sleep(sleepSeconds)
                 totalSleepSeconds += sleepSeconds
             
-                if (startTimeFrame is None) or (startUsageFrame is None):
-                    startTimeFrame, startUsageFrame, prevUsageFrame = extender.GetDayFirstFrame(today, prevUsageFrame) 
+                if (startUsageFrame is None):
+                    startUsageFrame, prevUsageFrame = extender.GetDayFirstFrame(today, prevUsageFrame) 
                         
                     if prevUsageFrame is None:
-                        extender.ArchivePrevFrameToDB(today)
+                        pass
+                        #extender.ArchivePrevFrameToDB(today)
                     else:
-                        (startTimeFrame, startUsageFrame) = (None, None)
+                        startUsageFrame = None
 
                     continue
                 else:
                     prevUsageFrame = None
                     if totalSleepSeconds >= dbRefreshSeconds:
-                        extender.PersistToDailyDB(startTimeFrame, startUsageFrame,today)
+                        #extender.PersistToDailyDB(startTimeFrame, startUsageFrame,today)
                         totalSleepSeconds = 0
 
-                nextTimeFrame,nextUsageFrame = extender.GetDayNextFrame(today, startTimeFrame, startUsageFrame)
+                nextUsageFrame = extender.GetDayNextFrame(today, startUsageFrame)
 
-                if nextTimeFrame is None:
+                if nextUsageFrame is None:
                     continue
+                
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print(extender.PrintableFrame(nextUsageFrame))
 
                 today = datetime.strptime(extender.GetNowUtc(), '%Y-%m-%d %H:%M:%S')
 
                 if today > utcDate:
                     continue
 
-                startTimeFrame, startUsageFrame = nextTimeFrame,nextUsageFrame
+                startUsageFrame = nextUsageFrame
 
     def stop(self):        
         self.startFlag = False
         super().join()
-
-
 
 
 

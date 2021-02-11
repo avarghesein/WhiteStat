@@ -43,14 +43,27 @@ class Analyzer:
         def CheckRouterIP(macInt):     
             return macInt in routers
 
-        frame = NF.append_fields(frame, "routerFlag", [], dtypes=[('i8')], fill_value=False)
+        frame = self.AddField(frame, "routerFlag","i8",False)
         #frame.loc[frame.IP == "192.168.1.21", 'MAC'] = "f8:c4:f3:50:53:68"
 
         fnCheckRouterFlg = np.vectorize(CheckRouterIP)
         frame["routerFlag"] = fnCheckRouterFlg(frame["MAC"])
-        frame = frame[frame["routerFlag"] == False]
+        frame = frame[ (frame["routerFlag"] == False) | (frame["LOCAL"] == False) ]
         frame = NF.drop_fields(frame, ['routerFlag'])
         return frame
+
+    def BuildFrame(self, usageList):
+        
+        dtypes =[
+                    ('IP', 'object'),
+                    ('MAC', 'object'),
+                    ('IN', 'f8'),
+                    ('OUT', 'f8'),
+                    ('SEEN', 'M8[ms]'),
+                    ('LOCAL', 'i8')
+                    ]            
+        return np.array(usageList, dtype=dtypes)
+
 
     def GetUsageFrame(self,date):
         try:
@@ -61,71 +74,56 @@ class Analyzer:
             if usageFrame is None:
                     return None
             
-            localIPs =  [tuple([key] + value + [True]) for key, value in usageFrame[LOCAL_IP_SET].items()]  
+            localIPs =  [tuple([value[0]] + [key] + value[1:] + [True]) for key, value in usageFrame[LOCAL_IP_SET].items()]  
 
-            localUsageBytes = np.array(localIPs, 
-                dtype=[
-                    ('MAC', 'object'),
-                    ('IP', 'object'),
-                    ('IN', 'i8'),
-                    ('OUT', 'i8'),
-                    ('SEEN', 'M8[ms]'),
-                    ('LOCAL', 'i8')
-                    ])
-
-            fnReplaceMacs = np.vectorize(self.ReplaceMACs)
-            localUsageBytes["IP"]=fnReplaceMacs(localUsageBytes["IP"],localUsageBytes["MAC"])
+            localUsageBytes = self.BuildFrame(localIPs)
 
             remoteIps = [tuple([key] + value + [False]) for key, value in usageFrame[REMOTE_IP_SET].items()]
 
-            remoteUsageBytes = np.array(remoteIps, 
-                dtype=[
-                    ('IP', 'object'),
-                    ('MAC', 'object'),
-                    ('IN', 'i8'),
-                    ('OUT', 'i8'),
-                    ('SEEN', 'M8[ms]'),
-                     ('LOCAL', 'i8')
-                    ])
+            remoteUsageBytes = self.BuildFrame(remoteIps)
 
-            remoteUsageBytes["IP"]=fnReplaceMacs(remoteUsageBytes["IP"],remoteUsageBytes["MAC"])
+            usageFrame = np.concatenate((localUsageBytes, remoteUsageBytes), axis=0)
+
+            fnReplaceMacs = np.vectorize(self.ReplaceMACs)
+            usageFrame["MAC"]=fnReplaceMacs(usageFrame["IP"],usageFrame["MAC"])
             
             fnConvertToKB = np.vectorize(self.ConvertToKB)
-            localUsageBytes["IN"]=fnConvertToKB(localUsageBytes["IN"])
-            remoteUsageBytes["IN"]=fnConvertToKB(remoteUsageBytes["IN"])
+            usageFrame["IN"]=fnConvertToKB(usageFrame["IN"])
+            usageFrame["OUT"]=fnConvertToKB(usageFrame["OUT"])
 
-            localUsageBytes["OUT"]=fnConvertToKB(localUsageBytes["OUT"])
-            remoteUsageBytes["OUT"]=fnConvertToKB(remoteUsageBytes["OUT"])
+            #utcDate=self.GetNowUtc()
+            usageFrame = self.AddField(usageFrame, "DATE","M8[ms]",date)
 
-            utcDate=self.GetNowUtc()
-            localUsageBytes = NF.append_fields(localUsageBytes, "DATE", [], dtypes=[('M8[ms]')], fill_value=utcDate)
-            remoteUsageBytes = NF.append_fields(remoteUsageBytes, "DATE", [], dtypes=[('M8[ms]')], fill_value=utcDate)
-
+            #Max get records for last 2 days
             curDate = (date - timedelta(seconds=24 * 60 * 60))
-            localUsageBytes = localUsageBytes[localUsageBytes["SEEN"] >= curDate]
-            remoteUsageBytes = remoteUsageBytes[remoteUsageBytes["SEEN"] >= curDate]
+            usageFrame = usageFrame[usageFrame["SEEN"] >= curDate]
 
-            routerMacs = np.unique(remoteUsageBytes["MAC"])
+            routerMacs = np.unique(usageFrame["MAC"][usageFrame["LOCAL"] == False])
 
             self.utl.AssignRouters(routerMacs)
 
-            localUsageBytes = self.DiscardRoutersForLocalIP(localUsageBytes)
+            usageFrame = self.DiscardRoutersForLocalIP(usageFrame)
 
-            return (localUsageBytes, remoteUsageBytes)
+            return usageFrame
         except Exception as e:
             self.utl.Log(e)
             return None
 
-    def GetDayFirstFrame(self, date, prevDateUsageFrame):
+    def AddField(self, frame, name, dataType, defaultVal = None):
+        frame = NF.append_fields(frame, name, [], dtypes=[(dataType)], fill_value=defaultVal)
+        frame[name] = defaultVal
+        return frame
+
+    def GetDayFirstFrame(self, date, prevUsageFrame):
         try:
 
-            startUsageFrame = self.GetUsageFrame(date)    
+            usageFrame = self.GetUsageFrame(date)    
 
-            if startUsageFrame is None:
-                return (None,None, prevDateUsageFrame)    
+            if (usageFrame is None) :
+                return (None, prevUsageFrame)    
 
             ##Get last day LSTDAY values from PrevDataUsageFrame
-            if not (prevDateUsageFrame is None) and not (prevDateUsageFrame.empty):
+            if not (prevUsageFrame is None) and not (prevUsageFrame.empty):
 
                 prevDateUsageFrame = self.StabilizeIP(date, prevDateUsageFrame, startUsageFrame)
 
@@ -165,159 +163,177 @@ class Analyzer:
 
                 prevDateUsageFrame = None
             else:
-                startUsageFrame.insert(0, "LSTDAY_KBIn", 0, allow_duplicates=True) 
-                startUsageFrame.insert(1, "LSTDAY_KBOut", 0, allow_duplicates=True) 
-                startUsageFrame["LSTDAY_KBIn"] = startUsageFrame["KBIn"]
-                startUsageFrame["LSTDAY_KBOut"] = startUsageFrame["KBOut"]
-                startUsageFrame["KBOut"] -= startUsageFrame["LSTDAY_KBOut"] 
-                startUsageFrame["KBIn"] -= startUsageFrame["LSTDAY_KBIn"]
+                usageFrame = self.AddField(usageFrame, "LSTDAY_IN","f8",0.0)
+                usageFrame = self.AddField(usageFrame, "LSTDAY_OUT","f8",0.0)
+
+                usageFrame["LSTDAY_IN"] = usageFrame["IN"]
+                usageFrame["LSTDAY_OUT"] = usageFrame["OUT"]
+
+                usageFrame["IN"] -= usageFrame["LSTDAY_IN"]
+                usageFrame["OUT"] -= usageFrame["LSTDAY_OUT"]
         
-            return (startTimeFrame,startUsageFrame, prevDateUsageFrame)
+            return (usageFrame, None)
+
         except Exception as e:
             self.utl.Log(e)
-            return (None,None, prevDateUsageFrame)
+            return (None, prevUsageFrame)  
 
-    def StabilizeIP(self, date, prevFrame, frame):
-        def CheckLanSegment(mac,ip):     
-            ipInLan = list(filter(lambda x: ip.startswith(x), self.utl.GetLANSegments()))    
+    def BuildMergedFrame(self, usageList, isLocal = True):
+        dtypes = None
+        if isLocal:
+            dtypes =[
+                    ('MAC', 'object'),
+                    ('DATE', 'M8[ms]'),
+                    ('IP1', 'object'),
+                    ('IP', 'object'),
+                    ('IN', 'f8'),
+                    ('IN2', 'f8'),
+                    ('OUT', 'f8'),
+                    ('OUT2', 'f8'),
+                    ('SEEN1', 'M8[ms]'),
+                    ('SEEN', 'M8[ms]'),
+                    ('LOCAL1', 'i8'),
+                    ('LOCAL', 'i8'),
+                    ('LSTDAY_IN', 'f8'),
+                    ('LSTDAY_OUT', 'f8')
+                    ]
+        else:
+            dtypes =[
+                    ('IP', 'object'),
+                    ('DATE', 'M8[ms]'),
+                    ('MAC1', 'object'),
+                    ('MAC', 'object'),
+                    ('IN', 'f8'),
+                    ('IN2', 'f8'),
+                    ('OUT', 'f8'),
+                    ('OUT2', 'f8'),
+                    ('SEEN1', 'M8[ms]'),
+                    ('SEEN', 'M8[ms]'),
+                    ('LOCAL1', 'i8'),
+                    ('LOCAL', 'i8'),
+                    ('LSTDAY_IN', 'f8'),
+                    ('LSTDAY_OUT', 'f8')
+                    ]
+        return np.array(usageList, dtype=dtypes)
 
-            if ((not (ipInLan is None )) and (len(ipInLan) > 0)) :
-                return True
-            
-            return False;
+    def ProcessMergedFrame(self, frame, isLocal = True):
+        mask = frame.mask
+        data = frame.data
 
-        #frame.loc[frame.IP == "192.168.1.21", 'MAC'] = "f8:c4:f3:50:53:68"
-        oldFrame = prevFrame
-        prevFrame = prevFrame[["IP","MAC", "LSTDAY_KBIn","LastSeen"]]     
-        prevFrame["lanFlag"]= prevFrame.apply(lambda x: CheckLanSegment(x.MAC, x.IP), axis=1)  
-        prevFrame = prevFrame[prevFrame.lanFlag == True] 
-        prevFrame.rename(columns = {'IP':'IP_OLD',"LastSeen":"LastSeen_OLD"}, inplace = True)
-        
-        frame = frame[["IP","MAC","KBIn","LastSeen"]]
-        frame["lanFlag"]= frame.apply(lambda x: CheckLanSegment(x.MAC, x.IP), axis=1)
-        frame = frame[frame.lanFlag == True]
+        isNull = True
+        #2 is New, 1 is Old. i.e. IP1 is old IP2 is new
+        bothInOldNew = ( (mask["SEEN2"] != isNull) & (mask["SEEN1"] != isNull) )
+        OnlyInOld = ( (mask["SEEN2"] == isNull) )
+        OnlyInNew = ( (mask["SEEN1"] == isNull) )
 
-        #frame.loc[frame.IP == "192.168.1.21", 'MAC'] = "f8:c4:f3:50:53:68"
 
-        newFrame = prevFrame.merge(frame, on=['MAC'], how ="inner")
+        if(isLocal):
+            data["IP2"][OnlyInOld] = data["IP1"][OnlyInOld]
+        else:
+            data["MAC2"][OnlyInOld] = data["MAC1"][OnlyInOld]
 
-        prevFrame.rename(columns = {'IP_OLD':'IP', "LastSeen_OLD":"LastSeen"}, inplace = True)
 
-        dic = {}
-    
-        def ReMapIpMac(mac,ip_old,new_ip):
-            dic[f"{mac},{ip_old}"] = new_ip
-            return None
+        data["LSTDAY_IN"][mask["LSTDAY_IN"] == isNull] = 0.0
+        data["LSTDAY_OUT"][mask["LSTDAY_OUT"] == isNull] = 0.0
 
-        newFrame = newFrame[(newFrame.IP != newFrame.IP_OLD)]
-        
-        if not(newFrame is None or newFrame.empty):
-            newFrame.apply(lambda x: ReMapIpMac(x.MAC,x.IP_OLD,x.IP),axis=1)
+        data["IN1"][mask["IN1"] == isNull] = 0.0
+        data["OUT1"][mask["OUT1"] == isNull] = 0.0
+        data["IN2"][mask["IN2"] == isNull] = 0.0
+        data["OUT2"][mask["OUT2"] == isNull] = 0.0
 
-        updIP= oldFrame.apply(lambda x: dic.get(f"{x.MAC},{x.IP}",x.IP), axis=1)
+        #for old records in local, retain the same value (will happen below while adding the bytes)
+        #records exists only in local, and no more in server
+        data["IN2"][OnlyInOld] = data["LSTDAY_IN"][OnlyInOld]
+        data["OUT2"][OnlyInOld] = data["LSTDAY_OUT"][OnlyInOld]
 
-        oldFrame.drop(["IP"], axis=1, inplace=True)
-        oldFrame.insert(0, "IP", updIP, True)
+        higherInCond = ( data["IN2"] >= data["LSTDAY_IN"] )
+        data["IN1"][higherInCond] += (data["IN2"][higherInCond] - data["LSTDAY_IN"][higherInCond])
 
-        return self.EnsureIP_MAC_Combo(date, oldFrame,"From StabilizeIP",fix=True)
+        higherOutCond = ( data["OUT2"] >= data["LSTDAY_OUT"] )
+        data["OUT1"][higherOutCond] += (data["OUT2"][higherOutCond] - data["LSTDAY_OUT"][higherOutCond])
 
-    
-    def GetDayNextFrame(self, date, prevTimeFrame, prevUsageFrame):
+        lowerInCond = ( data["IN2"] < data["LSTDAY_IN"] )
+        data["IN1"][lowerInCond] += data["IN2"][lowerInCond]
+
+        lowerOutCond = ( data["OUT2"] < data["LSTDAY_OUT"] )
+        data["OUT1"][lowerOutCond] += data["OUT2"][lowerOutCond]
+
+        data["LSTDAY_IN"] = data["IN2"]
+        data["LSTDAY_OUT"] = data["OUT2"]
+
+        data["LOCAL2"][OnlyInOld] = data["LOCAL1"][OnlyInOld]
+        data["SEEN2"][OnlyInOld] = data["SEEN1"][OnlyInOld]
+
+        frame = self.BuildMergedFrame(data,isLocal)
+
+        frame = NF.drop_fields(frame, ['IN2','OUT2','SEEN1','LOCAL1'])
+
+        if isLocal:
+            frame = NF.drop_fields(frame, ['IP1'])
+        else:
+            frame = NF.drop_fields(frame, ['MAC1'])
+
+        fnRound = np.vectorize(round)
+        frame['IN'] = fnRound(frame['IN'],2)
+        frame['OUT'] = fnRound(frame['OUT'],2)
+        frame['LSTDAY_IN'] = fnRound(frame['LSTDAY_IN'],2)
+        frame['LSTDAY_OUT'] = fnRound(frame['LSTDAY_OUT'],2)
+
+        return frame [[ 'IP','MAC','DATE','IN','OUT', 'SEEN','LOCAL', 'LSTDAY_IN' , 'LSTDAY_OUT' ]].copy()
+
+    def GetDayNextFrame(self, date, prevUsageFrame):
         try:
-            startTimeFrame = prevTimeFrame
             startUsageFrame = prevUsageFrame
-            nextTimeFrame = self.RunningFor()
-
-            if nextTimeFrame is None:
-                return (None, None)
-
             nextUsageFrame = self.GetUsageFrame(date)  
             
             if nextUsageFrame is None:
-                return (None, None)
+                return None
 
             if startUsageFrame is None:
-                return (nextTimeFrame,nextUsageFrame)
-    
-
-            startUsageFrame = self.StabilizeIP(date, startUsageFrame, nextUsageFrame)
-
-            nextUsageFrame.rename(columns = {'LastSeen':'LastSeen_NXT'}, inplace = True)
-            nextUsageFrame.rename(columns = {'KBIn':'KBIn_NXT'}, inplace = True)
-            nextUsageFrame.rename(columns = {'KBOut':'KBOut_NXT'}, inplace = True)
-            nextUsageFrame.rename(columns = {'Hostname':'Hostname_NXT'}, inplace = True)
-            #nextUsageFrame.rename(columns = {'DATE':'DATE_NXT'}, inplace = True)
-
-            newUsageFrame = nextUsageFrame.merge(startUsageFrame, on=['IP', 'MAC', 'DATE'], how ="outer")
-
-            #self.EnsureIP_MAC_Combo(newUsageFrame,"From GetDayNextFrame, Just after Merge")
+                return nextUsageFrame
             
-            #for new records from Server, Start the Meter as new with same returned bytes
-            # (will happen below while adding the bytes)
-            #records exists newly in server, and not in local
-            newUsageFrame.fillna(value={'LSTDAY_KBIn': 0.0, 'LSTDAY_KBOut': 0.0, 'KBIn': 0.0, 'KBOut': 0.0}, inplace=True)
-                       
-            #If the records already existing, update last seen and date, to reflect recent
-            #New Rows
-            newUsageFrame['LastSeen'].fillna(newUsageFrame['LastSeen_NXT'],inplace=True)
-            newUsageFrame['Hostname'].fillna(newUsageFrame['Hostname_NXT'],inplace=True)
-   
-            newUsageFrame.loc[(pd.notna(newUsageFrame.Hostname_NXT)) &
-            (pd.notna(newUsageFrame.Hostname)), 'Hostname'] = newUsageFrame["Hostname_NXT"]
+            localNewFrame = nextUsageFrame[nextUsageFrame["LOCAL"] == True]
+            remoteNewFrame = nextUsageFrame[nextUsageFrame["LOCAL"] == False]
 
-            #newUsageFrame.loc[(pd.notna(newUsageFrame.DATE_NXT)) &
-            #(pd.notna(newUsageFrame.DATE)), 'DATE'] = newUsageFrame["DATE_NXT"] 
-                        
-            #for old records in local, retain the same value (will happen below while adding the bytes)
-            #records exists only in local, and no more in server
-            newUsageFrame.loc[pd.isna(newUsageFrame.KBIn_NXT), 'KBIn_NXT'] = newUsageFrame.LSTDAY_KBIn
-            newUsageFrame.loc[pd.isna(newUsageFrame.KBOut_NXT), 'KBOut_NXT'] = newUsageFrame.LSTDAY_KBOut  
-                        
-            #if nextTimeFrame[1] >= startTimeFrame[1]:    
-            #    newUsageFrame["KBIn"] += newUsageFrame["KBIn_NXT"] - newUsageFrame["LSTDAY_KBIn"]
-            #    newUsageFrame["KBOut"] += newUsageFrame["KBOut_NXT"] - newUsageFrame["LSTDAY_KBOut"]
-            #else:
-            #    newUsageFrame["KBIn"] += newUsageFrame["KBIn_NXT"]
-            #    newUsageFrame["KBOut"] += newUsageFrame["KBOut_NXT"]
+            localOldFrame = startUsageFrame[startUsageFrame["LOCAL"] == True]
+            remoteOldFrame = startUsageFrame[startUsageFrame["LOCAL"] == False]
 
-            newUsageFrame.loc[
-                    newUsageFrame.KBIn_NXT >= newUsageFrame.LSTDAY_KBIn  ,
-                    'KBIn'] += newUsageFrame.KBIn_NXT - newUsageFrame.LSTDAY_KBIn
-            newUsageFrame.loc[
-                    newUsageFrame.KBOut_NXT >= newUsageFrame.LSTDAY_KBOut  ,
-                    'KBOut'] += newUsageFrame.KBOut_NXT - newUsageFrame.LSTDAY_KBOut
+            localMergedFrame = NF.join_by(["MAC", "DATE"],localOldFrame,localNewFrame,jointype="outer")
+            localMergedFrame = self.ProcessMergedFrame(localMergedFrame)
 
-            newUsageFrame.loc[
-                    newUsageFrame.KBIn_NXT < newUsageFrame.LSTDAY_KBIn  ,
-                    'KBIn'] += newUsageFrame.KBIn_NXT
-            newUsageFrame.loc[
-                    newUsageFrame.KBOut_NXT < newUsageFrame.LSTDAY_KBOut  ,
-                    'KBOut'] += newUsageFrame.KBOut_NXT
+            remoteMergedFrame = NF.join_by(["IP", "DATE"],remoteOldFrame,remoteNewFrame,jointype="outer")
+            remoteMergedFrame = self.ProcessMergedFrame(remoteMergedFrame,False) 
 
-            newUsageFrame["LSTDAY_KBIn"] = newUsageFrame["KBIn_NXT"]
-            newUsageFrame["LSTDAY_KBOut"] = newUsageFrame["KBOut_NXT"]
-
-            newUsageFrame.drop('KBIn_NXT', inplace=True, axis=1)
-            newUsageFrame.drop('KBOut_NXT', inplace=True, axis=1)        
-            
-            newUsageFrame = self.EnsureIP_MAC_Combo(date, newUsageFrame,"From GetDayNextFrame, Just Before Return",fix=True)
-
-            #New Rows, Existing Rows match. Inner Join, make the values recent
-            newUsageFrame.loc[(pd.notna(newUsageFrame.LastSeen_NXT)) &
-            (pd.notna(newUsageFrame.LastSeen)), 'LastSeen'] = newUsageFrame["LastSeen_NXT"]
-      
-            newUsageFrame.fillna(value={'Hostname': "(none)"}, inplace=True)
-
-            newUsageFrame.drop('Hostname_NXT', inplace=True, axis=1)
-            newUsageFrame.drop('LastSeen_NXT', inplace=True, axis=1)
-            #newUsageFrame.drop('DATE_NXT', inplace=True, axis=1)                        
-
-            return (nextTimeFrame,newUsageFrame)
-        
+            mergedFrame = np.concatenate((localMergedFrame, remoteMergedFrame), axis=0)
+  
+            return mergedFrame
         except Exception as e:
             self.utl.Log(e)
-            return (None,None)
+            return None
     
+    def PrintableFrame(self, frame):
+        if frame is None:
+            return None
+
+        newFrame = frame.copy()
+
+        def ConvertToIPString(ipInt):
+            return self.utl.UnPackIPPackedIntToString(ipInt)
+        
+        def ConvertToMACString(macInt):
+            return self.utl.UnPackPackedIntToString(macInt)
+
+        fnIPString = np.vectorize(ConvertToIPString)
+        fnMACString = np.vectorize(ConvertToMACString)
+
+        newFrame = self.AddField(newFrame, "MAC1","U100","")
+        newFrame = self.AddField(newFrame, "IP1","U100","")
+        newFrame["MAC1"]=fnMACString(newFrame["MAC"])
+        newFrame["IP1"]=fnIPString(newFrame["IP"])
+        newFrame = NF.drop_fields(newFrame, ['IP','MAC'])
+        np.set_printoptions(suppress=True)
+        return newFrame
+
     def EnsureIP_MAC_Combo(self,date, frame, msg=None,fix=False):
 
         self.DiscardRoutersForLocalIP(frame)

@@ -233,6 +233,8 @@ class Utility:
 
         #Add support for IPas well, change sep and formatter
         byteList = self.UnpackIntToBytes(packedBytesInt)
+        byteList = bytearray( [0 for idx in range(0,6-len(byteList))] ) + byteList
+
         macString = sep.join(['%02x' % byte for byte in byteList])
 
         with self._lock:
@@ -249,11 +251,18 @@ class Utility:
             return "0.0.0.0"
             
         ipBytes = bytes(self.UnpackIntToBytes(packedBytesInt))
-        ipString = ""
-        if(len(ipBytes) > 4):
-            ipString = socket.inet_ntop(AF_INET6,ipBytes);
+
+        if len(ipBytes) > 4:
+            ipBytes = bytearray( [0 for idx in range(0, 16-len(ipBytes))] ) + ipBytes
         else:
-            ipString = socket.inet_ntoa(ipBytes)
+            ipBytes = bytearray( [0 for idx in range(0, 4-len(ipBytes))] ) + ipBytes
+
+        ipString = ""
+
+        if(len(ipBytes) > 4):
+            ipString = socket.inet_ntop(AF_INET6,ipBytes)
+        else:
+              ipString = socket.inet_ntoa(ipBytes)
 
         with self._lock:
             if not( packedBytesInt in self.ipStrings.keys()):
