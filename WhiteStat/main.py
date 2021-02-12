@@ -8,6 +8,7 @@ import time
 import WhiteStat.Common.Utility as UTL
 import WhiteStat.NetMonitor.Monitor as MTR
 import WhiteStat.Analyzer.Manager as MR
+import WhiteStat.Analyzer.WebServer as WS
 
 def main(argv):
 
@@ -28,17 +29,19 @@ def main(argv):
 
     monitor = MTR.Monitor()
     analyzer = MR.Manager()
+    webServer = WS.WebServer()
 
     #monitor.start()
-    analyzer.start()
+    #analyzer.start()
+    webServer.start()
 
     try:
         while True:
             time.sleep(15) 
     finally:
-        monitor.stop()
+        webServer.stop()
         analyzer.stop()
+        monitor.stop()
 
 if __name__ == "__main__":
   main(sys.argv)
-  
