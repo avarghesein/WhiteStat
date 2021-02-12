@@ -23,13 +23,11 @@ def Initialize(configFolder, url, serverPort=777,hostIface = "eth0"):
         if not os.path.exists(f"{configFolder}/WhiteStatConfig.json"):
             copyfile(f"{scriptPath}/WhiteStatConfig.json", f"{configFolder}/WhiteStatConfig.json")
             copyfile(f"{scriptPath}/WhiteStat.db", f"{configFolder}/WhiteStat.db")
-            copyfile(f"{scriptPath}/IP_MAC.txt", f"{configFolder}/IP_MAC.txt")
-            copyfile(f"{scriptPath}/MAC_MAC.txt", f"{configFolder}/MAC_MAC.txt")
-            copyfile(f"{scriptPath}/MAC_MAC.txt", f"{configFolder}/MAC_HOST.txt")
+            copyfile(f"{scriptPath}/MAC_HOST.txt", f"{configFolder}/MAC_HOST.txt")
 
             jsonObj = json.loads(open(f"{configFolder}/WhiteStatConfig.json", 'r').read())
-            jsonObj["MONITOR"] = url
-            jsonObj["SERVER_PORT"] = int(serverPort)
+            jsonObj["MONITOR_URL"] = url
+            jsonObj["ANALYZER_PORT"] = int(serverPort)
             jsonObj["DATA_STORE"] = configFolder
             jsonObj["HOST_INTERFACE"] = hostIface
             
@@ -66,17 +64,19 @@ class Utility:
         self.configFolder = jsonObj["DATA_STORE"]
 
         self.hostInterfaces = jsonObj["HOST_INTERFACE"]
-        self.url = jsonObj["MONITOR"]
+        self.url = jsonObj["MONITOR_URL"]
         self.ipfilter = jsonObj["IPFilter"]
         self.updateDBSeconds = int(jsonObj["UpdateDBSeconds"])
         self.idleSeconds = int(jsonObj["IdleSeconds"])
-        self.ServerPort = int(jsonObj["SERVER_PORT"])
+        self.ServerPort = int(jsonObj["ANALYZER_PORT"])
 
-        self.macmac = f"{self.configFolder}/{jsonObj['MAC_MAC_REWRITE']}"
-        self.macmacDict = self.__ToDictionary(f"{self.macmac}",self.PackMacToInt, self.PackMacToInt)
+        #self.macmac = f"{self.configFolder}/{jsonObj['MAC_MAC_REWRITE']}"
+        #self.macmacDict = self.__ToDictionary(f"{self.macmac}",self.PackMacToInt, self.PackMacToInt)
+        self.macmacDict = {}
 
-        self.ipmac = f"{self.configFolder}/{jsonObj['IP_MAC_REWRITE']}"
-        self.ipmacDict = self.__ToDictionary(f"{self.ipmac}", self.PackIpToInt, self.PackMacToInt)
+        #self.ipmac = f"{self.configFolder}/{jsonObj['IP_MAC_REWRITE']}"
+        #self.ipmacDict = self.__ToDictionary(f"{self.ipmac}", self.PackIpToInt, self.PackMacToInt)
+        self.ipmacDict = {}
 
         self.macHost = f"{self.configFolder}/{jsonObj['MAC_HOST_MAP']}"
         self.macHostDict = self.__ToDictionary(f"{self.macHost}")
@@ -96,11 +96,37 @@ class Utility:
 
         self.extraPcapFilter = f"{jsonObj['EXTRA_PCAP_FILTER']}"
         
-        self._lock = threading.Lock()
+        self._lock = threading.Lock()        
+
         self.ipTypeLocal = {}
         self.macStrings = {}
         self.ipStrings = {}
 
+        self._hashLock = threading.Lock()
+        self.ipHashMap = {}
+        self.hashIPMap = {}
+        self.ipHashIdx = 0
+
+
+    def IpToHash(self, ipInt):
+        if ipInt in self.ipHashMap:
+            return self.ipHashMap[ipInt]
+        
+        ipHash = 0
+        with self._hashLock:
+            self.ipHashIdx += 1
+            ipHash = self.ipHashIdx
+            self.ipHashMap[ipInt] = ipHash
+            self.hashIPMap[ipHash] = ipInt
+        
+        return ipHash
+
+
+    def HashToIp(self, hashInt):
+        if hashInt in self.hashIPMap:
+            return self.hashIPMap[hashInt]
+
+        return 0
 
     def __ToDictionary(self,file, keyConverter = None, valueConverter = None):
         try:
@@ -171,9 +197,10 @@ class Utility:
         try:
             print(message)
             date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            with open(self.trace, "a") as logFile:
-                logFile.write(date + ":" +message +"\n")
-                logFile.close()
+            with self._lock:
+                with open(self.trace, "a") as logFile:
+                    logFile.write(date + ":" +message +"\n")
+                    logFile.close()
         except Exception as e:
             Log(e) 
 
@@ -186,9 +213,10 @@ class Utility:
             msg=f"{exc_type},{fname},{exc_tb.tb_lineno}"
             print(exc_type, fname, exc_tb.tb_lineno)
             date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            with open(self.log, "a") as logFile:
-                logFile.write(date + ":" + str(exception) + ":" + msg +"\n")
-                logFile.close()
+            with self._lock:
+                with open(self.log, "a") as logFile:
+                    logFile.write(date + ":" + str(exception) + ":" + msg +"\n")
+                    logFile.close()
         except Exception as e:
             print(e)  
 
@@ -217,7 +245,7 @@ class Utility:
 
     def UnpackIntToBytes(self,packedBytesInt):
         import math
-        number_of_bytes = int(math.ceil(packedBytesInt.bit_length() / 8))
+        number_of_bytes = int(math.ceil(int(packedBytesInt).bit_length() / 8))
 
         return bytearray([(((255 << (index * 8)) & packedBytesInt) >> (index * 8)) for 
                 index in range(number_of_bytes - 1,-1,-1)])

@@ -1,5 +1,6 @@
 import requests
 import numpy as np
+import pandas as pd
 from datetime import datetime, timedelta
 import WhiteStat.Common.Utility as UTL
 import WhiteStat.NetMonitor.RemoteServer as RS
@@ -55,8 +56,8 @@ class Analyzer:
     def BuildFrame(self, usageList):
         
         dtypes =[
-                    ('IP', 'object'),
-                    ('MAC', 'object'),
+                    ('IP', 'i8'),
+                    ('MAC', 'i8'),
                     ('IN', 'f8'),
                     ('OUT', 'f8'),
                     ('SEEN', 'M8[ms]'),
@@ -72,13 +73,13 @@ class Analyzer:
             usageFrame = curFrame.GetFrame()
 
             if usageFrame is None:
-                    return None
+                    return None            
             
-            localIPs =  [tuple([value[0]] + [key] + value[1:] + [True]) for key, value in usageFrame[LOCAL_IP_SET].items()]  
+            localIPs =  [tuple([self.utl.IpToHash(value[0])] + [key] + value[1:] + [True]) for key, value in usageFrame[LOCAL_IP_SET].items()]  
 
             localUsageBytes = self.BuildFrame(localIPs)
 
-            remoteIps = [tuple([key] + value + [False]) for key, value in usageFrame[REMOTE_IP_SET].items()]
+            remoteIps = [tuple([self.utl.IpToHash(key)] + value + [False]) for key, value in usageFrame[REMOTE_IP_SET].items()]
 
             remoteUsageBytes = self.BuildFrame(remoteIps)
 
@@ -182,10 +183,10 @@ class Analyzer:
         dtypes = None
         if isLocal:
             dtypes =[
-                    ('MAC', 'object'),
+                    ('MAC', 'i8'),
                     ('DATE', 'M8[ms]'),
-                    ('IP1', 'object'),
-                    ('IP', 'object'),
+                    ('IP1', 'i8'),
+                    ('IP', 'i8'),
                     ('IN', 'f8'),
                     ('IN2', 'f8'),
                     ('OUT', 'f8'),
@@ -199,10 +200,10 @@ class Analyzer:
                     ]
         else:
             dtypes =[
-                    ('IP', 'object'),
+                    ('IP', 'i8'),
                     ('DATE', 'M8[ms]'),
-                    ('MAC1', 'object'),
-                    ('MAC', 'object'),
+                    ('MAC1', 'i8'),
+                    ('MAC', 'i8'),
                     ('IN', 'f8'),
                     ('IN2', 'f8'),
                     ('OUT', 'f8'),
@@ -325,11 +326,12 @@ class Analyzer:
 
         fnIPString = np.vectorize(ConvertToIPString)
         fnMACString = np.vectorize(ConvertToMACString)
+        fnHashToIp = np.vectorize(self.utl.HashToIp)
 
         newFrame = self.AddField(newFrame, "MAC1","U100","")
         newFrame = self.AddField(newFrame, "IP1","U100","")
         newFrame["MAC1"]=fnMACString(newFrame["MAC"])
-        newFrame["IP1"]=fnIPString(newFrame["IP"])
+        newFrame["IP1"]=fnIPString(fnHashToIp(newFrame["IP"]))
         newFrame = NF.drop_fields(newFrame, ['IP','MAC'])
         np.set_printoptions(suppress=True)
         return newFrame
