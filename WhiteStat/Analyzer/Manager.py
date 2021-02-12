@@ -31,6 +31,9 @@ class Manager(threading.Thread):
             utcDate = datetime.strptime(extender.GetNowUtc(), '%Y-%m-%d %H:%M:%S')
             today=utcDate
 
+            #remove testing
+            test = extender.GetHistoricRecords(extender.GetNowUtc(),extender.GetNowUtc())
+
             startUsageFrame = None
 
             if startUsageFrame is None:
@@ -45,8 +48,7 @@ class Manager(threading.Thread):
                     startUsageFrame, prevUsageFrame = extender.GetDayFirstFrame(today, prevUsageFrame) 
                         
                     if prevUsageFrame is None:
-                        pass
-                        #extender.ArchivePrevFrameToDB(today)
+                        extender.ArchivePrevFrameToDB(today)
                     else:
                         startUsageFrame = None
 
@@ -54,7 +56,7 @@ class Manager(threading.Thread):
                 else:
                     prevUsageFrame = None
                     if totalSleepSeconds >= dbRefreshSeconds:
-                        #extender.PersistToDailyDB(startTimeFrame, startUsageFrame,today)
+                        extender.PersistToDailyDB(startUsageFrame,today)
                         totalSleepSeconds = 0
 
                 nextUsageFrame = extender.GetDayNextFrame(today, startUsageFrame)

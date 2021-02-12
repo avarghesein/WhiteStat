@@ -29,7 +29,7 @@ def main(argv):
     monitor = MTR.Monitor()
     analyzer = MR.Manager()
 
-    monitor.start()
+    #monitor.start()
     analyzer.start()
 
     try:
@@ -41,3 +41,4 @@ def main(argv):
 
 if __name__ == "__main__":
   main(sys.argv)
+  

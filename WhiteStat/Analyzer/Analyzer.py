@@ -1,6 +1,5 @@
 import requests
 import numpy as np
-import pandas as pd
 from datetime import datetime, timedelta
 import WhiteStat.Common.Utility as UTL
 import WhiteStat.NetMonitor.RemoteServer as RS
@@ -53,7 +52,7 @@ class Analyzer:
         frame = NF.drop_fields(frame, ['routerFlag'])
         return frame
 
-    def BuildFrame(self, usageList):
+    def BuildFrame(self, usageList, fromDB = False):
         
         dtypes =[
                     ('IP', 'i8'),
@@ -63,6 +62,14 @@ class Analyzer:
                     ('SEEN', 'M8[ms]'),
                     ('LOCAL', 'i8')
                     ]            
+        
+        if fromDB:
+            dtypes += [
+                ('DATE', 'M8[ms]'),
+                ('LSTDAY_IN', 'f8'),
+                ('LSTDAY_OUT', 'f8'),
+            ]
+
         return np.array(usageList, dtype=dtypes)
 
 
@@ -124,45 +131,40 @@ class Analyzer:
                 return (None, prevUsageFrame)    
 
             ##Get last day LSTDAY values from PrevDataUsageFrame
-            if not (prevUsageFrame is None) and not (prevUsageFrame.empty):
+            if not (prevUsageFrame is None):
 
-                prevDateUsageFrame = self.StabilizeIP(date, prevDateUsageFrame, startUsageFrame)
+                prevFrame = prevUsageFrame.copy()
+                prevFrame['DATE'] = date
 
-                prevSubFrame = prevDateUsageFrame[["IP", "MAC", "LSTDAY_KBIn","LSTDAY_KBOut"]]
-                startUsageFrame = startUsageFrame.merge(prevSubFrame, on=['IP', 'MAC'], how ="left")
+                localNewFrame = usageFrame[usageFrame["LOCAL"] == True]
+                remoteNewFrame = usageFrame[usageFrame["LOCAL"] == False]
 
-                startUsageFrame = self.EnsureIP_MAC_Combo(date, startUsageFrame,"From GetDayFirstFrame",fix=True)
+                localOldFrame = prevFrame[prevFrame["LOCAL"] == True]
+                remoteOldFrame = prevFrame[prevFrame["LOCAL"] == False]
 
-                startUsageFrame.fillna(value={'LSTDAY_KBIn': 0.0, 'LSTDAY_KBOut': 0.0}, inplace=True)
-                
-                startUsageFrame.loc[
-                    startUsageFrame.KBIn < startUsageFrame.LSTDAY_KBIn  ,
-                    'LSTDAY_KBIn'] = startUsageFrame.KBIn
+                isNull = True
 
-                startUsageFrame.loc[
-                    startUsageFrame.KBOut < startUsageFrame.LSTDAY_KBOut  ,
-                    'LSTDAY_KBOut'] = startUsageFrame.KBOut
+                localMergedFrame = NF.join_by(["MAC","DATE"],localOldFrame, localNewFrame, jointype="outer")                
+                mask = localMergedFrame.mask
+                data = localMergedFrame.data
+                newRecordsOnly = ( (mask["SEEN2"] != isNull) )
+                localMergedFrame = localMergedFrame[newRecordsOnly]
+                localMergedFrame["IN1"] = 0.0
+                localMergedFrame["OUT1"] = 0.0
+                localMergedFrame = self.ProcessMergedFrame(localMergedFrame)
 
-                kbIn = startUsageFrame["KBIn"].apply(lambda x: x)
-                kbOut = startUsageFrame["KBOut"].apply(lambda x: x)
+                remoteMergedFrame = NF.join_by(["IP","DATE"],remoteOldFrame, remoteNewFrame, jointype="outer")
+                mask = remoteMergedFrame.mask
+                data = remoteMergedFrame.data
+                newRecordsOnly = ( (mask["SEEN2"] != isNull) )
+                remoteMergedFrame = remoteMergedFrame[newRecordsOnly]
+                remoteMergedFrame["IN1"] = 0.0
+                remoteMergedFrame["OUT1"] = 0.0
+                remoteMergedFrame = self.ProcessMergedFrame(remoteMergedFrame,False) 
 
-                startUsageFrame.loc[
-                    startUsageFrame.KBIn >= startUsageFrame.LSTDAY_KBIn  ,
-                    'KBIn'] = startUsageFrame["KBIn"] - startUsageFrame["LSTDAY_KBIn"]
-
-                startUsageFrame.loc[
-                    startUsageFrame.KBOut >= startUsageFrame.LSTDAY_KBOut  ,
-                    'KBOut'] = startUsageFrame["KBOut"] - startUsageFrame["LSTDAY_KBOut"]
-
-                startUsageFrame.loc[
-                    kbIn > startUsageFrame.LSTDAY_KBIn  ,
-                    'LSTDAY_KBIn'] = kbIn
-
-                startUsageFrame.loc[
-                    kbOut > startUsageFrame.LSTDAY_KBOut  ,
-                    'LSTDAY_KBOut'] = kbOut
-
-                prevDateUsageFrame = None
+                mergedFrame = np.concatenate((localMergedFrame, remoteMergedFrame), axis=0)
+                usageFrame = mergedFrame
+                prevUsageFrame = None
             else:
                 usageFrame = self.AddField(usageFrame, "LSTDAY_IN","f8",0.0)
                 usageFrame = self.AddField(usageFrame, "LSTDAY_OUT","f8",0.0)
@@ -328,61 +330,39 @@ class Analyzer:
         fnMACString = np.vectorize(ConvertToMACString)
         fnHashToIp = np.vectorize(self.utl.HashToIp)
 
-        newFrame = self.AddField(newFrame, "MAC1","U100","")
-        newFrame = self.AddField(newFrame, "IP1","U100","")
-        newFrame["MAC1"]=fnMACString(newFrame["MAC"])
-        newFrame["IP1"]=fnIPString(fnHashToIp(newFrame["IP"]))
-        newFrame = NF.drop_fields(newFrame, ['IP','MAC'])
+        newFrame = self.AddField(newFrame, "MAC_STR","U100","")
+        newFrame = self.AddField(newFrame, "IP_STR","U100","")
+        newFrame = self.AddField(newFrame, "DATE_STR","U100","")
+        newFrame = self.AddField(newFrame, "SEEN_STR","U100","")
+        newFrame = self.AddField(newFrame, "LOCAL_STR","U100","")
+
+        newFrame["MAC_STR"]=fnMACString(newFrame["MAC"])
+        newFrame["IP_STR"]=fnIPString(fnHashToIp(newFrame["IP"]))
+
+        newFrame["DATE_STR"]=(newFrame["DATE"])
+        newFrame["SEEN_STR"]=(newFrame["SEEN"])
+        newFrame["LOCAL_STR"]=(newFrame["LOCAL"])
+ 
+        newFrame = NF.drop_fields(newFrame, ['IP','MAC','DATE','SEEN','LOCAL'])
         np.set_printoptions(suppress=True)
         return newFrame
 
-    def EnsureIP_MAC_Combo(self,date, frame, msg=None,fix=False):
-
-        self.DiscardRoutersForLocalIP(frame)
-
-        frame.drop(frame[(frame.LastSeen == 0)].index, inplace = True)
-        frame.drop(frame[(frame.LastSeen.str.strip() == "0")].index, inplace = True)
-        frame['DT_LastSeen'] = pd.to_datetime(frame['LastSeen'], format='%Y-%m-%d %H:%M:%S')
-        curDate = (date - timedelta(seconds=24 * 60 * 60))
-        frame.drop(frame[frame.DT_LastSeen < curDate].index, inplace = True) 
-
-        group=frame[['IP','MAC','DATE', 'LastSeen']].groupby(['IP','MAC','DATE'])
-        duplicates = group.count()
-        duplicates=duplicates[duplicates.LastSeen > 1]
-
-        if (not (duplicates is None)) and (not (duplicates.empty)) and  duplicates.shape[0] > 0:
-            if not fix:                
-                raise Exception(f'Multiple Same IP/MAC combination, Critical error:{msg}')
-            else:
-                self.utl.Trace(msg)
-
-                group=frame[['IP','MAC','DATE', 'DT_LastSeen']].groupby(['IP','MAC','DATE'])                
-                maxDate=group["DT_LastSeen"].max().to_frame(name = 'DT_LastSeen_Max').reset_index()               
-
-                newFrame = maxDate.merge(frame, on=['IP','MAC','DATE'], how ="left")
-
-                newFrame.drop(newFrame[newFrame.DT_LastSeen < newFrame.DT_LastSeen_Max].index, inplace = True) 
-                newFrame.drop_duplicates(subset=['IP','MAC','DATE'], keep='last',inplace=True)
-
-                newFrame.drop('DT_LastSeen_Max', inplace=True, axis=1)
-                newFrame.drop('DT_LastSeen', inplace=True, axis=1)
-                return newFrame
-        else:
-            return frame;
-
-
-    def PersistToDailyDB(self, timeframe, frame, utcDate):
+    def PersistToDailyDB(self, frame, utcDate):
         connection = None
-        try:            
+        try:  
+            pFrame = self.PrintableFrame(frame)
+
             import sqlite3
             connection = sqlite3.connect(self.utl.GetDB())
 
-            connection.execute(f"DELETE FROM timeframe WHERE date([DATE]) >= date('{utcDate}')")
-            connection.execute(f"DELETE FROM dailyusage WHERE date([DATE]) >= date('{utcDate}')")
+            connection.execute(f"DELETE FROM DailyUsage WHERE date([DATE]) >= date('{utcDate}')")
 
-            connection.execute(f"INSERT INTO timeframe(DATE,LastSeen) VALUES('{timeframe[0]}',{timeframe[1]})")
-            frame[['IP', 'MAC','Hostname', 'LastSeen','KBIn', 'KBOut', 'DATE',
-            'LSTDAY_KBIn', 'LSTDAY_KBOut']].to_sql('dailyusage', con=connection, if_exists='append',index=False)
+            sql = "INSERT INTO DailyUsage (DATE,IP,MAC,SEEN,[IN],OUT,LSTDAY_IN,LSTDAY_OUT,LOCAL) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+ 
+            cursor = connection.cursor()
+            
+            cursor.executemany(sql, pFrame[["DATE_STR","IP_STR","MAC_STR","SEEN_STR","IN","OUT","LSTDAY_IN","LSTDAY_OUT","LOCAL_STR"]])
+
             connection.commit()
             connection.close()
         except Exception as e:
@@ -399,20 +379,19 @@ class Analyzer:
             import sqlite3
             connection = sqlite3.connect(self.utl.GetDB())  
 
-            connection.execute("DELETE FROM usagehistory WHERE (IP,MAC,DATE) IN "
+            connection.execute("DELETE FROM UsageHistory WHERE (IP,MAC,DATE) IN "
                                "(SELECT IP,MAC,[DATE] "
-                               "FROM dailyusage "
+                               "FROM DailyUsage "
                                f"WHERE date([DATE]) < date('{utcDate}'))"
                                )
             
             connection.execute(
-                "INSERT INTO usagehistory(IP,MAC,Hostname,LastSeen,KBIn,KBOut,[DATE],LSTDAY_KBIn,LSTDAY_KBOut) "
-                "SELECT IP,MAC,Hostname,LastSeen,KBIn,KBOut,[DATE],LSTDAY_KBIn,LSTDAY_KBOut "
-                f"FROM dailyusage WHERE date([DATE]) < date('{utcDate}') AND "
-                "(IP,MAC,DATE) NOT IN (SELECT IP,MAC,DATE FROM usagehistory)")
+                "INSERT INTO UsageHistory(IP, MAC, [IN], OUT, SEEN, LOCAL, DATE, LSTDAY_IN, LSTDAY_OUT) "
+                "SELECT IP, MAC, [IN], OUT, SEEN, LOCAL, DATE, LSTDAY_IN, LSTDAY_OUT "
+                f"FROM DailyUsage WHERE date([DATE]) < date('{utcDate}') AND "
+                "(IP,MAC,DATE) NOT IN (SELECT IP,MAC,DATE FROM UsageHistory)")
 
-            connection.execute(f"DELETE FROM dailyusage WHERE date([DATE]) < date('{utcDate}')")            
-            connection.execute(f"DELETE FROM timeframe WHERE date([DATE]) < date('{utcDate}')")
+            connection.execute(f"DELETE FROM DailyUsage WHERE date([DATE]) < date('{utcDate}')")            
 
             connection.commit()
             connection.close()
@@ -426,7 +405,8 @@ class Analyzer:
 
     def ValidateDate(self, date_text):
         try:
-            datetime.strptime(date_text, '%Y-%m-%d %H:%M:%S')
+            date_text = date_text.replace("T", " ")
+            datetime.strptime(date_text, '%Y-%m-%d %H:%M:%S.%f')
             return True
         except ValueError:
             return False
@@ -445,28 +425,38 @@ class Analyzer:
             prevTimeframe = cursor.fetchone()
             cursor.close()
 
+            def IpStrToHash(ipStr):
+                return self.utl.IpToHash(self.utl.PackIpToInt(ipStr))
+            
+            def MacStrToInt(macStr):
+                return self.utl.PackMacToInt(macStr)
+
             if not (prevTimeframe is None) and self.ValidateDate(str(prevTimeframe[0])):
                 prevDate = prevTimeframe[0]
 
-                cursor = connection.execute(f"SELECT IP, MAC, Hostname, LastSeen, KBIn, KBOut, DATE, LSTDAY_KBIn, LSTDAY_KBOut, IS_LOCAL "
-                " FROM dailyusage WHERE date(DATE)=date('{prevDate}')")
+                cursor = connection.execute(f"SELECT IP, MAC, [IN], OUT, SEEN, LOCAL, DATE, LSTDAY_IN, LSTDAY_OUT " +
+                f" FROM DailyUsage WHERE date(DATE)=date('{prevDate}')")
 
-                results = cursor.fetchall()                
-                prevFrame = np.array(list(results))
+                results = cursor.fetchall()                 
+
+                records = [ (IpStrToHash(r[0]), MacStrToInt(r[1]),r[2], r[3], r[4], r[5], r[6], r[7], r[8]) for r in list(results)]    
+
+                prevFrame = self.BuildFrame(records,True)
 
             cursor = connection.execute(f"SELECT COUNT(*) AS CNT FROM dailyusage WHERE date(DATE)=date('{today}')")            
             #cursor = connection.execute(f"SELECT COUNT(*) AS CNT FROM dailyusage") 
             count=int(cursor.fetchone()[0])
             cursor.close()
 
-
-
             if count > 0:
-                cursor = connection.execute(f"SELECT IP, MAC, Hostname, LastSeen, KBIn, KBOut, DATE, LSTDAY_KBIn, LSTDAY_KBOut, IS_LOCAL "
+                cursor = connection.execute(f"SELECT IP, MAC, [IN], OUT, SEEN, LOCAL, DATE, LSTDAY_IN, LSTDAY_OUT " +
                 f" FROM dailyusage WHERE date(DATE)=date('{today}')")
 
-                results = cursor.fetchall()                
-                frame = np.array(list(results))
+                results = cursor.fetchall()  
+
+                records = [ (IpStrToHash(r[0]), MacStrToInt(r[1]),r[2], r[3], r[4], r[5], r[6], r[7], r[8]) for r in list(results)]    
+
+                frame = self.BuildFrame(records,True)
 
             connection.close()
 
@@ -479,41 +469,40 @@ class Analyzer:
         return (frame,prevFrame)
 
 
-    def ReplaceHostName(self, frame):
-
-        def LookupHost(mac,hostname):
-            return self.MacHostDic.get(mac,hostname)        
-
-        updHost= frame.apply(lambda x: LookupHost(x.MAC,x.Hostname), axis=1)
-        frame.drop(["Hostname"], axis=1, inplace=True)
-        frame.insert(2, "Hostname", updHost, True)
+    def ReplaceHostName(self,record):
+        mac = record[1]
+        hostname = record[2]
+        hostname = self.MacHostDic.get(mac,hostname)   
+        return [record[0], mac, hostname] + record[3:]
 
     def GetDailyUsageRecords(self):
         connection = None
         frame = None
-        timeframe = None
+
         try:            
             import sqlite3
             connection = sqlite3.connect(self.utl.GetDB())  
 
             utcDate=self.GetNowUtc()
 
-            cursor = connection.execute(f"SELECT DATE,LastSeen AS CNT FROM timeframe WHERE date(DATE)=date('{utcDate}')")
-            #cursor = connection.execute(f"SELECT DATE,LastSeen AS CNT FROM timeframe")
-            timeframe = cursor.fetchone()
-            cursor.close()
-
-            cursor = connection.execute(f"SELECT COUNT(*) AS CNT FROM dailyusage WHERE date(DATE)=date('{utcDate}')")            
+            cursor = connection.execute(f"SELECT COUNT(*) AS CNT FROM DailyUsage WHERE date(DATE)=date('{utcDate}')")            
             #cursor = connection.execute(f"SELECT COUNT(*) AS CNT FROM dailyusage") 
             count=int(cursor.fetchone()[0])
             cursor.close()
 
             if count > 0:
-                fields="IP,MAC,Hostname,LastSeen,KBIn,KBOut,[DATE],LSTDAY_KBIn,LSTDAY_KBOut"
-                frame=pd.read_sql_query(f"SELECT {fields} FROM dailyusage WHERE date(DATE)=date('{utcDate}') ORDER BY KBIn DESC", con=connection)
-                frame.fillna(value={'LSTDAY_KBIn': 0.0, 'LSTDAY_KBOut': 0.0},inplace=True)
-                #frame=pd.read_sql_query(f"SELECT * FROM dailyusage", con=connection)
-                self.ReplaceHostName(frame)
+
+                fields="DU.IP,MAC,DN.NAME AS HOST,SEEN,[IN],OUT,DATE,LSTDAY_IN,LSTDAY_OUT"
+                query=f"SELECT {fields} FROM DailyUsage DU LEFT JOIN DNAME DN ON DU.IP = DN.IP WHERE date(DATE)=date('{utcDate}') ORDER BY [IN] DESC"
+
+                records = connection.execute(query).fetchall()
+                records = [list(r) for r in records]
+
+                records = list(map(self.ReplaceHostName, records))
+
+                frame = {}
+                frame["columns"] = ["IP", "MAC", "Hostname", "LastSeen", "KBIn", "KBOut", "DATE", "LSTDAY_KBIn", "LSTDAY_KBOut"]
+                frame["data"] = records      
 
             connection.close()
 
@@ -523,27 +512,33 @@ class Analyzer:
 
             self.utl.Log(e)
         
-        return (timeframe,frame)
+        return frame
             
     def GetHistoricRecords(self, startDate, endDate):
         connection = None
         frame = None
         try:            
             import sqlite3
-            connection = sqlite3.connect(self.utl.GetDB())  
-
-            dateCondition = f"(date(DATE) >= date('{startDate}') AND date(DATE) <= date('{endDate}'))"
-            fields="IP,MAC,Hostname,LastSeen,KBIn,KBOut,[DATE],LSTDAY_KBIn,LSTDAY_KBOut"
-            selectQuery = (f"SELECT {fields} FROM (SELECT {fields} FROM dailyusage WHERE {dateCondition} UNION "
-                           f"SELECT {fields} FROM usagehistory WHERE ({dateCondition} AND (IP,MAC,DATE) NOT IN "
-                           f"(SELECT IP,MAC,DATE FROM dailyusage))) ORDER BY DATE DESC, KBIn DESC")
+            connection = sqlite3.connect(self.utl.GetDB()) 
 
   
-            frame=pd.read_sql_query(selectQuery, con=connection)
+            fields="DU.IP,MAC,DN.NAME AS HOST,SEEN,[IN],OUT,DATE,LSTDAY_IN,LSTDAY_OUT"
+            innerfields="IP,MAC,SEEN,[IN],OUT,DATE,LSTDAY_IN,LSTDAY_OUT"
+            dateCondition = f"(date(DATE) >= date('{startDate}') AND date(DATE) <= date('{endDate}'))"
 
-            if not (frame is None) and not frame.empty:
-                frame.fillna(value={'LSTDAY_KBIn': 0.0, 'LSTDAY_KBOut': 0.0},inplace=True)
-                self.ReplaceHostName(frame)
+            selectQuery = f"SELECT {fields} FROM  (((SELECT {innerfields}  FROM DailyUsage WHERE {dateCondition} UNION " 
+            selectQuery += f"SELECT {innerfields}  FROM UsageHistory WHERE ( {dateCondition} AND (IP,MAC,DATE) NOT IN " 
+            selectQuery += f"(SELECT IP,MAC,DATE FROM DailyUsage))) ) DU LEFT JOIN DNAME DN ON DU.IP = DN.IP) " 
+            selectQuery += f"ORDER BY DATE DESC, [IN] DESC"
+
+            records = connection.execute(selectQuery).fetchall()
+            records = [list(r) for r in records]
+
+            records = list(map(self.ReplaceHostName, records))
+
+            frame = {}
+            frame["columns"] = ["IP", "MAC", "Hostname", "LastSeen", "KBIn", "KBOut", "DATE", "LSTDAY_KBIn", "LSTDAY_KBOut"]
+            frame["data"] = records
                 
             connection.close()
 
