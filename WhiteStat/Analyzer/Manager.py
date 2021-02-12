@@ -9,6 +9,7 @@ class Manager(threading.Thread):
 
     def __init__(self):        
         self.utl = UTL.Utility.getInstance()
+        self.extender = WA.Analyzer()
         self.startFlag = False
         super().__init__()
 
@@ -18,23 +19,19 @@ class Manager(threading.Thread):
 
     def run(self):  
 
-        utl = UTL.Utility.getInstance()
-
-        dbRefreshSeconds = utl.GetUpdateDBSeconds()
-        sleepSeconds = utl.GetSleepSeconds()
+        dbRefreshSeconds = self.utl.GetUpdateDBSeconds()
+        sleepSeconds = self.utl.GetSleepSeconds()
         totalSleepSeconds = 0
-
-        extender = WA.Analyzer()
-
+        
         while self.startFlag:
 
-            utcDate = datetime.strptime(extender.GetNowUtc(), '%Y-%m-%d %H:%M:%S')
+            utcDate = datetime.strptime(self.extender.GetNowUtc(), '%Y-%m-%d %H:%M:%S')
             today=utcDate
 
             startUsageFrame = None
 
             if startUsageFrame is None:
-                startUsageFrame,prevUsageFrame = extender.RestoreFromDailyDB(today)       
+                startUsageFrame,prevUsageFrame = self.extender.RestoreFromDailyDB(today)       
 
             while today <= utcDate:
 
@@ -42,10 +39,10 @@ class Manager(threading.Thread):
                 totalSleepSeconds += sleepSeconds
             
                 if (startUsageFrame is None):
-                    startUsageFrame, prevUsageFrame = extender.GetDayFirstFrame(today, prevUsageFrame) 
+                    startUsageFrame, prevUsageFrame = self.extender.GetDayFirstFrame(today, prevUsageFrame) 
                         
                     if prevUsageFrame is None:
-                        extender.ArchivePrevFrameToDB(today)
+                        self.extender.ArchivePrevFrameToDB(today)
                     else:
                         startUsageFrame = None
 
@@ -53,18 +50,18 @@ class Manager(threading.Thread):
                 else:
                     prevUsageFrame = None
                     if totalSleepSeconds >= dbRefreshSeconds:
-                        extender.PersistToDailyDB(startUsageFrame,today)
+                        self.extender.PersistToDailyDB(startUsageFrame,today)
                         totalSleepSeconds = 0
 
-                nextUsageFrame = extender.GetDayNextFrame(today, startUsageFrame)
+                nextUsageFrame = self.extender.GetDayNextFrame(today, startUsageFrame)
 
                 if nextUsageFrame is None:
                     continue
                 
                 os.system('cls' if os.name == 'nt' else 'clear')
-                print(extender.PrintableFrame(nextUsageFrame))
+                print(self.extender.PrintableFrame(nextUsageFrame))
 
-                today = datetime.strptime(extender.GetNowUtc(), '%Y-%m-%d %H:%M:%S')
+                today = datetime.strptime(self.extender.GetNowUtc(), '%Y-%m-%d %H:%M:%S')
 
                 if today > utcDate:
                     continue
