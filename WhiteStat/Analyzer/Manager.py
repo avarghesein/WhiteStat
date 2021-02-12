@@ -31,9 +31,6 @@ class Manager(threading.Thread):
             utcDate = datetime.strptime(extender.GetNowUtc(), '%Y-%m-%d %H:%M:%S')
             today=utcDate
 
-            #remove testing
-            test = extender.GetHistoricRecords(extender.GetNowUtc(),extender.GetNowUtc())
-
             startUsageFrame = None
 
             if startUsageFrame is None:

@@ -22,7 +22,7 @@ from flask import (
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 # set the project root directory as the static folder, you can set others.
-app = Flask(__name__, static_url_path='/media/TMP-DSK/Python/WhiteStat_GitHub/UI')
+app = Flask(__name__, static_url_path='/mnt/app/')
 
 serverInstance = None
 
@@ -46,6 +46,11 @@ class WebServer(threading.Thread):
 
     def stop(self):        
         self.startFlag = False
+
+        func = request.environ.get('werkzeug.server.shutdown')
+        if not (func is None):
+            func()
+        
         super().join()
     
 @app.route('/')

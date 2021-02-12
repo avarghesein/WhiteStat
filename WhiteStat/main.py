@@ -32,7 +32,7 @@ def main(argv):
     webServer = WS.WebServer()
 
     #monitor.start()
-    #analyzer.start()
+    analyzer.start()
     webServer.start()
 
     try:

@@ -363,6 +363,16 @@ class Analyzer:
             
             cursor.executemany(sql, pFrame[["DATE_STR","IP_STR","MAC_STR","SEEN_STR","IN","OUT","LSTDAY_IN","LSTDAY_OUT","LOCAL_STR"]])
 
+            # Trigger Included in SQL DBFile
+            # CREATE TRIGGER trigger_update_dns_recs 
+            # AFTER INSERT ON DailyUsage
+            # WHEN NEW.IP NOT IN (SELECT IP FROM DNAME)
+            # BEGIN
+
+            #     INSERT INTO DNAME(IP,NAME) VALUES (NEW.IP,NULL);
+                
+            # END;
+
             connection.commit()
             connection.close()
         except Exception as e:
