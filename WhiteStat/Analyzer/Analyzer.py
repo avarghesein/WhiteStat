@@ -473,6 +473,10 @@ class Analyzer:
         mac = record[1]
         hostname = record[2]
         hostname = self.MacHostDic.get(mac,hostname)   
+
+        if hostname is None:
+            hostname =  record[0]
+
         return [record[0], mac, hostname] + record[3:]
 
     def GetDailyUsageRecords(self):
