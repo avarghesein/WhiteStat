@@ -15,7 +15,7 @@ RUN apt-get install libpcap0.8
 
 RUN mkdir -p /app/WhiteStat/
 WORKDIR /app/WhiteStat/
-COPY WhiteStatService.sh ./WhiteStatServiceArmhf.sh
+COPY WhiteStatServiceArmhf.sh ./WhiteStatServiceArmhf.sh
 COPY main.py ./main.py
 COPY setup.py ./setup.py
 ADD  Analyzer ./Analyzer
@@ -44,10 +44,11 @@ CMD ["/app/WhiteStat/WhiteStatServiceArmhf.sh"]
 #--name hostnet --network host --privileged \
 #--env TZ="Asia/Calcutta" \
 #--env ROLE="MONITOR|ANALYZER" \
+#--env HOST_INTERFACE="eth0" \
 #--env MONITOR_URL=":888" \
 #--env ANALYZER_PORT=777 \
-#--env DATA_STORE="/mnt/whitestat/config/" \
-#--mount type=bind,source="/media/TMP-DSK/Python/WhiteStat/TestDockerConfig/",target="/mnt/whitestat/config/"  \
+#--env DATA_STORE="/mnt/whitestat/" \
+#--mount type=bind,source="/media/TMP-DSK/Python/WhiteStat/TestDocker/",target="/mnt/whitestat/"  \
 #-d avarghesein/whitestat:v7_armhf
 #
 #Now Access Whitestat at http://localhost:777

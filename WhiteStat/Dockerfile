@@ -31,10 +31,11 @@ CMD ["/app/WhiteStat/WhiteStatService.sh"]
 #--name hostnet --network host --privileged \
 #--env TZ="Asia/Calcutta" \
 #--env ROLE="MONITOR|ANALYZER" \
+#--env HOST_INTERFACE="eth0" \
 #--env MONITOR_URL=":888" \
 #--env ANALYZER_PORT=777 \
-#--env DATA_STORE="/mnt/whitestat/config/" \
-#--mount type=bind,source="/media/TMP-DSK/Python/WhiteStat/TestDockerConfig/",target="/mnt/whitestat/config/"  \
+#--env DATA_STORE="/mnt/whitestat/" \
+#--mount type=bind,source="/media/TMP-DSK/Python/WhiteStat/TestDockerConfig/",target="/mnt/whitestat/"  \
 #-it avarghese.in/whitestat:v7 /bin/bash
 #
 # For Daemon/Service mode:
