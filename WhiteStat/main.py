@@ -10,38 +10,47 @@ import WhiteStat.NetMonitor.Monitor as MTR
 import WhiteStat.Analyzer.Manager as MR
 import WhiteStat.Analyzer.WebServer as WS
 
-def main(argv):
+def main(argv):    
+    os.system('cls' if os.name == 'nt' else 'clear')  
 
-    os.system('cls' if os.name == 'nt' else 'clear')
-
-    dataStore = UTL.GetEnv("DATA_STORE","/media/TMP-DSK/Python/WhiteStatGit/WhiteStat/Test/UbuntuConfig")
-    #dataStore = UTL.GetEnv("DATA_STORE","/mnt/whitestat/Config")
-    print(dataStore)
-    url = UTL.GetEnv("MONITOR_URL",":888")
-    print(url)
-    serverPort = UTL.GetEnv("ANALYZER_PORT",777)
-    print(serverPort)
-    hostIface = UTL.GetEnv("HOST_INTERFACE","eth0")
-    print(hostIface)
-
-    UTL.Initialize(dataStore,url,serverPort,hostIface)
-    utl = UTL.Utility.getInstance()
-
-    monitor = MTR.Monitor()
-    analyzer = MR.Manager()
-    webServer = WS.WebServer()
-
-    #monitor.start()
-    analyzer.start()
-    webServer.start()
-
+    utl = None
     try:
-        while True:
-            time.sleep(15) 
-    finally:
-        webServer.stop()
-        analyzer.stop()
-        monitor.stop()
+        role = UTL.GetEnv("ROLE","MONITOR|ANALYZER")
+        print(role)
+        dataStore = UTL.GetEnv("DATA_STORE","/media/TMP-DSK/Python/WhiteStatGit/WhiteStat/Test/UbuntuConfig")
+        #dataStore = UTL.GetEnv("DATA_STORE","/mnt/whitestat/Config")
+        print(dataStore)
+        url = UTL.GetEnv("MONITOR_URL",":888")
+        print(url)
+        serverPort = UTL.GetEnv("ANALYZER_PORT",777)
+        print(serverPort)
+        hostIface = UTL.GetEnv("HOST_INTERFACE","eth0")
+        print(hostIface)
+        UTL.Initialize(role, dataStore, url, serverPort, hostIface)
+        utl = UTL.Utility.getInstance()
+
+        monitor = MTR.Monitor()
+        analyzer = MR.Manager()
+        webServer = WS.WebServer()
+
+        if(utl.IsMonitor()):
+            monitor.start()
+        
+        if(utl.IsAnalyzer()):
+            analyzer.start()
+            webServer.start()
+
+        try:
+            while True:
+                time.sleep(15) 
+        finally:
+            webServer.stop()
+            analyzer.stop()
+            monitor.stop()   
+        
+    except Exception as e:
+        if not (utl is None):
+            utl.Log(e)
 
 if __name__ == "__main__":
   main(sys.argv)

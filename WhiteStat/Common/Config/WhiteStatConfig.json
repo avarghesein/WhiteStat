@@ -1,4 +1,6 @@
 {
+      "ROLE": "MONITOR|ANALYZER",
+
       "DATA_STORE": "./WhiteStat/RunConfig",
 
       "DBFile": "WhiteStat.db",      
@@ -9,9 +11,8 @@
       "ANALYZER_PORT":777,
       
       "IdleSeconds": 30,
-      "UpdateDBSeconds": 40,      
+      "UpdateDBSeconds": 40,
 
-      "IPFilter": "([\\d]+\\.){3,3}\\d+",
       "EXTRA_PCAP_FILTER": "",
       "LAN_SEGMENT_V4_MASKS":"0.0.0.0|10|192.168|172.16|172.17",
       "LAN_SEGMENT_V6_MASKS":"fe80|fec0|fd",

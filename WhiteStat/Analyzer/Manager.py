@@ -4,6 +4,7 @@ from datetime import datetime
 import WhiteStat.Common.Utility as UTL
 import WhiteStat.Analyzer.Analyzer as WA
 import threading, queue
+import socket
 
 class Manager(threading.Thread):
 
@@ -13,9 +14,13 @@ class Manager(threading.Thread):
         self.startFlag = False
         super().__init__()
 
+
     def start(self):       
         self.startFlag = True
         super().start()
+
+        self.dnsUpdateThread = threading.Thread(None, self.UpdateDnsRecords, args=[], daemon=True)
+        self.dnsUpdateThread.start()
 
     def run(self):  
 
@@ -69,8 +74,38 @@ class Manager(threading.Thread):
                 startUsageFrame = nextUsageFrame
 
     def stop(self):        
-        self.startFlag = False
+        self.startFlag = False     
         super().join()
+        self.dnsUpdateThread.join()
+
+    
+    def UpdateDnsRecords(self):
+        
+        while self.startFlag:
+            try:
+                dnsRecs = self.extender.GetEmptyDnsRecords()
+
+                if len(dnsRecs) <= 0:
+                    time.sleep(15)
+                    continue
+
+                dnsNames = {}
+
+                for ip in dnsRecs:
+                    try:
+                        ipAddr = ip[0]
+                        addr = socket.gethostbyaddr(ipAddr)
+                        dnsNames[ipAddr] = addr[0]
+                    except Exception as ex:
+                        if str(ex).find("Unknown") >= 0:
+                            dnsNames[ipAddr] = "(None)"
+                        continue
+                
+                self.extender.SetDnsRecords([ [dnsNames[key], key] for key in dnsNames.keys()])
+                time.sleep(5)
+            except Exception as e:
+                self.utl.Log(e)
+
 
 
 

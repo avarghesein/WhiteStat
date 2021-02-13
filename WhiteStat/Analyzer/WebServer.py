@@ -41,8 +41,8 @@ class WebServer(threading.Thread):
         super().start()
 
     def run(self):         
-        app.run()
-        #app.run(host="0.0.0.0", port=self.utl.GetServerPort())
+        #app.run(port=self.utl.GetServerPort())
+        app.run(host="0.0.0.0", port=self.utl.GetServerPort())
 
     def stop(self):        
         self.startFlag = False

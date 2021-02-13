@@ -17,7 +17,7 @@ def GetEnv(key, defaultVal=""):
 def get_script_path():
     return os.path.dirname(os.path.realpath(sys.argv[0]))
 
-def Initialize(configFolder, url, serverPort=777,hostIface = "eth0"):
+def Initialize(role, configFolder, url, serverPort=777,hostIface = "eth0"):
     try:
         scriptPath = get_script_path() + "/Config/"
         if not os.path.exists(f"{configFolder}/WhiteStatConfig.json"):
@@ -26,6 +26,7 @@ def Initialize(configFolder, url, serverPort=777,hostIface = "eth0"):
             copyfile(f"{scriptPath}/MAC_HOST.txt", f"{configFolder}/MAC_HOST.txt")
 
             jsonObj = json.loads(open(f"{configFolder}/WhiteStatConfig.json", 'r').read())
+            jsonObj["ROLE"] = role
             jsonObj["MONITOR_URL"] = url
             jsonObj["ANALYZER_PORT"] = int(serverPort)
             jsonObj["DATA_STORE"] = configFolder
@@ -61,11 +62,11 @@ class Utility:
 
         self.jsonObj = jsonObj
 
+        self.role = jsonObj["ROLE"]
         self.configFolder = jsonObj["DATA_STORE"]
 
         self.hostInterfaces = jsonObj["HOST_INTERFACE"]
         self.url = jsonObj["MONITOR_URL"]
-        self.ipfilter = jsonObj["IPFilter"]
         self.updateDBSeconds = int(jsonObj["UpdateDBSeconds"])
         self.idleSeconds = int(jsonObj["IdleSeconds"])
         self.ServerPort = int(jsonObj["ANALYZER_PORT"])
@@ -164,6 +165,21 @@ class Utility:
     def GetIpMacDict(self):
         return self.ipmacDict
 
+    def GetRoles(self):
+        return self.role.split('|')
+    
+    def IsMonitor(self):
+        roles = self.GetRoles()
+        if(roles == []): 
+            return True
+        return "MONITOR" in self.GetRoles()
+    
+    def IsAnalyzer(self):
+        roles = self.GetRoles()
+        if(roles == []): 
+            return True
+        return "ANALYZER" in self.GetRoles()
+
     def GetUrl(self):
         return self.url
 
@@ -189,9 +205,6 @@ class Utility:
 
     def GetTrace(self):
         return self.trace
-
-    def GetIPFilter(self):
-        return self.ipfilter
 
     def Trace(self, message):
         try:

@@ -484,7 +484,7 @@ class Analyzer:
         hostname = record[2]
         hostname = self.MacHostDic.get(mac,hostname)   
 
-        if hostname is None:
+        if hostname is None or hostname == "(None)":
             hostname =  record[0]
 
         return [record[0], mac, hostname] + record[3:]
@@ -563,3 +563,54 @@ class Analyzer:
             self.utl.Log(e)
         
         return frame
+    
+
+    def GetEmptyDnsRecords(self):
+        connection = None
+        records = None
+
+        try:            
+            import sqlite3
+            connection = sqlite3.connect(self.utl.GetDB())  
+
+            query="SELECT IP FROM DNAME WHERE NAME IS NULL LIMIT 15"
+
+            records = connection.execute(query).fetchall()
+            records = [list(r) for r in records]
+
+            connection.close()
+
+        except Exception as e:
+            if connection != None:
+                connection.close()
+
+            self.utl.Log(e)
+        
+        return records
+    
+    def SetDnsRecords(self, dnsEntries):
+        connection = None
+        records = None
+
+        try:            
+            import sqlite3
+            connection = sqlite3.connect(self.utl.GetDB())  
+
+            sql = "UPDATE DName SET NAME = ? WHERE IP = ?"
+ 
+            cursor = connection.cursor()
+            
+            cursor.executemany(sql, dnsEntries)
+
+            connection.commit()
+            connection.close()
+
+        except Exception as e:
+            if connection != None:
+                connection.rollback()
+                connection.close()
+
+            self.utl.Log(e)
+        
+        return records
+

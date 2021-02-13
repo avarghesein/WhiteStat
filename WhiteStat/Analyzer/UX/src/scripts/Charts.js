@@ -146,6 +146,10 @@ class Charts {
     var clearCharts = this.clearCharts;
     var self = this;
 
+    $(window).on('resize', function(){
+        self.refresh(self.service);
+    });
+
     $("#idSearch").click(function(){
       $('#chkRefresh').prop('checked', false);
 
