@@ -1,16 +1,15 @@
 FROM python:3.9-slim-buster
 
-RUN apt-get update -y && pip install pandas && pip install lxml && pip install flask && pip install requests
-
+RUN apt-get update -y && pip install numpy && pip install lxml && pip install flask && pip install requests
+RUN apt-get install libpcap0.8
 RUN mkdir -p /app/WhiteStat/
 WORKDIR /app/WhiteStat/
 COPY WhiteStatService.sh ./WhiteStatService.sh
-COPY WhiteStat.py ./WhiteStat.py
-COPY WhiteStatAnalyzer.py ./WhiteStatAnalyzer.py
-COPY WhiteStatServer.py ./WhiteStatServer.py
-COPY WhiteStatUtils.py ./WhiteStatUtils.py
-ADD  Config ./Config
-ADD  UX/dist ./UX/dist
+COPY main.py ./main.py
+COPY setup.py ./setup.py
+ADD  Analyzer ./Analyzer
+ADD  Common ./Common
+ADD  NetMonitor ./NetMonitor
 RUN  chmod a+x /app/WhiteStat/WhiteStatService.sh
 
 EXPOSE 777
@@ -22,22 +21,23 @@ EXPOSE 999
 CMD ["/app/WhiteStat/WhiteStatService.sh"]
 
 #Docker Build Sample:
-#docker build -f Dockerfile -t avarghesein/whitestat:v1 .
-#docker tag avarghesein/whitestat:v1 avarghesein/whitestat:v1
+#docker build -f Dockerfile -t avarghesein/whitestat:v7.
+#docker tag avarghesein/whitestat:v7 avarghesein/whitestat:v7
 #docker login
-#docker push avarghesein/whitestat:v1
+#docker push avarghesein/whitestat:v7
 
 #Running Container Sample
 #docker run --name whitestat \
+#--name hostnet --network host --privileged \
 #--env TZ="Asia/Calcutta" \
+#--env ROLE="MONITOR|ANALYZER" \
+#--env MONITOR_URL=":888" \
+#--env ANALYZER_PORT=777 \
 #--env DATA_STORE="/mnt/whitestat/config/" \
-#--env DARKSTAT_URL="http://192.168.1.5:777" \
-#--env SERVER_PORT=777 \
 #--mount type=bind,source="/media/TMP-DSK/Python/WhiteStat/TestDockerConfig/",target="/mnt/whitestat/config/"  \
-#-p 5000:777 \
-#-it avarghese.in/whitestat:v1 /bin/bash
+#-it avarghese.in/whitestat:v7 /bin/bash
 #
 # For Daemon/Service mode:
-#-d avarghese.in/whitestat:v1
+#-d avarghese.in/whitestat:v7
 #
-#Now Access Whitestat at http://localhost:5000
+#Now Access Whitestat at http://localhost:777

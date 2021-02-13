@@ -1,6 +1,4 @@
 #!/bin/sh -e
 #
 
-python ./WhiteStatServer.py &
-python ./WhiteStatAnalyzer.py
-fg
+PYTHONPATH=/app/ python ./main.py

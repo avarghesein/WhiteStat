@@ -79,7 +79,7 @@ class Analyzer:
             curFrame = self.remoteManager.RemoteUsageFrame()
             usageFrame = curFrame.GetFrame()
 
-            if usageFrame is None:
+            if usageFrame is None or len(usageFrame) <= 0:
                     return None            
             
             localIPs =  [tuple([self.utl.IpToHash(value[0])] + [key] + value[1:] + [True]) for key, value in usageFrame[LOCAL_IP_SET].items()]  

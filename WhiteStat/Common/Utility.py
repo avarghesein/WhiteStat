@@ -19,7 +19,7 @@ def get_script_path():
 
 def Initialize(role, configFolder, url, serverPort=777,hostIface = "eth0"):
     try:
-        scriptPath = get_script_path() + "/Config/"
+        scriptPath = get_script_path() + "/Common/Config/"
         if not os.path.exists(f"{configFolder}/WhiteStatConfig.json"):
             copyfile(f"{scriptPath}/WhiteStatConfig.json", f"{configFolder}/WhiteStatConfig.json")
             copyfile(f"{scriptPath}/WhiteStat.db", f"{configFolder}/WhiteStat.db")

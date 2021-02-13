@@ -63,8 +63,8 @@ class Manager(threading.Thread):
                 if nextUsageFrame is None:
                     continue
                 
-                os.system('cls' if os.name == 'nt' else 'clear')
-                print(self.extender.PrintableFrame(nextUsageFrame))
+                #os.system('cls' if os.name == 'nt' else 'clear')
+                #print(self.extender.PrintableFrame(nextUsageFrame))
 
                 today = datetime.strptime(self.extender.GetNowUtc(), '%Y-%m-%d %H:%M:%S')
 

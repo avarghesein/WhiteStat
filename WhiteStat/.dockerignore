@@ -1,0 +1,13 @@
+**/.git
+**/node_modules
+**/__pycache__
+**/.vscode
+**/Test
+**/UX/src
+**/UX/.babelrc
+**/UX/.eslintrc
+**/UX/gitignore
+**/UX/package-lock.json
+**/UX/package.json
+**/UX/postcss.config.js
+**/UX/config

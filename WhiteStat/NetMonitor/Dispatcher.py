@@ -60,11 +60,10 @@ class Dispatcher(threading.Thread):
                     curFrame.SetFrame(self.localIPs,self.remoteIPs)
                     sleptSeconds = 0
 
-                    curFrame = client.RemoteUsageFrame()
-                    remoteFrame = curFrame.GetFrame()
-                   
-                    os.system('cls' if os.name == 'nt' else 'clear')
-                    self.PrintFrame(remoteFrame[0],remoteFrame[1])
+                    #curFrame = client.RemoteUsageFrame()
+                    #remoteFrame = curFrame.GetFrame()                   
+                    #os.system('cls' if os.name == 'nt' else 'clear')
+                    #self.PrintFrame(remoteFrame[0],remoteFrame[1])
 
                     today = datetime.datetime.now().date()
 
