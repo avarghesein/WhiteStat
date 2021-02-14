@@ -1,5 +1,5 @@
 # WhiteStat
-Network (Internet) Bandwidth Daily Usage Analyser with Historic Data Persistence in a Docker Container.
+An entire Network (Internet) Bandwidth Daily Usage Analyser, with Historic Data Persistence in a Docker Container.
 Supports RaspberryPi2/armv7l.
 
 ![alt UX](https://github.com/avarghesein/WhiteStat/blob/main/Docs/UX3.png)
@@ -28,7 +28,7 @@ I have been looking for a Network (Internet) Bandwidth Analyzer, which could eas
 Most of the tools, I came across are much heavier for the purpose and the information shown in the UI is pretty difficult grasp for an average user.
 Mostly these tools also store the flow data in every minutes, and your storage could be piled up with Gig(s) of data in a matter of days.
 
-What about a utility, which is minimal enough to smoothly run on a Pi hardware, efficiently uses the storage and yet provide features similar to aformentioned tools with low latency? 
+What about a utility, which is minimal enough to smoothly run on a Pi hardware, efficiently uses the storage and yet provide features similar to aformentioned tools with live statistics 
 
 ## Features
 
@@ -63,6 +63,8 @@ Docker Images are available in Docker Hub.
 
 ## Prerequisites : 
 
+Other than Docker CE, No other external library or package dependency.
+Only ensure the below;
 
     1. Your Linux Device as the Default Gateway (X64 or armhf)
 
