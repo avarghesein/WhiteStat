@@ -1,59 +1,59 @@
 # WhiteStat
-Internet/Network Bandwidth Daily Usage Analyser with Historic Data Persistence in a Docker Container. Supports RaspberryPi2/armv7.
+Network (Internet) Bandwidth Daily Usage Analyser with Historic Data Persistence in a Docker Container.
+Supports RaspberryPi2/armv7l.
 
-![alt UX](https://github.com/avarghesein/WhiteStat/blob/main/UX/UX3.png)
+![alt UX](https://github.com/avarghesein/WhiteStat/blob/main/Docs/UX3.png)
 
-Pull & Run: [View in DockerHub](https://hub.docker.com/r/avarghesein/whitestat)
+Pull & Run: [avarghesein/whitestat](https://hub.docker.com/r/avarghesein/whitestat) in your Linux Device.
+Below sample shows running "WhiteStat" on RaspberryPi 2B (armv7l), which is the default gateway for the network, and host interface named as "eth0". 
 
-      docker run --name whitestat \
-      --env DATA_STORE="/mnt/whitestat/" \
-      --env DARKSTAT_URL="http://192.168.1.5:777" \
-      --env SERVER_PORT=777 \
-      --mount type=bind,source="/home/ubuntuuser/whitestat",target="/mnt/whitestat/"  \
-      -p 888:777 \
-      -d avarghesein/whitestat:v5
+The Bind Directory should be writable.
+Open ports 777, 888 in firewall
+
+      docker run --name whitestatpi --restart always \
+    --network host --privileged \
+    --env TZ="Asia/Calcutta" \
+    --env ROLE="MONITOR|ANALYZER" \
+    --env HOST_INTERFACE="eth0" \
+    --env MONITOR_URL=":888" \
+    --env ANALYZER_PORT=777 \
+    --env DATA_STORE="/mnt/whitestat/" \
+    --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
+    -d avarghesein/whitestat:v8_armhf
 
 # Why Whitestat? 
 
-I have been looking for a Network (Internet) Bandwidth Analyzer, which could easily run on my RaspberryPi hardware with minimal footprint and provides daily statistics which is easy to comprehend in a glance. 
+I have been looking for a Network (Internet) Bandwidth Analyzer, which could easily run on my RaspberryPi hardware with minimal footprint and provides daily statistics (per device level, not IP as any device can have multiple IP's under a DHCP environment) which is easy to comprehend in a glance. 
 
 Most of the tools, I came across are much heavier for the purpose and the information shown in the UI is pretty difficult grasp for an average user.
 Mostly these tools also store the flow data in every minutes, and your storage could be piled up with Gig(s) of data in a matter of days.
 
-What about a utility, which is minimal enough to smoothly run on a Pi hardware, efficiently uses the storage and yet provide features similar to aformentioned tools? 
-
-## Leveraging DarkStat.
-
-WhiteStat pulls the raw network usage data (per IP and MAC) as the source from [“DarkStat”](https://github.com/TomMichel/darkstat) and 
-process for daily usage reporting in every 30 seconds by default, which is then refreshed to a SQLite DB.
+What about a utility, which is minimal enough to smoothly run on a Pi hardware, efficiently uses the storage and yet provide features similar to aformentioned tools with low latency? 
 
 ## Features
 
 #### 1. Entire Network Usage Analyzer is in a Docker Image and minimal enough to run on a Pi Hardware
 
 #### 2. Provides Daily Usage Levels per individual Host in the Network, Considering DHCP and the same Host could have different IP's on the same day
-   
-   Note:
-   DarkStat, provides cumulative usage levels only per Host/IP (from the day of install), not daily usage levels.
 
 #### 3. Single Responsive Dashboard (UX) to view all the daily/historic statistics. Supports searching/sorting on all usage record fields.
 
-#### 4. Survival of Usage Data, in case of a System Crash (Router/Pi at which WhiteStat or DarkStat is running)
-   WhiteStat keeps checkpoints on data usage in every 30 Seconds by default, and use the same as the starting level, when the system comes up.
-   DarkStat, though uses an internal DB, does not seems to survive system crashes, and data usage levels resets.
+#### 4. Survival of Usage Data, in case of a System Crash (Router/Pi at which WhiteStat is running)
 
+   WhiteStat keeps checkpoints on data usage in every 30 Seconds by default, and use the same as the starting level, when the system comes up.
+ 
 #### 5. Provides Historic Data, in SQL lite Database
 
-#### 6. JSON/HTML end points are given, so that it could be integrated with other Analytics tools for detailed data analysis (like PowerBI, excel)
+#### 6. JSON end points are given, so that it could be integrated with other Analytics tools for detailed data analysis (like PowerBI, excel)
 
-![alt UX2](https://github.com/avarghesein/WhiteStat/blob/main/UX/UX1.png)
+![alt UX2](https://github.com/avarghesein/WhiteStat/blob/main/Docs/UX1.png)
 
 
 #### Tools Used 
 
 Front End(UX): Python Flask, BootStrap, JQuery, SASS
 
-Middle Ware: Python, Python Pandas
+Middle Ware: Python, Pcap System Library, Python Numpy/Pandas, Python Threads
 
 BackEnd: SQLite
 
@@ -63,14 +63,14 @@ Docker Images are available in Docker Hub.
 
 ## Prerequisites : 
 
-As “WhiteStat” pulls the source network statistics from  “DarkStat”, you’ve to configure “DarkStat” properly in your environment. 
-A possible configuration has been [mentioned here](https://github.com/avarghesein/-NIX/blob/main/Raspberry%20Pi%20II%20(Buster)/MinimalNetworkBandwidthMonitor.md). 
 
-Find more more information on DarkStat below:
+    1. Your Linux Device as the Default Gateway (X64 or armhf)
 
-https://unix4lyfe.org/darkstat/
+       If not, make it as the default gateway:
 
-https://www.tecmint.com/darkstat-web-based-linux-network-traffic-analyzer/
+    2. Docker available in the Linux Device
+
+    3. You're okay with running "WhiteStat", in privilaged mode with directly interacting HOST network
 
  
 
@@ -78,97 +78,104 @@ https://www.tecmint.com/darkstat-web-based-linux-network-traffic-analyzer/
 
 “WhiteStat” is built to run as a Docker Container, and the image has been [uploaded in DockerHub](https://hub.docker.com/r/avarghesein/whitestat). 
 
-For X64 Hardware: e.g.
-
-    docker run --name whitestat \
-    --env DATA_STORE="/mnt/whitestat/" \
-    --env DARKSTAT_URL="http://192.168.1.5:777" \
-    --env SERVER_PORT=777 \
-    --mount type=bind,source="/home/ubuntuuser/whitestat",target="/mnt/whitestat/"  \
-    -p 888:777 \
-    -d avarghesein/whitestat:v5
 
 For RaspberryPi2 (ARMV7 or armhf) Hardware: e.g.
 
-    docker run --name whitestatpi \
+    docker run --name whitestatpi --restart always \
+    --network host --privileged \
+    --env TZ="Asia/Calcutta" \
+    --env ROLE="MONITOR|ANALYZER" \
+    --env HOST_INTERFACE="eth0" \
+    --env MONITOR_URL=":888" \
+    --env ANALYZER_PORT=777 \
     --env DATA_STORE="/mnt/whitestat/" \
-    --env DARKSTAT_URL="http://192.168.1.5:777" \
-    --env SERVER_PORT=777 \
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
-    -p 888:777 \
-    -d avarghesein/whitestat:v5_armhf
-    
+    -d avarghesein/whitestat:v8_armhf
+
+For X64 Hardware:
+
+    -d avarghesein/whitestat:v5
+
 Now You could view Daily Bandwidth Usage using
 
-    Default UI: http://IP:888/
-    Plain HTML: http://IP:888/table/
-    Plain JSON: http://IP:888/json/
+    UI: http://IP:777/
+    Plain JSON: http://IP:777/json/
 
 Bandwidth Usage History couldbe viewed through
 
-    Default UI: http://IP:888/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
-    Plain HTML: http://IP:888/table/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
-    Plain JSON: http://IP:888/json/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
+    UI: http://IP:777/
+    Plain JSON: http://IP:777/json/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
 
 
 We could feed these URLs to other Data Analysis systems (e.g. An excel with PowerQuery, PowerBI), using the above end points.
 
-![alt UX2](https://github.com/avarghesein/WhiteStat/blob/main/UX/UX2.png)
+![alt UX2](https://github.com/avarghesein/WhiteStat/blob/main/Docs/UX2.png)
 
 ## Key Configuration Options:
 
-"Config/WhiteStatConfig.json", contains the key configuration parameters, which controls WhiteStat.
+"WhiteStatConfig.json", contains the key configuration parameters, which controls WhiteStat.
 
 A sample instance has been given below;
 
-     {
-           "DATA_STORE": "./WhiteStat/RunConfig",
-           "DBFile": "WhiteStat.db",
-           "LOGFile": "WhiteStatLog.txt",
-           "IP_MAC_REWRITE": "IP_MAC.txt",
-           "MAC_MAC_REWRITE": "MAC_MAC.txt",
-           "MAC_HOST_MAP": "MAC_HOST.txt",
-           "DARKSTAT_URL": "http://192.168.1.5:777",
-           "IPFilter": "([\\d]+\\.){3,3}\\d+",
-           "IdleSeconds": 30,
-           "UpdateDBSeconds": 40,
-           "SERVER_PORT":777
-     }
+    {
+      "ROLE": "MONITOR|ANALYZER",
 
-This file will be automatically created, when you start the container for the first time. The only requirement would be, provide a writable path on the  Host machine as the bind mount through DATA-STORE, environment variable.  Also provide the DarkStat URL, with DARKSTAT_URL environment parameter. 
+      "DATA_STORE": "./WhiteStat/RunConfig",
+
+      "DBFile": "WhiteStat.db",      
+      "MAC_HOST_MAP": "MAC_HOST.txt",      
+      
+      "HOST_INTERFACE":"eth0",
+      "MONITOR_URL": ":888",
+      "ANALYZER_PORT":777,
+      
+      "IdleSeconds": 30,
+      "UpdateDBSeconds": 40,
+
+      "EXTRA_PCAP_FILTER": "",
+      "LAN_SEGMENT_V4_MASKS":"0.0.0.0|10|192.168|172.16|172.17",
+      "LAN_SEGMENT_V6_MASKS":"fe80|fec0|fd",
+      "LAN_ROUTERS_TO_SKIP":"",
+      "LOGFile": "WhiteStatLog.txt",
+      "TRACEFile": "WhiteStatTrace.txt"
+    }
+
+This file will be automatically created, when you start the container for the first time. The only requirement would be, provide a writable path on the  Host machine as the bind mount through DATA-STORE, environment variable.
 
 Other parameters have been explained below; 
 The default values for all parameters will be filled by WhiteStat. You've to edit the values for advanced configuration for your network, if needed.
 
-     {
-             "DATA_STORE": "{Host Path provided in the DATA_STORE param docker command line}",
-             
-             "DBFile": "{Name of the SQLite File, Default: WhiteStat.db. Usage data will be stored here}",
-             
-             "LOGFile": "{Log File: Default name: WhiteStatLog.txt}",
-             
-             # In Key value format seperated by |, multiple entries are seperated by new line             
-             "IP_MAC_REWRITE": "{Default: IP_MAC.txt, Provide if you've to see a different MAC than original for an IP in daily usage reports}.",
-             
-             # In Key value format seperated by |, multiple entries are seperated by new line             
-             "MAC_MAC_REWRITE": "{Default: MAC_MAC.txt, Provide if you would like to change a MAC address to a different one}",
-             
-             # In Key value format seperated by |, multiple entries are seperated by new line
-             "MAC_HOST_MAP": "{Default: MAC_HOST.txt, maps a MAC to a user friendly Host Name, will be displayed in usage reports, for easy tracking}",
-             
-             "DARKSTAT_URL": "The Url of DarkStat",
-             
-             "IPFilter": "This filter define which all IP entries will be used for reporting. Default is only IPV4 addresses",
-             
-             "IdleSeconds": "Sleep interval for whitestat, after each data extraction from DarkStat",
-             
-             "UpdateDBSeconds": "How Often the DB should be updated. i.e in every 40 seconds",
-             
-             "SERVER_PORT":"The port at which WhiteStat will be available"
-             
-             "LAN_SEGMENT_MASKS":"LAN segments used inside your private network. Auto populated"
-             
-             "LAN_ROUTERS_TO_SKIP": "Router MAC's in the LAN to skip while reporting usage. Auto populated"
+    {
+        "ROLE": "MONITOR|ANALYZER",
+
+        "DATA_STORE": "{Host Path provided in the DATA_STORE param docker command line}",
+        
+        "DBFile": "{Name of the SQLite File, Default: WhiteStat.db. Usage data will be stored here}",
+
+        "HOST_INTERFACE":"Network Interfaces to Watch on Host Device",
+
+        "MONITOR_URL": "IP:Port, of the monitor instance of whitestat. Default include both and at port 888",
+
+        "ANALYZER_PORT":The port at which WhiteStat will be available. Default 777,
+        
+         # In Key value format seperated by |, multiple entries are seperated by new line
+        "MAC_HOST_MAP": "{Default: MAC_HOST.txt, maps a Local MAC to a user friendly Host Name, will be displayed in usage reports, for easy tracking}",
+
+        "IdleSeconds": "Sleep interval for whitestat, after each data extraction from Monitor",
+        
+        "UpdateDBSeconds": "How Often the DB should be updated. i.e in every 40 seconds",
+
+        "EXTRA_PCAP_FILTER": "",
+
+        "LAN_SEGMENT_V4_MASKS":"LAN segments used inside your private network. Auto populated",
+
+        "LAN_SEGMENT_V6_MASKS":"LAN segments used inside your private network. Auto populated",
+
+        "LAN_ROUTERS_TO_SKIP":"Router MAC's in the LAN to skip while reporting usage. Auto populated",
+
+        "LOGFile": "{Log File: Default name: WhiteStatLog.txt}",
+
+        "TRACEFile": "{Trace File: Default name: WhiteStatTrace.txt}"
        }
        
  
@@ -199,12 +206,12 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
  
  For X64 machines
  
-    docker build -f Dockerfile -t avarghesein/whitestat:v3 .
+    docker build -f Dockerfile -t avarghesein/whitestat:v8 .
   
 For arm/armhf/armv7 (or RaspberryPi2) machines
 
     docker run --rm --privileged fkrull/qemu-user-static enable
-    docker build -f Dockerfile.armhf -t avarghesein/whitestat:v3_armhf .
+    docker build -f Dockerfile.armhf -t avarghesein/whitestat:v8_armhf .
 
  Note: The first docker command (for arm platform only) is to enable arm to X64 translations through [Qemu-User-Static](https://ownyourbits.com/2018/06/13/transparently-running-binaries-from-any-architecture-in-linux-with-qemu-and-binfmt_misc/)
  
