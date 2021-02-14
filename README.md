@@ -2,7 +2,7 @@
 An entire Network (Internet) Bandwidth Daily Usage Analyser, with Historic Data Persistence in a Docker Container.
 Supports RaspberryPi2/armv7l and X64 architectures.
 
-No other dependency or installs required other Docker CE available in Host System.
+No other dependency or installs required other than Docker CE available in Host System.
 
 ![alt UX](https://github.com/avarghesein/WhiteStat/blob/main/Docs/UX3.png)
 
