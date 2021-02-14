@@ -51,18 +51,6 @@ What about a utility, which is minimal enough to smoothly run on a Pi hardware, 
 ![alt UX2](https://github.com/avarghesein/WhiteStat/blob/main/Docs/UX1.png)
 
 
-#### Tools Used 
-
-Front End(UX): Python Flask, BootStrap, JQuery, SASS
-
-Middle Ware: Python, Pcap System Library, Python Numpy/Pandas, Python Threads
-
-BackEnd: SQLite
-
-The entire components are built and packaged as Docker Images, and run as Containers in the Host System.
-Supports both X64 and arm/Armhf (ArmV7) architectures. 
-Docker Images are available in Docker Hub.
-
 ## Prerequisites : 
 
 Other than Docker CE, No other external library or package dependency.
@@ -78,7 +66,7 @@ Only ensure the below;
 
  
 
-## Usage: 
+## Usage: (Both Packet Capturing and Analyzing in a single container)
 
 “WhiteStat” is built to run as a Docker Container, and the image has been [uploaded in DockerHub](https://hub.docker.com/r/avarghesein/whitestat). 
 
@@ -100,15 +88,48 @@ For X64 Hardware:
 
     -d avarghesein/whitestat:v5
 
-Now You could view Daily Bandwidth Usage using
+## Advanced Usage: (Packet Capturing and Analyzing features in seperate containers and in seperate hosts)
 
-    UI: http://IP:777/
-    Plain JSON: http://IP:777/json/
+See Architecture Page here, for more details:
+
+If you would like to confine individual roles (Monitor/Analyzer Roles) to seperate machines;
+Say you only require Packet Capturing role in Default Gateway, device for minimal footprint, and 
+Analyzer role to be running in a seperate Device in the Network;
+
+Run WhiteStat as Monitor only in default gateway sample: (say in 192.168.1.5)
+
+    docker run --name whitestatpi --restart always \
+    --network host --privileged \
+    --env TZ="Asia/Calcutta" \
+    --env ROLE="MONITOR" \
+    --env HOST_INTERFACE="eth0" \
+    --env MONITOR_URL=":888" \
+    --env DATA_STORE="/mnt/whitestat/" \
+    --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
+    -d avarghesein/whitestat:v8_armhf
+
+Now Run Analyzer role in another machine (192.168.1.6) which does most of the heavy duty, pointing it to
+the Monitor instance:
+
+    docker run --name whitestatpi --restart always \
+    --env TZ="Asia/Calcutta" \
+    --env ROLE="ANALYZER" \
+    --env MONITOR_URL="192.168.1.5:888" \
+    --env ANALYZER_PORT=777 \
+    --env DATA_STORE="/mnt/whitestat/" \
+    --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
+    -d avarghesein/whitestat:v8_armhf
+
+
+You could view Daily Bandwidth Usage using
+
+    UI: http://192.168.1.6:777/
+    Plain JSON: http://192.168.1.6:777/json/
 
 Bandwidth Usage History couldbe viewed through
 
-    UI: http://IP:777/
-    Plain JSON: http://IP:777/json/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
+    UI: http://192.168.1.6:777/
+    Plain JSON: http://192.168.1.6:777/json/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
 
 
 We could feed these URLs to other Data Analysis systems (e.g. An excel with PowerQuery, PowerBI), using the above end points.
@@ -146,7 +167,12 @@ A sample instance has been given below;
 
 This file will be automatically created, when you start the container for the first time. The only requirement would be, provide a writable path on the  Host machine as the bind mount through DATA-STORE, environment variable.
 
-Other parameters have been explained below; 
+The parameter of your most interest would be "MAC_HOST_MAP", which points to the file where we keep individual
+Host Names in our LAN mapped to their corresponding MAC ID. Multiple entries are seperated by new line, and an entry in the file (Default: MAC_HOST.txt) will follow the below format;
+
+    MAC|HOST
+
+Parameters have been explained below; 
 The default values for all parameters will be filled by WhiteStat. You've to edit the values for advanced configuration for your network, if needed.
 
     {
@@ -220,5 +246,17 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
  Note: The first docker command (for arm platform only) is to enable arm to X64 translations through [Qemu-User-Static](https://ownyourbits.com/2018/06/13/transparently-running-binaries-from-any-architecture-in-linux-with-qemu-and-binfmt_misc/)
  
  Earlier I was trying to build Qemu Virtual machines for ARMV7 architectures, which is painstaking and much slower. By using qemu-User-Static, build your ARM Container images at least 2x faster (when compared to building the same in the original armv7 devices like RaspberryPi)
+
+ #### Tools Used 
+
+Front End(UX): Python Flask, BootStrap, JQuery, SASS
+
+Middle Ware: Python, Pcap System Library, Python Numpy/Pandas, Python Threads
+
+BackEnd: SQLite
+
+The entire components are built and packaged as Docker Images, and run as Containers in the Host System.
+Supports both X64 and arm/Armhf (ArmV7) architectures. 
+Docker Images are available in Docker Hub.
  
 
