@@ -1,5 +1,7 @@
 # WhiteStat
-An entire Network (Internet) Bandwidth Daily Usage Analyser, with Historic Data Persistence in a Docker Container.
+An entire Network (Internet) Bandwidth Daily Usage Analyser, in a Docker Container
+with Historic Data Persistence. Supports both IPV4 and V6.
+
 Supports RaspberryPi2/armv7l and X64 architectures.
 
 No other dependency or installs required other than Docker CE available in Host System.
@@ -26,7 +28,7 @@ Open ports 777, 888 in firewall
 Now Access the Usage Reports at 
 
     http://IP:777
-    
+
 # Why Whitestat? 
 
 I have been looking for a Network (Internet) Bandwidth Analyzer, which could easily run on my RaspberryPi hardware with minimal footprint and provides daily statistics (per device level, not IP as any device can have multiple IP's under a DHCP environment) which is easy to comprehend in a glance. 
@@ -91,6 +93,11 @@ For RaspberryPi2 (ARMV7 or armhf) Hardware: e.g.
 For X64 Hardware:
 
     -d avarghesein/whitestat:v5
+
+Need to Capture from multiple Network Interfaces?
+
+    --env HOST_INTERFACE="eth0|eth1" \
+
 
 ## Advanced Usage: (Packet Capturing and Analyzing features in seperate containers and in seperate hosts)
 
