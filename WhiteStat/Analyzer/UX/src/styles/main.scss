@@ -32,4 +32,18 @@
 @import 'helpers';
 
 
+img {
+  border-radius: 60%;
+  width: 30px;
+  height: 40px;
+  background-image: url("../images/whitestatico.jpg");
+  cursor: pointer;
+  vertical-align:middle;
+} 
+
+.box {
+  display: flex;
+  align-items:center;
+}
+
 
