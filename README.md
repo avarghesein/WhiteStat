@@ -23,6 +23,10 @@ Open ports 777, 888 in firewall
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
     -d avarghesein/whitestat:v8_armhf
 
+Now Access the Usage Reports at 
+
+    http://IP:777
+    
 # Why Whitestat? 
 
 I have been looking for a Network (Internet) Bandwidth Analyzer, which could easily run on my RaspberryPi hardware with minimal footprint and provides daily statistics (per device level, not IP as any device can have multiple IP's under a DHCP environment) which is easy to comprehend in a glance. 
