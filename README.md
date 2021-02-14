@@ -102,7 +102,7 @@ Need to Capture from multiple Network Interfaces?
 
 ## Advanced Usage: (Packet Capturing and Analyzing features in seperate containers and in seperate hosts)
 
-See Architecture Page here, for more details:
+See **[Architecture Page here](https://github.com/avarghesein/WhiteStat/blob/main/Docs/Architecture.MD)**, for more details:
 
 If you would like to confine individual roles (Monitor/Analyzer Roles) to seperate machines;
 Say you only require Packet Capturing role in Default Gateway, device for minimal footprint, and 
