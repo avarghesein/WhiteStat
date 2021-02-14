@@ -1,6 +1,8 @@
 # WhiteStat
 An entire Network (Internet) Bandwidth Daily Usage Analyser, with Historic Data Persistence in a Docker Container.
-Supports RaspberryPi2/armv7l.
+Supports RaspberryPi2/armv7l and X64 architectures.
+
+No other dependency or installs required other Docker CE available in Host System.
 
 ![alt UX](https://github.com/avarghesein/WhiteStat/blob/main/Docs/UX3.png)
 
@@ -210,7 +212,7 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
  
     docker build -f Dockerfile -t avarghesein/whitestat:v8 .
   
-For arm/armhf/armv7 (or RaspberryPi2) machines
+(Cross Platform Build) For arm/armhf/armv7 (or RaspberryPi2) machines
 
     docker run --rm --privileged fkrull/qemu-user-static enable
     docker build -f Dockerfile.armhf -t avarghesein/whitestat:v8_armhf .
