@@ -60,11 +60,12 @@ What about a utility, which is minimal enough to smoothly run on a Pi hardware, 
 ## Prerequisites : 
 
 Other than Docker CE, No other external library or package dependency.
+
 Only ensure the below;
 
     1. Your Linux Device as the Default Gateway (X64 or armhf)
 
-       If not, make it as the default gateway:
+If not, make it as the default gateway: Making a raspberryPi2 as the Default Gateway has been [explained here](https://github.com/avarghesein/WhiteStat/blob/main/Docs/LinuxDeviceAsGateway.md).
 
     2. Docker available in the Linux Device
 
