@@ -1,8 +1,8 @@
 # WhiteStat
 An entire Network (Internet) Bandwidth Daily Usage Analyser, in a Docker Container
-with Historic Data Persistence. Supports both IPV4 and V6.
+with Historic Data Persistence. Supports both IPV4 and V6 captures.
 
-Supports RaspberryPi2/armv7l and X64 architectures.
+Platforms Supported: RaspberryPi2/armv7l and X64 architectures.
 
 No other dependency or installs required other than Docker CE available in Host System.
 
