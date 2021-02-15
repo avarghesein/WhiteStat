@@ -183,6 +183,8 @@ The parameter of your most interest would be "MAC_HOST_MAP", which points to the
 Host Names in our LAN mapped to their corresponding MAC ID. Multiple entries are seperated by new line, and an entry in the file (Default: MAC_HOST.txt) will follow the below format;
 
     MAC|HOST
+    
+See one sample [here](https://github.com/avarghesein/WhiteStat/blob/main/WhiteStat/Common/Config/MAC_HOST.txt)
 
 Parameters have been explained below; 
 The default values for all parameters will be filled by WhiteStat. You've to edit the values for advanced configuration for your network, if needed.
@@ -207,7 +209,7 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
         
         "UpdateDBSeconds": "How Often the DB should be updated. i.e in every 40 seconds",
 
-        "EXTRA_PCAP_FILTER": "",
+        "EXTRA_PCAP_FILTER": "any additional pcap filter you prefer, say (tcp and port 80)",
 
         "LAN_SEGMENT_V4_MASKS":"LAN segments used inside your private network. Auto populated",
 
