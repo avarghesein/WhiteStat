@@ -93,7 +93,7 @@ For RaspberryPi2 (ARMV7 or armhf) Hardware: e.g.
 
 For X64 Hardware:
 
-    -d avarghesein/whitestat:v5
+    -d avarghesein/whitestat:v8
 
 Need to Capture from multiple Network Interfaces?
 
@@ -270,5 +270,25 @@ BackEnd: SQLite
 The entire components are built and packaged as Docker Images, and run as Containers in the Host System.
 Supports both X64 and arm/Armhf (ArmV7) architectures. 
 Docker Images are available in Docker Hub.
- 
+
+### References
+
+##### Network Interface TCP/IP Data Capture Reference:
+
+[PCappy, No Build Required.Through Python CTypes](https://github.com/allfro/pcappy)
+
+[Original PCapy, Need to build for each platform](https://github.com/helpsystems/pcapy)
+
+[Abount PCap System Library Filer Reference](https://www.tcpdump.org/manpages/pcap-filter.7.html)
+
+[Sniff Packets, ref1](https://github.com/Arturogv15/sniffer/blob/master/main.py)
+
+[Sniff Packets, ref2](https://github.com/danicuestasuarez/packet-sniffer/blob/master/sniffer.py)
+
+
+##### Cross Platform Build Reference
+
+[Run Arm Arch Container in X64, through Qemu UserMode and binfmt_misc](https://github.com/avarghesein/docker-qemu-user-static) 
+
+[Qemu User Static](https://github.com/multiarch/qemu-user-static)
 
