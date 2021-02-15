@@ -184,7 +184,7 @@ Host Names in our LAN mapped to their corresponding MAC ID. Multiple entries are
 
     MAC|HOST
     
-See on sample [here](https://github.com/avarghesein/WhiteStat/blob/main/WhiteStat/Common/Config/MAC_HOST.txt)
+See one sample [here](https://github.com/avarghesein/WhiteStat/blob/main/WhiteStat/Common/Config/MAC_HOST.txt)
 
 Parameters have been explained below; 
 The default values for all parameters will be filled by WhiteStat. You've to edit the values for advanced configuration for your network, if needed.
