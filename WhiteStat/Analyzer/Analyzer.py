@@ -320,7 +320,8 @@ class Analyzer:
 
         newFrame = frame.copy()
 
-        def ConvertToIPString(ipInt):
+        def ConvertToIPString(ipHash):
+            ipInt = self.utl.HashToIp(ipHash)
             return self.utl.UnPackIPPackedIntToString(ipInt)
         
         def ConvertToMACString(macInt):
@@ -328,7 +329,6 @@ class Analyzer:
 
         fnIPString = np.vectorize(ConvertToIPString)
         fnMACString = np.vectorize(ConvertToMACString)
-        fnHashToIp = np.vectorize(self.utl.HashToIp)
 
         newFrame = self.AddField(newFrame, "MAC_STR","U100","")
         newFrame = self.AddField(newFrame, "IP_STR","U100","")
@@ -337,7 +337,7 @@ class Analyzer:
         newFrame = self.AddField(newFrame, "LOCAL_STR","U100","")
 
         newFrame["MAC_STR"]=fnMACString(newFrame["MAC"])
-        newFrame["IP_STR"]=fnIPString(fnHashToIp(newFrame["IP"]))
+        newFrame["IP_STR"]=fnIPString(newFrame["IP"])
 
         newFrame["DATE_STR"]=(newFrame["DATE"])
         newFrame["SEEN_STR"]=(newFrame["SEEN"])
