@@ -8,15 +8,15 @@ class WhiteStatApi
   {
     this.chart = chart;
     //this.url = "/images/whitestatdata.json";
-    //this.url="http://localhost:777/json";
+    //this.url="http://192.168.1.5:777/json";
     this.url="/json";
 
     //this.historyUrl = "/images/whitestatdata.json";
-    //this.historyUrl = "http://localhost:777/json/history";
+    //this.historyUrl = "http://192.168.1.5:777/json/history";
     this.historyUrl = "/json/history";
 
     //this.lanUrl = "/images/whitestatnetdata.json";
-    //this.lanUrl = "http://localhost:777/json/lansegments";
+    //this.lanUrl = "http://192.168.1.5:777/json/lansegments";
     this.lanUrl = "/json/lansegments";
 
     var start = $('#idStart').val();

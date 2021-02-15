@@ -30,10 +30,14 @@ class Navigation {
     // show/hide sidebar navigation
     this.sidebar.classList.toggle(this.sidebarOpenClass);
 
+    var current = this;
     // expand/shrink the main containers based on the sidebar nav
     this.mainContent.forEach(container => {
       container.classList.toggle(this.mainContentOpenClass);
+     
+      current.charts.Redraw();
     });
+    
   }
 
   enableStickyNavigation () {
@@ -53,8 +57,10 @@ class Navigation {
       }
     });
   }
+  
 
-  init () {
+  init (charts) {
+    this.charts = charts;
     this.toggleButtons.forEach(button => {
       button.addEventListener('click', this.toggle.bind(this));
     });

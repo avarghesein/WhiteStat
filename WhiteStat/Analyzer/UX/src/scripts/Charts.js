@@ -134,7 +134,12 @@ class Charts {
     }
     }
   } 
-  
+
+  Redraw()
+  {
+    this.refresh(this.service);
+  }
+
   init(api)
   {
     this.service = api;
@@ -151,7 +156,7 @@ class Charts {
     });
 
     $("#idSearch").click(function(){
-      $('#chkRefresh').prop('checked', false);
+      $('#chkRefresh').prop('checked', false).trigger("change");
 
       var start = $('#idStart').val();
       var end = $('#idEnd').val();

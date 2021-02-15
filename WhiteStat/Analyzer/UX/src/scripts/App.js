@@ -11,7 +11,7 @@ class App {
     const api = new WhiteStatApi();
 
     api.init(charts);
-    nav.init();
+    nav.init(charts);
     scrollableComponents.init();
     //charts.init(api);
   }
