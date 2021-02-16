@@ -443,7 +443,7 @@ class Analyzer:
             def IpStrToHash(ipStr):
                 return self.utl.IpToHash(self.utl.PackIpToInt(ipStr))
             
-            def MacStrToInt(macStr):
+            def MacStrToHash(macStr):
                 return self.utl.MacToHash(self.utl.PackMacToInt(macStr))
 
             if not (prevTimeframe is None) and self.ValidateDate(str(prevTimeframe[0])):
@@ -454,7 +454,7 @@ class Analyzer:
 
                 results = cursor.fetchall()                 
 
-                records = [ (IpStrToHash(r[0]), MacStrToInt(r[1]),r[2], r[3], r[4], r[5], r[6], r[7], r[8]) for r in list(results)]    
+                records = [ (IpStrToHash(r[0]), MacStrToHash(r[1]),r[2], r[3], r[4], r[5], r[6], r[7], r[8]) for r in list(results)]    
 
                 prevFrame = self.BuildFrame(records,True)
 
@@ -469,7 +469,7 @@ class Analyzer:
 
                 results = cursor.fetchall()  
 
-                records = [ (IpStrToHash(r[0]), MacStrToInt(r[1]),r[2], r[3], r[4], r[5], r[6], r[7], r[8]) for r in list(results)]    
+                records = [ (IpStrToHash(r[0]), MacStrToHash(r[1]),r[2], r[3], r[4], r[5], r[6], r[7], r[8]) for r in list(results)]    
 
                 frame = self.BuildFrame(records,True)
 
@@ -487,6 +487,7 @@ class Analyzer:
     def ReplaceHostName(self,record):
         mac = record[1]
         hostname = record[2]
+        record[3] = record[3].replace("T", " ")
         hostname = self.MacHostDic.get(mac,hostname)   
 
         if hostname is None or hostname == "(None)":

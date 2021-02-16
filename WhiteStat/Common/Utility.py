@@ -126,6 +126,11 @@ class Utility:
         
         return ipHash
 
+    def HashToIp(self, hashInt):
+        if hashInt in self.hashIPMap:
+            return self.hashIPMap[hashInt]
+
+        return 0
 
     def HashToMac(self, hashInt):
         if hashInt in self.hashMacMap:
@@ -146,12 +151,7 @@ class Utility:
         
         return macHash
 
-
-    def HashToIp(self, hashInt):
-        if hashInt in self.hashIPMap:
-            return self.hashIPMap[hashInt]
-
-        return 0
+ 
 
     def __ToDictionary(self,file, keyConverter = None, valueConverter = None):
         try:
