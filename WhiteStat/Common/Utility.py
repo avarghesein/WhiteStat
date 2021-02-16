@@ -60,6 +60,15 @@ class Utility:
         else:
             Utility.__instance = self
 
+        self._hashLock = threading.Lock()
+        self.ipHashMap = {}
+        self.hashIPMap = {}
+        self.ipHashIdx = 0
+
+        self.macHashMap = {}
+        self.hashMacMap = {}
+        self.macHashIdx = 0
+
         self.jsonObj = jsonObj
 
         self.role = jsonObj["ROLE"]
@@ -91,7 +100,7 @@ class Utility:
         self.lanRouters = f"{jsonObj['LAN_ROUTERS_TO_SKIP'].strip()}"
 
         if(self.lanRouters != ""):
-            self.lanRouters = [self.PackMacToInt(router.strip()) for router in self.lanRouters.split('|')]
+            self.lanRouters = [self.MacToHash(self.PackMacToInt(router.strip())) for router in self.lanRouters.split('|')]
         else:
             self.lanRouters = []
 
@@ -102,16 +111,6 @@ class Utility:
         self.ipTypeLocal = {}
         self.macStrings = {}
         self.ipStrings = {}
-
-        self._hashLock = threading.Lock()
-        self.ipHashMap = {}
-        self.hashIPMap = {}
-        self.ipHashIdx = 0
-
-        self.macHashMap = {}
-        self.hashMacMap = {}
-        self.macHashIdx = 0
-
 
     def IpToHash(self, ipInt):
         if ipInt in self.ipHashMap:
@@ -386,7 +385,7 @@ class Utility:
         if len(self.GetLANRouters()) > 0:
             return
         
-        routers = [self.UnPackPackedIntToString(router) for router in routerList]
+        routers = [self.UnPackPackedIntToString(self.HashToMac(router)) for router in routerList]
 
         self.jsonObj['LAN_ROUTERS_TO_SKIP'] = '|'.join(list(routers))
         self.lanRouters = routerList
