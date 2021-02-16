@@ -137,7 +137,7 @@ class Charts {
 
   Redraw()
   {
-    this.refresh(this.service);
+    this.refresh(this.service,true);
   }
 
   init(api)
@@ -152,7 +152,7 @@ class Charts {
     var self = this;
 
     $(window).on('resize', function(){
-        self.refresh(self.service);
+        self.Redraw();
     });
 
     $("#idSearch").click(function(){
@@ -212,15 +212,27 @@ class Charts {
     }
   }
 
-  refresh(api) {
+  refresh(api, redrawOnly = false) {
     this.service = api;
 
     this.clearCharts(this);
 
+
+    var chartData = self.ChartData || [];
+    var records = self.Records || [];
+
+    if(!redrawOnly)
+    {
+      chartData = api.GetHighFivePie();
+      records = api.GetRecords();
+
+      self.ChartData = chartData;
+      self.Records = records;
+    }
+    
     // init bar chart
     const barChartCanvas = document.getElementById('barChart');
     if (barChartCanvas) {
-      var chartData = api.GetHighFivePie();
 
       this.createChart(barChartCanvas, {
         type: 'bar',
@@ -253,8 +265,6 @@ class Charts {
 
     $('#idTotalKBUp').text(api.GetTotalUpload());
     $('#idTotalKBDown').text(api.GetTotalDownload());
-
-    var records = api.GetRecords();
 
     if(records != null)
     {

@@ -108,6 +108,10 @@ class Utility:
         self.hashIPMap = {}
         self.ipHashIdx = 0
 
+        self.macHashMap = {}
+        self.hashMacMap = {}
+        self.macHashIdx = 0
+
 
     def IpToHash(self, ipInt):
         if ipInt in self.ipHashMap:
@@ -121,6 +125,26 @@ class Utility:
             self.hashIPMap[ipHash] = ipInt
         
         return ipHash
+
+
+    def HashToMac(self, hashInt):
+        if hashInt in self.hashMacMap:
+            return self.hashMacMap[hashInt]
+
+        return 0
+
+    def MacToHash(self, macInt):
+        if macInt in self.macHashMap:
+            return self.macHashMap[macInt]
+        
+        macHash = 0
+        with self._hashLock:
+            self.macHashIdx += 1
+            macHash = self.macHashIdx
+            self.macHashMap[macInt] = macHash
+            self.hashMacMap[macHash] = macInt
+        
+        return macHash
 
 
     def HashToIp(self, hashInt):

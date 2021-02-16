@@ -82,11 +82,15 @@ class Analyzer:
             if usageFrame is None or len(usageFrame) <= 0:
                     return None            
             
-            localIPs =  [tuple([self.utl.IpToHash(value[0])] + [key] + value[1:] + [True]) for key, value in usageFrame[LOCAL_IP_SET].items()]  
+            localIPs =  [tuple([self.utl.IpToHash(value[0])] + 
+            [self.utl.MacToHash(key)] + value[1:] + [True]) 
+            for key, value in usageFrame[LOCAL_IP_SET].items()]  
 
             localUsageBytes = self.BuildFrame(localIPs)
 
-            remoteIps = [tuple([self.utl.IpToHash(key)] + value + [False]) for key, value in usageFrame[REMOTE_IP_SET].items()]
+            remoteIps = [tuple([self.utl.IpToHash(key)] + 
+            [self.utl.MacToHash(value[0])] + value[1:] + [False]) 
+            for key, value in usageFrame[REMOTE_IP_SET].items()]
 
             remoteUsageBytes = self.BuildFrame(remoteIps)
 
@@ -324,7 +328,8 @@ class Analyzer:
             ipInt = self.utl.HashToIp(ipHash)
             return self.utl.UnPackIPPackedIntToString(ipInt)
         
-        def ConvertToMACString(macInt):
+        def ConvertToMACString(macHash):
+            macInt = self.utl.HashToMac(macHash)            
             return self.utl.UnPackPackedIntToString(macInt)
 
         fnIPString = np.vectorize(ConvertToIPString)
@@ -439,7 +444,7 @@ class Analyzer:
                 return self.utl.IpToHash(self.utl.PackIpToInt(ipStr))
             
             def MacStrToInt(macStr):
-                return self.utl.PackMacToInt(macStr)
+                return self.utl.MacToHash(self.utl.PackMacToInt(macStr))
 
             if not (prevTimeframe is None) and self.ValidateDate(str(prevTimeframe[0])):
                 prevDate = prevTimeframe[0]
