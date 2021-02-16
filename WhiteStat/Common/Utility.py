@@ -109,6 +109,7 @@ class Utility:
         self._lock = threading.Lock()        
 
         self.ipTypeLocal = {}
+        self.ipHashTypeLocal = {}
         self.macStrings = {}
         self.ipStrings = {}
 
@@ -359,6 +360,21 @@ class Utility:
             lanMasks = "fe80|fec0|fd".split("|")
         
         return [hexval.replace(':','') for hexval in lanMasks]
+
+    
+    def IsLANIPHash(self,ipHash:int):
+        if ipHash in self.ipHashTypeLocal.keys():
+            return self.ipHashTypeLocal[ipHash]
+        
+        fnHashToIp = lambda ipHash : self.HashToIp(ipHash)
+        flag = self.IsLANIPBytes(fnHashToIp(ipHash))
+
+        with self._lock:
+            if not( ipHash in self.ipHashTypeLocal.keys()):
+                self.ipHashTypeLocal[ipHash] = flag
+
+        return flag
+
 
     def IsLANIPBytes(self,packedBytesInt:int):
 

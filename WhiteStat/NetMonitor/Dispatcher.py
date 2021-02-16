@@ -102,10 +102,7 @@ class Dispatcher(threading.Thread):
 
         rec = []
 
-        utl = self.utl
-        fnHashToIp = lambda ipHash : utl.HashToIp(ipHash)
-
-        if self.utl.IsLANIPBytes(fnHashToIp(ip)):
+        if self.utl.IsLANIPHash(ip):
             frame = self.localIPs
 
             if ( mac in frame.keys()):
