@@ -54,10 +54,20 @@ class Dispatcher(threading.Thread):
                 packet = None
 
                 if sleptSeconds >= remoteRefreshSeconds:
+                    utl = self.utl
+                    fnHashToIp = lambda ipHash : utl.HashToIp(ipHash)    
+                    fnHashToMac = lambda macHash : utl.HashToMac(macHash) 
+
+                    localIPS = { fnHashToMac(key) : [fnHashToIp(value[0])] + value[1:]
+                    for key, value in self.localIPs.items() }
+
+                    remoteIPs = { fnHashToIp(key) : [fnHashToMac(value[0])] + value[1:]
+                    for key, value in self.remoteIPs.items() }
+
                     client = RS.RemoteManager()
                     client.connect()
                     curFrame = client.RemoteUsageFrame()
-                    curFrame.SetFrame(self.localIPs,self.remoteIPs)
+                    curFrame.SetFrame(localIPS,remoteIPs)
                     sleptSeconds = 0
 
                     #curFrame = client.RemoteUsageFrame()
@@ -92,7 +102,10 @@ class Dispatcher(threading.Thread):
 
         rec = []
 
-        if self.utl.IsLANIPBytes(ip):
+        utl = self.utl
+        fnHashToIp = lambda ipHash : utl.HashToIp(ipHash)
+
+        if self.utl.IsLANIPBytes(fnHashToIp(ip)):
             frame = self.localIPs
 
             if ( mac in frame.keys()):

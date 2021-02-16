@@ -71,6 +71,10 @@ class PacketFilter(threading.Thread):
     #function to parse a packet
     def ParsePacket(self,packet) :
 
+        utl = self.utl
+        fnIpToHash = lambda ipBytes : utl.IpToHash(utl.PackBytesToInt(ipBytes))
+        fnMacToHash = lambda macBytes : utl.MacToHash(utl.PackBytesToInt(macBytes))
+
         srcMac = 0
         dstMac = 0
         srcIP = 0
@@ -87,8 +91,8 @@ class PacketFilter(threading.Thread):
         eth = unpack('!6s6sH' , eth_header)
         eth_protocol = socket.ntohs(eth[2])
 
-        dstMac = self.utl.PackBytesToInt(packet[0:6])       
-        srcMac = self.utl.PackBytesToInt(packet[6:12])  
+        dstMac = fnMacToHash(packet[0:6])       
+        srcMac = fnMacToHash(packet[6:12])  
 
         sizeInBytes = len(packet)
 
@@ -98,8 +102,8 @@ class PacketFilter(threading.Thread):
             #IP V6 (https://github.com/Arturogv15/sniffer/blob/master/main.py)
             ip_header = packet[eth_length:40+eth_length]
             iph = unpack('!4sHBB16s16s' , ip_header)
-            srcIP = self.utl.PackBytesToInt(iph[4])
-            dstIP = self.utl.PackBytesToInt(iph[5])           
+            srcIP = fnIpToHash(iph[4])
+            dstIP = fnIpToHash(iph[5])           
             
         #Parse IP V4 packets, IP Protocol number = 8
         if eth_protocol == 8 :
@@ -109,9 +113,8 @@ class PacketFilter(threading.Thread):
             #take first 20 characters for the ip header
             ip_header = packet[eth_length:20+eth_length]
             iph = unpack('!BBHHHBBH4s4s' , ip_header)
-            srcIP = self.utl.PackBytesToInt(iph[8])
-            dstIP = self.utl.PackBytesToInt(iph[9])
-            sizeInBytes = len(packet)
+            srcIP = fnIpToHash(iph[8])
+            dstIP = fnIpToHash(iph[9])
             #unpack('!BBH' , ip_header[0:4])[2] #is the total length from IP header
 
 

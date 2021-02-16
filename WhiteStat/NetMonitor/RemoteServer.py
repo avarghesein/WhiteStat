@@ -67,5 +67,7 @@ class RemoteUsageFrame:
 
     def SetFrame(self, localIPs, remoteIPs):
         with self._lock:
+            self._localIPs = None
+            self._remoteIPs = None
             self._localIPs = localIPs;
             self._remoteIPs = remoteIPs;
