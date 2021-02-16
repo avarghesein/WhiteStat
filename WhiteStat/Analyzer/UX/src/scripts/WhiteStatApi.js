@@ -8,15 +8,15 @@ class WhiteStatApi
   {
     this.chart = chart;
     //this.url = "/images/whitestatdata.json";
-    //this.url="http://192.168.1.5:777/json";
+    //this.url="http://localhost:5000/json";
     this.url="/json";
 
     //this.historyUrl = "/images/whitestatdata.json";
-    //this.historyUrl = "http://192.168.1.5:777/json/history";
+    //this.historyUrl = "http://localhost:5000/json/history";
     this.historyUrl = "/json/history";
 
     //this.lanUrl = "/images/whitestatnetdata.json";
-    //this.lanUrl = "http://192.168.1.5:777/json/lansegments";
+    //this.lanUrl = "http://localhost:5000/json/lansegments";
     this.lanUrl = "/json/lansegments";
 
     var start = $('#idStart').val();
@@ -43,13 +43,15 @@ class WhiteStatApi
 
     var jqxhr = $.getJSON(self.url, function(data) {
         var dataRecords = data;
-        self.records = dataRecords;    
-        jqxhr = $.getJSON(self.lanUrl, function(data) {
-            var lanRecord = data;
-            self.lanRecord = lanRecord;    
-            self.CalculateTotal();
-            self.chart.refresh(self);
-          }); 
+        self.records = dataRecords; 
+        self.CalculateTotal();
+        self.chart.refresh(self);   
+        // jqxhr = $.getJSON(self.lanUrl, function(data) {
+        //     var lanRecord = data;
+        //     self.lanRecord = lanRecord;    
+        //     self.CalculateTotal();
+        //     self.chart.refresh(self);
+        //   }); 
       });
   }
 
@@ -75,7 +77,8 @@ class WhiteStatApi
     this.records.data.forEach(function(rec, index){
       var flag = false;
         
-      lanRecord.forEach(function(subnet,index){ flag |= String(rec[0]).startsWith(subnet); });
+      //lanRecord.forEach(function(subnet,index){ flag |= String(rec[0]).startsWith(subnet); });
+      flag |= (rec[9] != 0);
 
       if(flag)
       {

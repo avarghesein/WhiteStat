@@ -96,6 +96,10 @@ class Analyzer:
 
             usageFrame = np.concatenate((localUsageBytes, remoteUsageBytes), axis=0)
 
+            if(len(usageFrame) <= 0):
+                self.utl.Trace("No records from Monitor. May not be initialized the first frame")
+                return None
+
             fnReplaceMacs = np.vectorize(self.ReplaceMACs)
             usageFrame["MAC"]=fnReplaceMacs(usageFrame["IP"],usageFrame["MAC"])
             
@@ -487,7 +491,11 @@ class Analyzer:
     def ReplaceHostName(self,record):
         mac = record[1]
         hostname = record[2]
-        record[3] = record[3].replace("T", " ")
+
+        seen = record[3]
+        seen = seen[seen.find("T")+1 : ].replace(".000","")
+        record[3] = seen
+
         hostname = self.MacHostDic.get(mac,hostname)   
 
         if hostname is None or hostname == "(None)":
@@ -512,7 +520,7 @@ class Analyzer:
 
             if count > 0:
 
-                fields="DU.IP,MAC,DN.NAME AS HOST,SEEN,[IN],OUT,DATE,LSTDAY_IN,LSTDAY_OUT"
+                fields="DU.IP,MAC,DN.NAME AS HOST,SEEN,[IN],OUT,DATE,LSTDAY_IN,LSTDAY_OUT,LOCAL"
                 query=f"SELECT {fields} FROM DailyUsage DU LEFT JOIN DNAME DN ON DU.IP = DN.IP WHERE date(DATE)=date('{utcDate}') ORDER BY [IN] DESC"
 
                 records = connection.execute(query).fetchall()
@@ -521,7 +529,7 @@ class Analyzer:
                 records = list(map(self.ReplaceHostName, records))
 
                 frame = {}
-                frame["columns"] = ["IP", "MAC", "Hostname", "LastSeen", "KBIn", "KBOut", "DATE", "LSTDAY_KBIn", "LSTDAY_KBOut"]
+                frame["columns"] = ["IP", "MAC", "Hostname", "LastSeen", "KBIn", "KBOut", "DATE", "LSTDAY_KBIn", "LSTDAY_KBOut","LOCAL"]
                 frame["data"] = records      
 
             connection.close()
@@ -542,8 +550,8 @@ class Analyzer:
             connection = sqlite3.connect(self.utl.GetDB()) 
 
   
-            fields="DU.IP,MAC,DN.NAME AS HOST,SEEN,[IN],OUT,DATE,LSTDAY_IN,LSTDAY_OUT"
-            innerfields="IP,MAC,SEEN,[IN],OUT,DATE,LSTDAY_IN,LSTDAY_OUT"
+            fields="DU.IP,MAC,DN.NAME AS HOST,SEEN,[IN],OUT,DATE,LSTDAY_IN,LSTDAY_OUT,LOCAL"
+            innerfields="IP,MAC,SEEN,[IN],OUT,DATE,LSTDAY_IN,LSTDAY_OUT,LOCAL"
             dateCondition = f"(date(DATE) >= date('{startDate}') AND date(DATE) <= date('{endDate}'))"
 
             selectQuery = f"SELECT {fields} FROM  (((SELECT {innerfields}  FROM DailyUsage WHERE {dateCondition} UNION " 
@@ -557,7 +565,7 @@ class Analyzer:
             records = list(map(self.ReplaceHostName, records))
 
             frame = {}
-            frame["columns"] = ["IP", "MAC", "Hostname", "LastSeen", "KBIn", "KBOut", "DATE", "LSTDAY_KBIn", "LSTDAY_KBOut"]
+            frame["columns"] = ["IP", "MAC", "Hostname", "LastSeen", "KBIn", "KBOut", "DATE", "LSTDAY_KBIn", "LSTDAY_KBOut","LOCAL"]
             frame["data"] = records
                 
             connection.close()
