@@ -31,18 +31,10 @@ def main(argv):
 
         monitor = MTR.Monitor()
         analyzer = MR.Manager()
-        webServer = WS.WebServer()
-
-        if(utl.IsMonitor()):
-            monitor.start()
-        
-        if(utl.IsAnalyzer()):
-            analyzer.start()
-            webServer.start()
-
+        webServer = WS.WebServer()        
         try:
-            while True:
-                time.sleep(15) 
+            analyzer.startFlag = True
+            analyzer.run()
         finally:
             webServer.stop()
             analyzer.stop()

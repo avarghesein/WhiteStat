@@ -4,6 +4,7 @@ import os
 import threading, queue
 import WhiteStat.Common.Utility as UTL
 import WhiteStat.NetMonitor.RemoteServer as RS
+import gc
 
 class Dispatcher(threading.Thread):
 
@@ -69,6 +70,7 @@ class Dispatcher(threading.Thread):
                     curFrame = client.RemoteUsageFrame()
                     curFrame.SetFrame(localIPS,remoteIPs)
                     sleptSeconds = 0
+                    gc.collect()
 
                     #curFrame = client.RemoteUsageFrame()
                     #remoteFrame = curFrame.GetFrame()                   

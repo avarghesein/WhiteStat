@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import WhiteStat.Common.Utility as UTL
 import WhiteStat.NetMonitor.RemoteServer as RS
 import numpy.lib.recfunctions as NF
+import copy
 
 LOCAL_IP_SET = 0
 REMOTE_IP_SET = 1
@@ -79,9 +80,11 @@ class Analyzer:
             curFrame = self.remoteManager.RemoteUsageFrame()
             usageFrame = curFrame.GetFrame()
 
-            if usageFrame is None or len(usageFrame) <= 0:
+            if usageFrame is None:
                     return None            
             
+            usageFrame = copy.deepcopy(usageFrame)
+
             localIPs =  [tuple([self.utl.IpToHash(value[0])] + 
             [self.utl.MacToHash(key)] + value[1:] + [True]) 
             for key, value in usageFrame[LOCAL_IP_SET].items()]  

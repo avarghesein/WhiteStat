@@ -23,7 +23,37 @@ class PacketFilter(threading.Thread):
         self.dispatcherQueue = queue.Queue()
         self.dispatcher = WD.Dispatcher(self.dispatcherQueue)
 
+        self._hashLock = threading.Lock()
+        self.ipBytesHashMap = {}
+        self.macBytesHashMap = {}
+
         super().__init__()
+
+    def IpBytesToHash(self, ipBytes):
+        if ipBytes in self.ipBytesHashMap:
+            return self.ipBytesHashMap[ipBytes]
+        
+        utl = self.utl
+
+        ipHash = 0
+        with self._hashLock:
+            ipHash = utl.IpToHash(utl.PackBytesToInt(ipBytes))
+            self.ipBytesHashMap[ipBytes] = ipHash
+         
+        return ipHash
+    
+    def MacBytesToHash(self, macBytes):
+        if macBytes in self.macBytesHashMap:
+            return self.macBytesHashMap[macBytes]
+        
+        utl = self.utl
+
+        macHash = 0
+        with self._hashLock:
+            macHash = utl.MacToHash(utl.PackBytesToInt(macBytes))
+            self.macBytesHashMap[macBytes] = macHash
+         
+        return macHash
 
     def start(self):       
         self.startFlag = True
@@ -72,8 +102,8 @@ class PacketFilter(threading.Thread):
     def ParsePacket(self,packet) :
 
         utl = self.utl
-        fnIpToHash = lambda ipBytes : utl.IpToHash(utl.PackBytesToInt(ipBytes))
-        fnMacToHash = lambda macBytes : utl.MacToHash(utl.PackBytesToInt(macBytes))
+        fnIpToHash = lambda ipBytes : self.IpBytesToHash(ipBytes)
+        fnMacToHash = lambda macBytes : self.MacBytesToHash(macBytes)
 
         srcMac = 0
         dstMac = 0

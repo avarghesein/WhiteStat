@@ -5,6 +5,7 @@ import WhiteStat.Common.Utility as UTL
 import WhiteStat.Analyzer.Analyzer as WA
 import threading, queue
 import socket
+import gc
 
 class Manager(threading.Thread):
 
@@ -57,6 +58,7 @@ class Manager(threading.Thread):
                     if totalSleepSeconds >= dbRefreshSeconds:
                         self.extender.PersistToDailyDB(startUsageFrame,today)
                         totalSleepSeconds = 0
+                        gc.collect()
 
                 nextUsageFrame = self.extender.GetDayNextFrame(today, startUsageFrame)
 
