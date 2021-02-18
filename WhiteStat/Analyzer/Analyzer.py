@@ -45,7 +45,7 @@ class Analyzer(object):
         def CheckRouterIP(macInt):     
             return macInt in routers
 
-        frame = self.AddField(frame, "routerFlag","i8",False)
+        frame = self.AddField(frame, "routerFlag","i1",False)
         #frame.loc[frame.IP == "192.168.1.21", 'MAC'] = "f8:c4:f3:50:53:68"
 
         fnCheckRouterFlg = np.vectorize(CheckRouterIP)
@@ -57,12 +57,12 @@ class Analyzer(object):
     def BuildFrame(self, usageList, fromDB = False):
         
         dtypes =[
-                    ('IP', 'i8'),
-                    ('MAC', 'i8'),
+                    ('IP', 'i4'),
+                    ('MAC', 'i4'),
                     ('IN', 'f8'),
                     ('OUT', 'f8'),
                     ('SEEN', 'M8[ms]'),
-                    ('LOCAL', 'i8')
+                    ('LOCAL', 'i1')
                     ]            
         
         if fromDB:
@@ -197,35 +197,35 @@ class Analyzer(object):
         dtypes = None
         if isLocal:
             dtypes =[
-                    ('MAC', 'i8'),
+                    ('MAC', 'i4'),
                     ('DATE', 'M8[ms]'),
-                    ('IP1', 'i8'),
-                    ('IP', 'i8'),
+                    ('IP1', 'i4'),
+                    ('IP', 'i4'),
                     ('IN', 'f8'),
                     ('IN2', 'f8'),
                     ('OUT', 'f8'),
                     ('OUT2', 'f8'),
                     ('SEEN1', 'M8[ms]'),
                     ('SEEN', 'M8[ms]'),
-                    ('LOCAL1', 'i8'),
-                    ('LOCAL', 'i8'),
+                    ('LOCAL1', 'i1'),
+                    ('LOCAL', 'i1'),
                     ('LSTDAY_IN', 'f8'),
                     ('LSTDAY_OUT', 'f8')
                     ]
         else:
             dtypes =[
-                    ('IP', 'i8'),
+                    ('IP', 'i4'),
                     ('DATE', 'M8[ms]'),
-                    ('MAC1', 'i8'),
-                    ('MAC', 'i8'),
+                    ('MAC1', 'i4'),
+                    ('MAC', 'i4'),
                     ('IN', 'f8'),
                     ('IN2', 'f8'),
                     ('OUT', 'f8'),
                     ('OUT2', 'f8'),
                     ('SEEN1', 'M8[ms]'),
                     ('SEEN', 'M8[ms]'),
-                    ('LOCAL1', 'i8'),
-                    ('LOCAL', 'i8'),
+                    ('LOCAL1', 'i1'),
+                    ('LOCAL', 'i1'),
                     ('LSTDAY_IN', 'f8'),
                     ('LSTDAY_OUT', 'f8')
                     ]
@@ -343,11 +343,11 @@ class Analyzer(object):
         fnIPString = np.vectorize(ConvertToIPString)
         fnMACString = np.vectorize(ConvertToMACString)
 
-        newFrame = self.AddField(newFrame, "MAC_STR","U100","")
-        newFrame = self.AddField(newFrame, "IP_STR","U100","")
-        newFrame = self.AddField(newFrame, "DATE_STR","U100","")
-        newFrame = self.AddField(newFrame, "SEEN_STR","U100","")
-        newFrame = self.AddField(newFrame, "LOCAL_STR","U100","")
+        newFrame = self.AddField(newFrame, "MAC_STR","U17","")
+        newFrame = self.AddField(newFrame, "IP_STR","U39","")
+        newFrame = self.AddField(newFrame, "DATE_STR","U25","")
+        newFrame = self.AddField(newFrame, "SEEN_STR","U25","")
+        newFrame = self.AddField(newFrame, "LOCAL_STR","U1","")
 
         newFrame["MAC_STR"]=fnMACString(newFrame["MAC"])
         newFrame["IP_STR"]=fnIPString(newFrame["IP"])
