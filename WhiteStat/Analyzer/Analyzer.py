@@ -9,7 +9,8 @@ import copy
 LOCAL_IP_SET = 0
 REMOTE_IP_SET = 1
 
-class Analyzer:
+class Analyzer(object):
+    __slots__ = ['__weakref__', 'utl', 'remoteManager', 'IpMacDic','MacMacDic','MacHostDic']
 
     def __init__(self):
 

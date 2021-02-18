@@ -8,6 +8,7 @@ import WhiteStat.Common.Utility as UTL
 import threading, queue
 
 class Monitor(threading.Thread):
+    __slots__ = ['utl', 'packetQueue', 'startFlag', 'packetFilter']
 
     def __init__(self):        
         self.utl = UTL.Utility.getInstance()

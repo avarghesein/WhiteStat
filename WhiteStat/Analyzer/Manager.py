@@ -8,6 +8,7 @@ import socket
 import gc
 
 class Manager(threading.Thread):
+    __slots__ = ['utl', 'extender', 'startFlag']
 
     def __init__(self):        
         self.utl = UTL.Utility.getInstance()

@@ -4,6 +4,7 @@ import time
 import WhiteStat.Common.Utility as UTL
 
 class RemoteServer(threading.Thread):
+    __slots__ = ['startFlag','remoteManager']
 
     def __init__(self):        
         self.startFlag = False
@@ -26,6 +27,8 @@ class RemoteServer(threading.Thread):
         super().join()
 
 class RemoteManager(MP.SyncManager):
+    __slots__ = ['utl']
+
     def __init__(self):
         self.utl = UTL.Utility.getInstance()
         (ip,port) = self.utl.url.split(':')
@@ -41,7 +44,9 @@ class RemoteManager(MP.SyncManager):
         self.shutdown()
 
 
-class RemoteUsageFrame:
+class RemoteUsageFrame(object):
+    __slots__ = ['__weakref__', '_lock','_localIPs','_remoteIPs']
+
     __instance = None
 
     @staticmethod 

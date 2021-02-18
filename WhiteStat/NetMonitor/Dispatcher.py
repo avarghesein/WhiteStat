@@ -7,6 +7,8 @@ import WhiteStat.NetMonitor.RemoteServer as RS
 import gc
 
 class Dispatcher(threading.Thread):
+    __slots__ = ['utl', 'dispatcherQueue', 'startFlag', 'remoteServer', 'remoteManager', 
+    'localIPs','remoteIPs']
 
     def __init__(self, dispatcherQueue):
         

@@ -13,6 +13,8 @@ import WhiteStat.NetMonitor.Dispatcher as WD
 import WhiteStat.Common.Utility as UTL
 
 class PacketFilter(threading.Thread):
+    __slots__ = ['utl', 'packetQueue', 'startFlag', 'dispatcherQueue',
+    'dispatcher', '_hashLock', 'ipBytesHashMap','macBytesHashMap']
 
     def __init__(self, packetQueue):        
         self.utl = UTL.Utility.getInstance()

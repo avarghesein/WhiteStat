@@ -27,6 +27,7 @@ app = Flask(__name__, static_url_path='/mnt/app/')
 serverInstance = None
 
 class WebServer(threading.Thread):
+    __slots__ = ['utl', 'extender', 'startFlag']
 
     def __init__(self):        
         self.utl = UTL.Utility.getInstance()
