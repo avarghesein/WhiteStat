@@ -77,14 +77,26 @@ class Analyzer(object):
 
     def GetUsageFrame(self,date):
         try:
-            self.remoteManager.connect()
-            curFrame = self.remoteManager.RemoteUsageFrame()
-            usageFrame = curFrame.GetFrame()
+            usageFrame = None
 
-            if usageFrame is None:
-                    return None            
-            
-            usageFrame = copy.deepcopy(usageFrame)
+            if not self.utl.IsMonitor():
+                self.remoteManager.connect()
+                curFrame = self.remoteManager.RemoteUsageFrame()
+                remoteFrame = curFrame.GetFrame()
+
+                if remoteFrame is None:
+                        return None            
+                
+                usageFrame = copy.deepcopy(remoteFrame)
+
+                del remoteFrame
+                del curFrame
+            else:
+                localMonitor = RS.RemoteUsageFrame.getInstance()
+                usageFrame = localMonitor.GetFrame()
+
+            if (usageFrame is None) or (usageFrame[LOCAL_IP_SET] is None) or (usageFrame[REMOTE_IP_SET] is None):
+                return None
 
             localIPs =  [tuple([self.utl.IpToHash(value[0])] + 
             [self.utl.MacToHash(key)] + value[1:] + [True]) 
@@ -387,6 +399,7 @@ class Analyzer(object):
             # END;
 
             connection.commit()
+            del pFrame
             connection.close()
         except Exception as e:
             if connection != None:

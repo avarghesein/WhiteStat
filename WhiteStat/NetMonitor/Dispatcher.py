@@ -67,10 +67,13 @@ class Dispatcher(threading.Thread):
                     remoteIPs = { fnHashToIp(key) : [fnHashToMac(value[0])] + value[1:]
                     for key, value in self.remoteIPs.items() }
 
-                    client = RS.RemoteManager()
-                    client.connect()
-                    curFrame = client.RemoteUsageFrame()
-                    curFrame.SetFrame(localIPS,remoteIPs)
+                    #client = RS.RemoteManager()
+                    #client.connect()
+                    #curFrame = client.RemoteUsageFrame()
+                    #curFrame.SetFrame(localIPS,remoteIPs)
+                    localMonitor = RS.RemoteUsageFrame.getInstance()
+                    localMonitor.SetFrame(localIPS,remoteIPs)
+
                     sleptSeconds = 0
                     gc.collect()
 

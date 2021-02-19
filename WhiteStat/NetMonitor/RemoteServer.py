@@ -64,15 +64,15 @@ class RemoteUsageFrame(object):
             RemoteUsageFrame.__instance = self
 
         self._lock = threading.Lock()
-        self._localIPs = {}
-        self._remoteIPs = {}
+        self._localIPs = None
+        self._remoteIPs = None
 
     def GetFrame(self):
         return (self._localIPs, self._remoteIPs)
 
     def SetFrame(self, localIPs, remoteIPs):
         with self._lock:
-            self._localIPs = None
-            self._remoteIPs = None
+            del self._localIPs
+            del self._remoteIPs
             self._localIPs = localIPs;
             self._remoteIPs = remoteIPs;
