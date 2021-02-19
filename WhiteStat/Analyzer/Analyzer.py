@@ -80,20 +80,9 @@ class Analyzer(object):
             usageFrame = None
 
             if not self.utl.IsMonitor():
-                self.remoteManager.connect()
-                curFrame = self.remoteManager.RemoteUsageFrame()
-                remoteFrame = curFrame.GetFrame()
-
-                if remoteFrame is None:
-                        return None            
-                
-                usageFrame = copy.deepcopy(remoteFrame)
-
-                del remoteFrame
-                del curFrame
+                usageFrame = self.remoteManager.FetchFrame()
             else:
-                localMonitor = RS.RemoteUsageFrame.getInstance()
-                usageFrame = localMonitor.GetFrame()
+                usageFrame = RS.RemoteUsageFrame.getInstance().GetFrame()
 
             if (usageFrame is None) or (usageFrame[LOCAL_IP_SET] is None) or (usageFrame[REMOTE_IP_SET] is None):
                 return None
