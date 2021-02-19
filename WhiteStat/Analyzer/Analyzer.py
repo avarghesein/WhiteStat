@@ -159,7 +159,7 @@ class Analyzer(object):
 
                 localMergedFrame = NF.join_by(["MAC","DATE"],localOldFrame, localNewFrame, jointype="outer")                
                 mask = localMergedFrame.mask
-                data = localMergedFrame.data
+                #data = localMergedFrame.data
                 newRecordsOnly = ( (mask["SEEN2"] != isNull) )
                 localMergedFrame = localMergedFrame[newRecordsOnly]
                 localMergedFrame["IN1"] = 0.0
@@ -168,7 +168,7 @@ class Analyzer(object):
 
                 remoteMergedFrame = NF.join_by(["IP","DATE"],remoteOldFrame, remoteNewFrame, jointype="outer")
                 mask = remoteMergedFrame.mask
-                data = remoteMergedFrame.data
+                #data = remoteMergedFrame.data
                 newRecordsOnly = ( (mask["SEEN2"] != isNull) )
                 remoteMergedFrame = remoteMergedFrame[newRecordsOnly]
                 remoteMergedFrame["IN1"] = 0.0
@@ -238,9 +238,9 @@ class Analyzer(object):
 
         isNull = True
         #2 is New, 1 is Old. i.e. IP1 is old IP2 is new
-        bothInOldNew = ( (mask["SEEN2"] != isNull) & (mask["SEEN1"] != isNull) )
+        #bothInOldNew = ( (mask["SEEN2"] != isNull) & (mask["SEEN1"] != isNull) )
         OnlyInOld = ( (mask["SEEN2"] == isNull) )
-        OnlyInNew = ( (mask["SEEN1"] == isNull) )
+        #OnlyInNew = ( (mask["SEEN1"] == isNull) )
 
 
         if(isLocal):

@@ -54,7 +54,7 @@ class Dispatcher(threading.Thread):
                 lastSeen = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 self.PopulateFrame(srcMac,srcIP,sizeInBytes,lastSeen,True)
                 self.PopulateFrame(dstMac,dstIP,sizeInBytes,lastSeen,False)               
-                packet = None
+                del packet
 
                 if sleptSeconds >= remoteRefreshSeconds:
                     utl = self.utl
@@ -80,6 +80,7 @@ class Dispatcher(threading.Thread):
                     #curFrame = client.RemoteUsageFrame()
                     #remoteFrame = curFrame.GetFrame()                   
                     #os.system('cls' if os.name == 'nt' else 'clear')
+                    #remoteFrame = localMonitor.GetFrame()
                     #self.PrintFrame(remoteFrame[0],remoteFrame[1])
 
                     today = datetime.datetime.now().date()

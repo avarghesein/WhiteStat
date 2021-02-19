@@ -79,7 +79,7 @@ class PacketFilter(threading.Thread):
 
                 processedPacket = (srcMac,srcIP,srcPort, dstMac,dstIP, dstPort,sizeInBytes,protocol) = self.ParsePacket(packet)                
                
-                packet = None
+                del packet
 
                 if (sizeInBytes > 0 and 
                     (protocol == 56710 or protocol == 8) and 

@@ -49,13 +49,15 @@ class Monitor(threading.Thread):
                 socket.socket();
                 cap.filter = lanOnlyFilter
 
-                def CapCallBack(userData, header, packet):
+                #def CapCallBack(userData, header, packet):
+                def CapCallBackSlim(packet):
                     self.packetQueue.put_nowait(packet)
-                    packet = None            
+                    del packet
 
                 try:
                     while(self.startFlag):
-                        cap.loop(-1, CapCallBack, None)
+                        #cap.loop(-1, CapCallBack, None)
+                        cap.loop_slim(CapCallBackSlim)
                         #cap.dispatch(-1, CapCallBack, None)
                         time.sleep(10)
                 finally:

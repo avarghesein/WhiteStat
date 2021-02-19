@@ -714,6 +714,29 @@ class PcapPyAlive(PcapPyBase):
     def loop(self, cnt, callback, user):
         return self._setup_handler(pcap_loop, cnt, callback, user)
 
+
+###Ext Loop
+    def _parse_entry_slim(self, ph, pd):
+        return string_at(pd, ph.caplen)
+
+    def _setup_handler_slim(self, looper, cnt, callback, user):
+        def _loop_callback_slim(user, ph, pd):
+            pd = self._parse_entry_slim(ph.contents, pd)
+            callback(pd)
+
+        r = looper(self._p, cnt, pcap_handler(_loop_callback_slim), pointer(py_object(user)))
+        if r == -1:
+            raise PcapPyException(self.err)
+        return r
+
+    def loop_slim(self, callback):
+        return self._setup_handler_slim(pcap_loop, -1, callback, None)
+###Ext Loop
+
+
+
+
+
     def dispatch(self, cnt, callback, user):
         return self._setup_handler(pcap_dispatch, cnt, callback, user)
 

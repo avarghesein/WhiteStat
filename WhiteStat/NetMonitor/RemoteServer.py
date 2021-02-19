@@ -19,7 +19,10 @@ class RemoteServer(threading.Thread):
         
     def run(self): 
         while(self.startFlag):
-            self.remoteManager.Serve()
+            try:
+                self.remoteManager.Serve()
+            finally:
+                pass
 
     def stop(self):
         self.remoteManager.Shutdown()
