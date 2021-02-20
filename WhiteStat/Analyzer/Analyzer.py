@@ -558,7 +558,7 @@ class Analyzer(object):
   
             fields="DU.IP,MAC,DN.NAME AS HOST,SEEN,[IN],OUT,DATE,LSTDAY_IN,LSTDAY_OUT,LOCAL"
             innerfields="IP,MAC,SEEN,[IN],OUT,DATE,LSTDAY_IN,LSTDAY_OUT,LOCAL"
-            dateCondition = f"(date(DATE) >= date('{startDate}') AND date(DATE) <= date('{endDate}'))"
+            dateCondition = f"(date(DATE) >= date('{startDate}') AND date(DATE) <= date('{endDate}') AND LOCAL=1)"
 
             selectQuery = f"SELECT {fields} FROM  (((SELECT {innerfields}  FROM DailyUsage WHERE {dateCondition} UNION " 
             selectQuery += f"SELECT {innerfields}  FROM UsageHistory WHERE ( {dateCondition} AND (IP,MAC,DATE) NOT IN " 
