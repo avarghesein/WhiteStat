@@ -96,11 +96,16 @@ class Charts {
     var resort = true;
     $("#idRecords").trigger("update", [resort]);
 
-    const pieChartCanvas = document.getElementById('pieChart');
+    var pieChartCanvas = document.getElementById('pieChart');
     if (pieChartCanvas) {
 
       if(this.pieChart != undefined &&  this.pieChart != null)
         this.pieChart.destroy();
+
+        var container = $('#pieChartContainer');
+        container.empty();
+        container.html('<canvas id="pieChart"/>'); 
+        pieChartCanvas = document.getElementById("pieChart");
 
       this.pieChart = chart.createChart(pieChartCanvas, {
         type: 'pie',
@@ -111,11 +116,16 @@ class Charts {
       });
 
 
-     const barChartCanvas = document.getElementById('barChart');
+     var barChartCanvas = document.getElementById('barChart');
     if (barChartCanvas) {
 
       if(this.barChart != undefined &&  this.barChart != null)
         this.barChart.destroy();
+
+        container = $('#barChartContainer');
+        container.empty();
+        container.html('<canvas id="barChart" class="h-100"/>'); 
+        barChartCanvas = document.getElementById("barChart");
 
        this.barChart = chart.createChart(barChartCanvas, {
         type: 'bar',
