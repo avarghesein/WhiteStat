@@ -361,7 +361,7 @@ class Utility:
         if lanMasks == None or len(lanMasks) <= 0:
             lanMasks = "fe80|fec0|fd".split("|")
         
-        return [hexval.replace(':','') for hexval in lanMasks]
+        return lanMasks
 
     
     def IsLANIPHash(self,ipHash:int):

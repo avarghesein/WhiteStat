@@ -353,6 +353,18 @@ class Analyzer(object):
         newFrame["MAC_STR"]=fnMACString(newFrame["MAC"])
         newFrame["IP_STR"]=fnIPString(newFrame["IP"])
 
+        # lanV6masks = self.utl.GetV6LANMasks()
+
+        # def FilterIPV6Local(ipv6Str):
+        #     for lan in lanV6masks:
+        #         if ipv6Str.startswith(lan):
+        #             return True
+
+        #     return False
+        
+        # fnIPV6Local = np.vectorize(FilterIPV6Local)
+        # newFrame = newFrame[fnIPV6Local(newFrame["IP_STR"]) == False]
+
         newFrame["DATE_STR"]=(newFrame["DATE"])
         newFrame["SEEN_STR"]=(newFrame["SEEN"])
         newFrame["LOCAL_STR"]=(newFrame["LOCAL"])
