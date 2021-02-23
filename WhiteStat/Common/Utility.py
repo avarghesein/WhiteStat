@@ -265,9 +265,11 @@ class Utility:
         ipBytes = None
 
         if ":" in ipString:
-            ipBytes = bytearray.fromhex(ipString.strip().replace(':',''))
+            #ipBytes = bytearray.fromhex(ipString.strip().replace(':',''))
+            ipBytes = socket.inet_pton(socket.AF_INET6,ipString)
         else:
-            ipBytes = bytearray([int(byte) for byte in ipString.split(".")]) 
+            ipBytes = socket.inet_pton(socket.AF_INET,ipString)
+            #ipBytes = bytearray([int(byte) for byte in ipString.split(".")]) 
 
         return self.PackBytesToInt(ipBytes)
 
