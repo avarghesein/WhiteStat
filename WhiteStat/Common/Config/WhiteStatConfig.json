@@ -3,8 +3,7 @@
 
       "DATA_STORE": "./WhiteStat/RunConfig",
 
-      "DBFile": "WhiteStat.db",      
-      "MAC_HOST_MAP": "MAC_HOST.txt",      
+      "DBFile": "WhiteStat.db", 
       
       "HOST_INTERFACE":"eth0",
       "MONITOR_URL": ":888",

@@ -7,17 +7,15 @@ class WhiteStatApi
   init (chart) 
   {
     this.chart = chart;
-    //this.url = "/images/whitestatdata.json";
-    //this.url="http://localhost:5000/json";
-    this.url="/json";
 
-    //this.historyUrl = "/images/whitestatdata.json";
-    //this.historyUrl = "http://localhost:5000/json/history";
-    this.historyUrl = "/json/history";
+    this.baseUrl = "/json";
+    //this.baseUrl="http://localhost:5000/json";
+    //this.baseUrl = "/images/whitestatdata.json";    
 
-    //this.lanUrl = "/images/whitestatnetdata.json";
-    //this.lanUrl = "http://localhost:5000/json/lansegments";
-    this.lanUrl = "/json/lansegments";
+    this.url= this.baseUrl;
+    this.historyUrl = this.baseUrl + "/history";
+    this.hostName = this.baseUrl + "/hostname";
+    this.lanUrl = this.baseUrl + "/lansegments";
 
     var start = $('#idStart').val();
     if(start == undefined || start == "")
@@ -35,6 +33,19 @@ class WhiteStatApi
     
     this.chart.init(this);
     this.refresh(this.chart);
+  }
+
+  updateHostName(postData, onSuccess)
+  {
+    var self = this;
+
+    return $.ajax({
+      type: "POST",
+      url: self.hostName,
+      data: JSON.stringify(postData),
+      success: onSuccess,
+      dataType: "json"
+    });
   }
 
   refresh (chart) 

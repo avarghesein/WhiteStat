@@ -88,8 +88,9 @@ class Utility:
         #self.ipmacDict = self.__ToDictionary(f"{self.ipmac}", self.PackIpToInt, self.PackMacToInt)
         self.ipmacDict = {}
 
-        self.macHost = f"{self.configFolder}/{jsonObj['MAC_HOST_MAP']}"
-        self.macHostDict = self.__ToDictionary(f"{self.macHost}")
+        #self.macHost = f"{self.configFolder}/{jsonObj['MAC_HOST_MAP']}"
+        #self.macHostDict = self.__ToDictionary(f"{self.macHost}")
+        self.macHostDict = {}
 
         self.db = f"{self.configFolder}/{jsonObj['DBFile']}"
         self.log = f"{self.configFolder}/{jsonObj['LOGFile']}"
@@ -151,7 +152,6 @@ class Utility:
         
         return macHash
 
- 
 
     def __ToDictionary(self,file, keyConverter = None, valueConverter = None):
         try:
@@ -161,13 +161,15 @@ class Utility:
                     (key, val) = line.split('|')
                     key = key.strip()
                     val = val.strip()
-                    if not(keyConverter is None):
-                        key = keyConverter(key)
 
-                    if not(valueConverter is None):
-                        val = valueConverter(val)
+                    if (not (key is None) and key != "") and (not (val is None) and val != "") :
+                        if not(keyConverter is None):
+                            key = keyConverter(key)
 
-                    d[key] = val
+                        if not(valueConverter is None):
+                            val = valueConverter(val)
+
+                        d[key] = val
             return d
         except Exception as e:
             self.Log(e)   
@@ -411,5 +413,9 @@ class Utility:
         f = open(f"{self.configFolder}/WhiteStatConfig.json", "w")
         json.dump(self.jsonObj, f, indent = 6) 
         f.close()
-
+    
+    def SetHostNames(self, hostNames):
+        self.macHostDict = {**self.macHostDict, **hostNames}
+        return self.macHostDict
+    
         

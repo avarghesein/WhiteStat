@@ -223,6 +223,7 @@ class Charts {
   }
 
   refresh(api, redrawOnly = false) {
+    var self = this;
     this.service = api;
 
     this.clearCharts(this);
@@ -280,9 +281,11 @@ class Charts {
     {
         $('#idTotal').text("(" + records.length + ")");
         $.each(records, function(index,item) {
+          var hostName = String(item[2]).substring(0,15);
+          var local = item[9];
           var tr = $('<tr>').append(
               $('<td>').text(item[0]),          
-              $('<td>').text(String(item[2]).substring(0,15)),
+              $('<td contenteditable="true" class="changeable" data-old=' + hostName + ' data-local=' + local + '>').text(hostName),
               $('<td>').text(Math.round(item[4]/1024,2)),
               $('<td>').text(Math.round(item[5]/1024,2)),
               $('<td>').text(String(item[6]).substring(0,10)),
@@ -291,6 +294,29 @@ class Charts {
           ); 
           
           tr.appendTo('#idRecordsBody');
+      });
+
+      $(".changeable").blur(function(e){
+          e.preventDefault(); 
+          var ip = $(this).closest('tr').find("td:nth-child(1)").text();
+          var name = $(this).closest('tr').find("td:nth-child(2)").text();   
+          var mac = $(this).closest('tr').find("td:nth-child(7)").text();
+          var oldName = $(this).data("old");
+          var isLocal = $(this).data("local");
+          var column = $(this);
+          if (oldName != name)
+          {
+              var data = {
+                "ip":ip,
+                "name": name,
+                "mac":mac,
+                "oldName": oldName,
+                "local":isLocal
+              };
+              self.service.updateHostName(data, function(newVal) {
+                column.data("old", newVal); 
+              });
+          }
       });
     }
 

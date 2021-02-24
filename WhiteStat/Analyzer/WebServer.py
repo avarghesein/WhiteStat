@@ -24,6 +24,8 @@ app.config["DEBUG"] = True
 # set the project root directory as the static folder, you can set others.
 app = Flask(__name__, static_url_path='/mnt/app/')
 
+app.config['CORS_HEADERS'] = 'Content-Type'
+
 serverInstance = None
 
 class WebServer(threading.Thread):
@@ -54,6 +56,7 @@ class WebServer(threading.Thread):
         
         super().join()
     
+
 @app.route('/')
 def root():
     return send_from_directory('./UX/dist', 'index.html')
@@ -88,8 +91,16 @@ def GetHistory():
     
     if not endDate:
         endDate = serverInstance.extender.GetNowUtc()
+
+    if startDate > endDate:
+        startDate, endDate = endDate, startDate
     
-    return serverInstance.extender.GetHistoricRecords(startDate,endDate)
+    publicIP = request.args.get('includePublicIP')
+    includePublicIPs = False
+    if publicIP and publicIP.lower() == "yes":
+        includePublicIPs = True
+
+    return serverInstance.extender.GetHistoricRecords(startDate, endDate, includePublicIPs)
 
 @app.route('/json/history', methods=['GET'])
 def historyJson():
@@ -111,6 +122,21 @@ def lanSegmentsJson():
     response = Response(json.dumps(lans),  mimetype='application/json')
     response.headers.add("Access-Control-Allow-Origin", "*")
     return response
+
+@app.route('/json/hostname', methods=['POST'])
+def updateHostName():
+    json_data = json.loads([ formData for formData in flask.request.form][0])
+    ip = json_data['ip']
+    mac = json_data['mac']
+    hostName = json_data['name']
+    isLocal = json_data['local']
+    serverInstance.extender.SetHostName(ip,mac,hostName,isLocal)
+    response = Response(json.dumps(json_data["name"]),  mimetype='application/json')
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
+
+    
+
 
 
 

@@ -4,6 +4,7 @@ import pickle
 import threading
 import time
 import WhiteStat.Common.Utility as UTL
+import socket
 
 class RemoteServer(threading.Thread):
     __slots__ = ['startFlag','remoteManager']
@@ -36,7 +37,7 @@ class RemoteManager(object):
         self.utl = UTL.Utility.getInstance()
         (ip,port) = self.utl.url.split(':')
         self.address = (ip, int(port))
-        self.listener = None
+        self.listener = None        
 
     def Serve(self):
 
@@ -44,9 +45,15 @@ class RemoteManager(object):
             self.listener = Listener(self.address, authkey=b'whitestat')
 
         with self.listener.accept() as client:
+
             frame = RemoteUsageFrame.getInstance().GetFrame()
             bytesTosend = pickle.dumps(frame)
             client.send_bytes(bytesTosend)
+            closureBytes = client.recv_bytes()
+            client.close()
+
+            del closureBytes
+            del client
             del bytesTosend
             del frame
 
@@ -55,9 +62,17 @@ class RemoteManager(object):
     
     def FetchFrame(self):
         with Client(self.address, authkey=b'whitestat') as client:
+
             bytesRecvd = client.recv_bytes()
+            closureBytes = bytearray.fromhex('ff')
+            client.send_bytes(closureBytes)
+            client.close()
             frame = pickle.loads(bytesRecvd)
+
+            del closureBytes
+            del client
             del bytesRecvd
+
             return frame
 
 class RemoteUsageFrame(object):

@@ -18,8 +18,7 @@ class Analyzer(object):
         self.remoteManager = RS.RemoteManager()
         self.IpMacDic = self.utl.GetIpMacDict()
         self.MacMacDic = self.utl.GetMacMacDict()
-        self.MacHostDic = self.utl.GetMacHostDict()
-
+        self.MacHostDic = self.LoadLocalHostNames()
 
     def ReplaceMACs(self, ip, mac):
         new_mac = self.IpMacDic.get(ip, mac)
@@ -560,7 +559,7 @@ class Analyzer(object):
         
         return frame
             
-    def GetHistoricRecords(self, startDate, endDate):
+    def GetHistoricRecords(self, startDate, endDate, includePublicIPs = False):
         connection = None
         frame = None
         try:            
@@ -570,7 +569,8 @@ class Analyzer(object):
   
             fields="DU.IP,MAC,DN.NAME AS HOST,SEEN,[IN],OUT,DATE,LSTDAY_IN,LSTDAY_OUT,LOCAL"
             innerfields="IP,MAC,SEEN,[IN],OUT,DATE,LSTDAY_IN,LSTDAY_OUT,LOCAL"
-            dateCondition = f"(date(DATE) >= date('{startDate}') AND date(DATE) <= date('{endDate}') AND LOCAL=1)"
+            publicIps = "" if includePublicIPs else "AND LOCAL=1"
+            dateCondition = f"(date(DATE) >= date('{startDate}') AND date(DATE) <= date('{endDate}') {publicIps} )"
 
             selectQuery = f"SELECT {fields} FROM  (((SELECT {innerfields}  FROM DailyUsage WHERE {dateCondition} UNION " 
             selectQuery += f"SELECT {innerfields}  FROM UsageHistory WHERE ( {dateCondition} AND (IP,MAC,DATE) NOT IN " 
@@ -620,7 +620,47 @@ class Analyzer(object):
         
         return records
     
-    def SetDnsRecords(self, dnsEntries):
+    def SetHostName(self, ip, mac, hostName, isLocal):
+        try:
+
+            if not isLocal:
+                self.SetDnsRecords([[ hostName, ip]])
+            else:
+                self.SetDnsRecords([[ hostName, mac]],True)
+                self.MacHostDic = self.utl.SetHostNames( {mac:hostName} )
+
+        except Exception as e:
+            self.utl.Log(e)
+
+    def LoadLocalHostNames(self):
+        connection = None
+        hostNames = {}
+
+        try:            
+            import sqlite3
+            connection = sqlite3.connect(self.utl.GetDB())  
+
+            fields="MAC,NAME"
+            query=f"SELECT {fields} FROM MNAME"
+
+            records = connection.execute(query).fetchall()
+            hostNames = { r[0] : r[1] for r in records}
+
+            if len(hostNames) > 0:
+                hostNames = self.utl.SetHostNames(hostNames)
+
+            connection.close()
+
+        except Exception as e:
+            if connection != None:
+                connection.close()
+
+            self.utl.Log(e)
+        
+        return hostNames
+
+
+    def SetDnsRecords(self, dnsEntries, isLocal = False):
         connection = None
         records = None
 
@@ -628,7 +668,10 @@ class Analyzer(object):
             import sqlite3
             connection = sqlite3.connect(self.utl.GetDB())  
 
-            sql = "UPDATE DName SET NAME = ? WHERE IP = ?"
+            tableName = "MName" if isLocal else "DName"
+            fieldName = "MAC" if isLocal else "IP"
+
+            sql = f"INSERT OR REPLACE INTO {tableName}(NAME, {fieldName}) VALUES(?,?)"
  
             cursor = connection.cursor()
             
