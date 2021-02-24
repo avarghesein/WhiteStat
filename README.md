@@ -29,7 +29,7 @@ Now Access the Usage Reports at
 
     http://IP:777
 
-# Why Whitestat? 
+# Why WhiteStat? 
 
 I have been looking for a Network (Internet) Bandwidth Analyzer, which could easily run on my RaspberryPi hardware with minimal footprint and provides daily statistics (per device level, not IP as any device can have multiple IP's under a DHCP environment) which is easy to comprehend in a glance. 
 
@@ -136,17 +136,25 @@ the Monitor instance:
 You could view Daily Bandwidth Usage using
 
     UI: http://192.168.1.6:777/
-    Plain JSON: http://192.168.1.6:777/json/
+    JSON: http://192.168.1.6:777/json/
 
 Bandwidth Usage History couldbe viewed through
 
     UI: http://192.168.1.6:777/
-    Plain JSON: http://192.168.1.6:777/json/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
+    JSON: http://192.168.1.6:777/json/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00
+    JSON including Public IPs: http://192.168.1.6:777/json/history?start=2021-01-30 00:00:00&end=2021-01-31 00:00:00&includePublicIP=yes
 
 
 We could feed these URLs to other Data Analysis systems (e.g. An excel with PowerQuery, PowerBI), using the above end points.
 
 ![alt UX2](https://github.com/avarghesein/WhiteStat/blob/main/Docs/UX2.png)
+
+## Map Friendly Name for LAN Devices
+
+The UI supports inplace editing of Device Names by double clicking on the Grid Cell, so that a friendlier name could be assigned to a LAN Device.
+The name will be saved, once you change and navigate away from the host name cell in the Grid.
+
+![alt UX4](https://github.com/avarghesein/WhiteStat/blob/main/Docs/UX4.png)
 
 ## Key Configuration Options:
 
@@ -159,8 +167,7 @@ A sample instance has been given below;
 
       "DATA_STORE": "./WhiteStat/RunConfig",
 
-      "DBFile": "WhiteStat.db",      
-      "MAC_HOST_MAP": "MAC_HOST.txt",      
+      "DBFile": "WhiteStat.db",
       
       "HOST_INTERFACE":"eth0",
       "MONITOR_URL": ":888",
@@ -179,13 +186,6 @@ A sample instance has been given below;
 
 This file will be automatically created, when you start the container for the first time. The only requirement would be, provide a writable path on the  Host machine as the bind mount through DATA-STORE, environment variable.
 
-The parameter of your most interest would be "MAC_HOST_MAP", which points to the file where we keep individual
-Host Names in our LAN mapped to their corresponding MAC ID. Multiple entries are seperated by new line, and an entry in the file (Default: MAC_HOST.txt) will follow the below format;
-
-    MAC|HOST
-    
-See one sample [here](https://github.com/avarghesein/WhiteStat/blob/main/WhiteStat/Common/Config/MAC_HOST.txt)
-
 Parameters have been explained below; 
 The default values for all parameters will be filled by WhiteStat. You've to edit the values for advanced configuration for your network, if needed.
 
@@ -200,10 +200,7 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
 
         "MONITOR_URL": "IP:Port, of the monitor instance of whitestat. Default include both and at port 888",
 
-        "ANALYZER_PORT":The port at which WhiteStat will be available. Default 777,
-        
-         # In Key value format seperated by |, multiple entries are seperated by new line
-        "MAC_HOST_MAP": "{Default: MAC_HOST.txt, maps a Local MAC to a user friendly Host Name, will be displayed in usage reports, for easy tracking}",
+        "ANALYZER_PORT":The port at which WhiteStat will be available. Default 777,        
 
         "IdleSeconds": "Sleep interval for whitestat, after each data extraction from Monitor",
         
