@@ -149,9 +149,9 @@ We could feed these URLs to other Data Analysis systems (e.g. An excel with Powe
 
 ![alt UX2](https://github.com/avarghesein/WhiteStat/blob/main/Docs/UX2.png)
 
-## Map Friendly Name for LAN Devices
+## Tag a Friendly Name for any LAN Devices in UX
 
-The UI supports inplace editing of Device Names by double clicking on the Grid Cell, so that a friendlier name could be assigned to a LAN Device.
+The UX supports inplace editing of Device Names by double clicking on the Host Name Grid Cell, so that a friendlier name could be assigned to any LAN Device.
 The name will be saved, once you change and navigate away from the host name cell in the Grid.
 
 ![alt UX4](https://github.com/avarghesein/WhiteStat/blob/main/Docs/UX4.png)
