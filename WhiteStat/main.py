@@ -14,9 +14,11 @@ def main(argv):
     #os.system('cls' if os.name == 'nt' else 'clear')  
     utl = None
     try:
+        platform = UTL.GetEnv("PLATFORM","LINUX")
+        dataStorePath = "Set env variable DATA_STORE. For debugging Set in .pythonenv"
         role = UTL.GetEnv("ROLE","MONITOR|ANALYZER")
         print(role)
-        dataStore = UTL.GetEnv("DATA_STORE","/media/TMP-DSK/Python/WhiteStatGit/WhiteStat/Test/UbuntuConfig")
+        dataStore = UTL.GetEnv("DATA_STORE",dataStorePath)
         #dataStore = UTL.GetEnv("DATA_STORE","/mnt/whitestat/Config")
         print(dataStore)
         url = UTL.GetEnv("MONITOR_URL",":888")

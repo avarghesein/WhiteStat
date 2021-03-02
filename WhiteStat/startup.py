@@ -16,9 +16,11 @@ def main(argv):
     print(argv[1])
     utl = None
     try:
+        platform = UTL.GetEnv("PLATFORM","LINUX")
+        dataStorePath = "Set env variable DATA_STORE. For debugging Set in .pythonenv"
         role = UTL.GetEnv("ROLE","MONITOR|ANALYZER")
         print(role)
-        dataStore = UTL.GetEnv("DATA_STORE","/media/TMP-DSK/Python/WhiteStatGit/WhiteStat/Test/UbuntuConfig")
+        dataStore = UTL.GetEnv("DATA_STORE",dataStorePath)
         #dataStore = UTL.GetEnv("DATA_STORE","/mnt/whitestat/Config")
         print(dataStore)
         url = UTL.GetEnv("MONITOR_URL",":888")
@@ -65,7 +67,7 @@ def main(argv):
             if processID == -1:
                 processID = StartProcess(commandLine)
                 utl.Trace("Started Whitestat")
-                time.sleep(10) 
+                time.sleep(5) 
                 continue
             
             memoryUsage = MemoryUsage(processID)  # in bytes 
@@ -76,11 +78,11 @@ def main(argv):
                 #stat = bash(f'kill -9 $(ps -aux | grep main.py | tr -s " " | cut -d " " -f 2)')
                 KillProcessTree(processID)
                 utl.Trace(f"Terminated Due to Max Memory Usage {memoryUsage}: Whitestat")
-                time.sleep(10) 
+                time.sleep(5) 
                 processID = StartProcess(commandLine)
                 utl.Trace("Restarted WhiteStat")
 
-            time.sleep(300) 
+            time.sleep(30) 
         
         
     except Exception as e:

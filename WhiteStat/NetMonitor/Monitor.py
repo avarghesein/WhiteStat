@@ -45,6 +45,7 @@ class Monitor(threading.Thread):
 
             interfaces = self.utl.GetHostInterfaces()        
 
+            #windows pcap: https://www.winpcap.org/install/default.htm
             pcaps = [ PCAPY.open_live(dev , 65536 , 1 , 1000) for dev in interfaces] 
 
             def SniffPackets(cap):
