@@ -9,8 +9,9 @@
       "MONITOR_URL": ":888",
       "ANALYZER_PORT":777,
       
-      "IdleSeconds": 30,
-      "UpdateDBSeconds": 40,
+      "IdleSeconds": 150,
+      "UpdateDBSeconds": 300,
+      "MemoryLimitInMB": 250,
 
       "EXTRA_PCAP_FILTER": "",
       "LAN_SEGMENT_V4_MASKS":"0.0.0.0|10|192.168|172.16|172.17",

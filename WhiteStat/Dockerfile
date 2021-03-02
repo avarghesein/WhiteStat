@@ -1,11 +1,13 @@
 FROM python:3.9-slim-buster
 
 RUN apt-get update -y && pip install numpy && pip install lxml && pip install flask && pip install requests
+RUN pip install psutil
 RUN apt-get install libpcap0.8
 RUN mkdir -p /app/WhiteStat/
 WORKDIR /app/WhiteStat/
 COPY WhiteStatService.sh ./WhiteStatService.sh
 COPY main.py ./main.py
+COPY startup.py ./startup.py
 COPY setup.py ./setup.py
 ADD  Analyzer ./Analyzer
 ADD  Common ./Common
@@ -18,7 +20,8 @@ EXPOSE 999
 
 #ENV TZ="Asia/Calcutta"
 
-CMD ["/app/WhiteStat/WhiteStatService.sh"]
+#CMD ["/app/WhiteStat/WhiteStatService.sh"]
+CMD PYTHONPATH=/app/ python /app/WhiteStat/startup.py /app/WhiteStat/WhiteStatService.sh
 
 #Docker Build Sample:
 #docker build -f Dockerfile -t avarghesein/whitestat:v7.

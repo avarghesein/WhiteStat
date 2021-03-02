@@ -22,8 +22,9 @@ class PacketFilter(threading.Thread):
         self.packetQueue = packetQueue
         self.startFlag = False
 
-        self.dispatcherQueue = queue.Queue()
-        self.dispatcher = WD.Dispatcher(self.dispatcherQueue)
+        #if not (packetQueue is None):
+        #    self.dispatcherQueue = queue.Queue()
+        #    self.dispatcher = WD.Dispatcher(self.dispatcherQueue)
 
         self._hashLock = threading.Lock()
         self.ipBytesHashMap = {}
@@ -60,7 +61,7 @@ class PacketFilter(threading.Thread):
     def start(self):       
         self.startFlag = True
         super().start()
-        self.dispatcher.start()
+        #self.dispatcher.start()
 
     def run(self):               
 
@@ -77,25 +78,31 @@ class PacketFilter(threading.Thread):
                 except queue.Empty:
                     break
 
-                processedPacket = (srcMac,srcIP,srcPort, dstMac,dstIP, dstPort,sizeInBytes,protocol) = self.ParsePacket(packet)                
-               
+                processedPacket = self.ProcessPacket(packet)
                 del packet
 
-                if (sizeInBytes > 0 and 
-                    (protocol == 56710 or protocol == 8) and 
-                    not (srcIP <= 0 or dstIP <= 0) and 
-                    not (self.utl.IsLANIPHash(srcIP) and self.utl.IsLANIPHash(dstIP)) ):
-
+                if not (processedPacket is None):
                     self.dispatcherQueue.put_nowait(processedPacket)
 
             time.sleep(2)
 
+    def ProcessPacket(self, packet):
+        processedPacket = (srcMac,srcIP,srcPort, dstMac,dstIP, dstPort,sizeInBytes,protocol) = self.ParsePacket(packet)                
+               
+        if (sizeInBytes > 0 and 
+            (protocol == 56710 or protocol == 8) and 
+            not (srcIP <= 0 or dstIP <= 0) and 
+            not (self.utl.IsLANIPHash(srcIP) and self.utl.IsLANIPHash(dstIP)) ):
+
+            return processedPacket
+        
+        return None
 
     def stop(self):
 
-        self.dispatcher.stop()
-        self.dispatcher.join()
-        #self.dispatcherQueue.join()
+        #self.dispatcher.stop()
+        #self.dispatcher.join()
+        ##self.dispatcherQueue.join()
 
         self.startFlag = False
         super().join()

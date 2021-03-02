@@ -23,7 +23,7 @@ def Initialize(role, configFolder, url, serverPort=777,hostIface = "eth0"):
         if not os.path.exists(f"{configFolder}/WhiteStatConfig.json"):
             copyfile(f"{scriptPath}/WhiteStatConfig.json", f"{configFolder}/WhiteStatConfig.json")
             copyfile(f"{scriptPath}/WhiteStat.db", f"{configFolder}/WhiteStat.db")
-            copyfile(f"{scriptPath}/MAC_HOST.txt", f"{configFolder}/MAC_HOST.txt")
+            #copyfile(f"{scriptPath}/MAC_HOST.txt", f"{configFolder}/MAC_HOST.txt")
 
             jsonObj = json.loads(open(f"{configFolder}/WhiteStatConfig.json", 'r').read())
             jsonObj["ROLE"] = role
@@ -60,6 +60,13 @@ class Utility:
         else:
             Utility.__instance = self
 
+        self._lock = threading.Lock()        
+
+        self.ipTypeLocal = {}
+        self.ipHashTypeLocal = {}
+        self.macStrings = {}
+        self.ipStrings = {}
+
         self._hashLock = threading.Lock()
         self.ipHashMap = {}
         self.hashIPMap = {}
@@ -78,6 +85,8 @@ class Utility:
         self.url = jsonObj["MONITOR_URL"]
         self.updateDBSeconds = int(jsonObj["UpdateDBSeconds"])
         self.idleSeconds = int(jsonObj["IdleSeconds"])
+        self.memoryLimitInMB = int(jsonObj["MemoryLimitInMB"])
+
         self.ServerPort = int(jsonObj["ANALYZER_PORT"])
 
         #self.macmac = f"{self.configFolder}/{jsonObj['MAC_MAC_REWRITE']}"
@@ -105,14 +114,8 @@ class Utility:
         else:
             self.lanRouters = []
 
-        self.extraPcapFilter = f"{jsonObj['EXTRA_PCAP_FILTER']}"
+        self.extraPcapFilter = f"{jsonObj['EXTRA_PCAP_FILTER']}"       
         
-        self._lock = threading.Lock()        
-
-        self.ipTypeLocal = {}
-        self.ipHashTypeLocal = {}
-        self.macStrings = {}
-        self.ipStrings = {}
 
     def IpToHash(self, ipInt):
         if ipInt in self.ipHashMap:
@@ -211,6 +214,9 @@ class Utility:
 
     def GetUpdateDBSeconds(self):
         return self.updateDBSeconds
+
+    def GetMemoryLimitInMB(self):
+        return self.memoryLimitInMB
 
     def GetSleepSeconds(self):
         return self.idleSeconds

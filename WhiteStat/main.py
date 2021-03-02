@@ -12,7 +12,6 @@ import WhiteStat.Analyzer.WebServer as WS
 
 def main(argv):    
     #os.system('cls' if os.name == 'nt' else 'clear')  
-
     utl = None
     try:
         role = UTL.GetEnv("ROLE","MONITOR|ANALYZER")
@@ -29,24 +28,33 @@ def main(argv):
         UTL.Initialize(role, dataStore, url, serverPort, hostIface)
         utl = UTL.Utility.getInstance()
 
-        monitor = MTR.Monitor()
-        analyzer = MR.Manager()
-        webServer = WS.WebServer()
+        monitor = None
+        analyzer = None
+        webServer = None
 
         if(utl.IsMonitor()):
+            monitor = MTR.Monitor()
             monitor.start()
         
         if(utl.IsAnalyzer()):
+            analyzer = MR.Manager()
+            webServer = WS.WebServer()
+
             analyzer.start()
             webServer.start()
 
         try:
             while True:
-                time.sleep(15) 
+                time.sleep(30) 
         finally:
-            webServer.stop()
-            analyzer.stop()
-            monitor.stop()   
+            if not (webServer is None):
+                webServer.stop()
+
+            if not (analyzer is None):
+                analyzer.stop()
+
+            if not (monitor is None):
+                monitor.stop()   
         
     except Exception as e:
         if not (utl is None):

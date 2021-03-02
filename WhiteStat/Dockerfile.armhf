@@ -11,12 +11,14 @@ RUN apt-get install python3-numpy -y
 RUN apt-get install python3-flask -y
 RUN apt-get install python3-lxml -y
 RUN apt-get install python3-requests -y
+RUN apt-get install python3-psutil -y
 RUN apt-get install libpcap0.8
 
 RUN mkdir -p /app/WhiteStat/
 WORKDIR /app/WhiteStat/
 COPY WhiteStatServiceArmhf.sh ./WhiteStatServiceArmhf.sh
 COPY main.py ./main.py
+COPY startup.py ./startup.py
 COPY setup.py ./setup.py
 ADD  Analyzer ./Analyzer
 ADD  Common ./Common
@@ -29,7 +31,8 @@ EXPOSE 999
 
 #ENV TZ="Asia/Calcutta"
 
-CMD ["/app/WhiteStat/WhiteStatServiceArmhf.sh"]
+#CMD ["/app/WhiteStat/WhiteStatServiceArmhf.sh"]
+CMD PYTHONPATH=/app/ /usr/bin/python3.7 /app/WhiteStat/startup.py /app/WhiteStat/WhiteStatServiceArmhf.sh
 
 
 #Docker Build Sample:

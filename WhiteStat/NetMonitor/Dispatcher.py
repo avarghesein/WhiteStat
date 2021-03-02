@@ -3,12 +3,13 @@ import time
 import os
 import threading, queue
 import WhiteStat.Common.Utility as UTL
+import WhiteStat.NetMonitor.PacketFilter as PF
 import WhiteStat.NetMonitor.RemoteServer as RS
 import gc
 
 class Dispatcher(threading.Thread):
     __slots__ = ['utl', 'dispatcherQueue', 'startFlag', 'remoteServer', 'remoteManager', 
-    'localIPs','remoteIPs']
+    'localIPs','remoteIPs', 'packetFilter']
 
     def __init__(self, dispatcherQueue):
         
@@ -20,6 +21,8 @@ class Dispatcher(threading.Thread):
 
         self.remoteServer = RS.RemoteServer()
         self.remoteManager = RS.RemoteManager()
+
+        self.packetFilter = PF.PacketFilter(None)
 
         self.localIPs = {}
         self.remoteIPs = {}
@@ -45,16 +48,24 @@ class Dispatcher(threading.Thread):
                 packet = None
 
                 try:
-                    packet = (srcMac,srcIP,srcPort, dstMac,dstIP, dstPort,sizeInBytes,protocol) = self.dispatcherQueue.get_nowait()
+                    packet = self.dispatcherQueue.get_nowait()
                     self.dispatcherQueue.task_done()
 
                 except queue.Empty:
                     break
 
+                processedPacket = self.packetFilter.ProcessPacket(packet)
+
+                del packet
+
+                if processedPacket is None:
+                    continue
+
+                (srcMac,srcIP,srcPort, dstMac,dstIP, dstPort,sizeInBytes,protocol) = processedPacket
                 lastSeen = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 self.PopulateFrame(srcMac,srcIP,sizeInBytes,lastSeen,True)
                 self.PopulateFrame(dstMac,dstIP,sizeInBytes,lastSeen,False)               
-                del packet
+                del processedPacket
 
                 if sleptSeconds >= remoteRefreshSeconds:
                     utl = self.utl
@@ -92,6 +103,7 @@ class Dispatcher(threading.Thread):
 
             time.sleep(sleepSeconds)
             sleptSeconds += sleepSeconds
+
 
     def PrintFrame(self, localFrame,remoteFrame):
         frame = localFrame

@@ -4,23 +4,26 @@ import sys
 import socket
 import time
 import WhiteStat.NetMonitor.PacketFilter as PF
+import WhiteStat.NetMonitor.Dispatcher as WD
 import WhiteStat.Common.Utility as UTL
 import threading, queue
 
 class Monitor(threading.Thread):
-    __slots__ = ['utl', 'packetQueue', 'startFlag', 'packetFilter']
+    __slots__ = ['utl', 'packetQueue', 'startFlag', 'packetFilter', 'dispatcher']
 
     def __init__(self):        
         self.utl = UTL.Utility.getInstance()
         self.startFlag = False
         self.packetQueue = queue.Queue()
-        self.packetFilter = PF.PacketFilter(self.packetQueue)
+        #self.packetFilter = PF.PacketFilter(self.packetQueue)
+        self.dispatcher = WD.Dispatcher(self.packetQueue)
         super().__init__()
 
     def start(self):       
         self.startFlag = True
         super().start()
-        self.packetFilter.start()
+        #self.packetFilter.start()
+        self.dispatcher.start()
 
     def run(self):  
         try:
@@ -79,8 +82,12 @@ class Monitor(threading.Thread):
             self.utl.Log(e)
 
     def stop(self):        
-        self.packetFilter.stop()
-        self.packetFilter.join()
+        #self.packetFilter.stop()
+        #self.packetFilter.join()
+
+        self.dispatcher.stop()
+        self.dispatcher.join()
+
         #self.packetQueue.join()
         self.startFlag = False
         super().join()
