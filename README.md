@@ -23,7 +23,7 @@ Open ports 777, 888 in firewall
     --env ANALYZER_PORT=777 \
     --env DATA_STORE="/mnt/whitestat/" \
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
-    -d avarghesein/whitestat:v8_armhf
+    -d avarghesein/whitestat:v9_armhf
 
 Now Access the Usage Reports at 
 
@@ -89,11 +89,11 @@ For RaspberryPi2 (ARMV7 or armhf) Hardware: e.g.
     --env ANALYZER_PORT=777 \
     --env DATA_STORE="/mnt/whitestat/" \
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
-    -d avarghesein/whitestat:v8_armhf
+    -d avarghesein/whitestat:v9_armhf
 
 For X64 Hardware:
 
-    -d avarghesein/whitestat:v8
+    -d avarghesein/whitestat:v9
 
 Need to Capture from multiple Network Interfaces?
 
@@ -118,7 +118,7 @@ Run WhiteStat as Monitor only in default gateway sample: (say in 192.168.1.5)
     --env MONITOR_URL=":888" \
     --env DATA_STORE="/mnt/whitestat/" \
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
-    -d avarghesein/whitestat:v8_armhf
+    -d avarghesein/whitestat:v9_armhf
 
 Now Run Analyzer role in another machine (192.168.1.6) which does most of the heavy duty, pointing it to
 the Monitor instance:
@@ -130,7 +130,7 @@ the Monitor instance:
     --env ANALYZER_PORT=777 \
     --env DATA_STORE="/mnt/whitestat/" \
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
-    -d avarghesein/whitestat:v8_armhf
+    -d avarghesein/whitestat:v9_armhf
 
 
 You could view Daily Bandwidth Usage using
@@ -149,9 +149,10 @@ We could feed these URLs to other Data Analysis systems (e.g. An excel with Powe
 
 ![alt UX2](https://github.com/avarghesein/WhiteStat/blob/main/Docs/UX2.png)
 
-## Map Friendly Name for LAN Devices
+## Easily Tag a Friendly Name, to any LAN Device or to an External IP, with the "Inplace Edit" feature in UX
 
-The UI supports inplace editing of Device Names by double clicking on the Grid Cell, so that a friendlier name could be assigned to a LAN Device.
+The UX supports inplace editing of Device/Host Names by double clicking on the Host Name Grid Cell, so that a friendlier name could be assigned to any LAN Device or to an External IP.
+
 The name will be saved, once you change and navigate away from the host name cell in the Grid.
 
 ![alt UX4](https://github.com/avarghesein/WhiteStat/blob/main/Docs/UX4.png)
@@ -247,12 +248,12 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
  
  For X64 machines
  
-    docker build -f Dockerfile -t avarghesein/whitestat:v8 .
+    docker build -f Dockerfile -t avarghesein/whitestat:v9 .
   
 (Cross Platform Build) For arm/armhf/armv7 (or RaspberryPi2) machines
 
     docker run --rm --privileged fkrull/qemu-user-static enable
-    docker build -f Dockerfile.armhf -t avarghesein/whitestat:v8_armhf .
+    docker build -f Dockerfile.armhf -t avarghesein/whitestat:v9_armhf .
 
  Note: The first docker command (for arm platform only) is to enable arm to X64 translations through [Qemu-User-Static](https://ownyourbits.com/2018/06/13/transparently-running-binaries-from-any-architecture-in-linux-with-qemu-and-binfmt_misc/)
  
