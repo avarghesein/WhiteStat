@@ -174,8 +174,9 @@ A sample instance has been given below;
       "MONITOR_URL": ":888",
       "ANALYZER_PORT":777,
       
-      "IdleSeconds": 30,
-      "UpdateDBSeconds": 40,
+      "IdleSeconds": 150,
+      "UpdateDBSeconds": 300,
+      "MemoryLimitInMB": 250,
 
       "EXTRA_PCAP_FILTER": "",
       "LAN_SEGMENT_V4_MASKS":"0.0.0.0|10|192.168|172.16|172.17",
@@ -206,6 +207,8 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
         "IdleSeconds": "Sleep interval for whitestat, after each data extraction from Monitor",
         
         "UpdateDBSeconds": "How Often the DB should be updated. i.e in every 40 seconds",
+        
+        "MemoryLimitInMB": "Max RAM usage allowed for WhiteStat, Restart if the limit exceeds. Useful for low memory devices like RaspberryPI",
 
         "EXTRA_PCAP_FILTER": "any additional pcap filter you prefer, say (tcp and port 80)",
 
