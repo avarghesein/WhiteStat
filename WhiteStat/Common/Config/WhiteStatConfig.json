@@ -9,7 +9,7 @@
       "MONITOR_URL": ":888",
       "ANALYZER_PORT":777,
       
-      "IdleSeconds": 150,
+      "IdleSeconds": 30,
       "UpdateDBSeconds": 300,
       "MemoryLimitInMB": 250,
 

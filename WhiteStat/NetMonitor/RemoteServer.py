@@ -5,6 +5,7 @@ import threading
 import time
 import WhiteStat.Common.Utility as UTL
 import socket
+import datetime
 
 class RemoteServer(threading.Thread):
     __slots__ = ['startFlag','remoteManager']
@@ -76,7 +77,7 @@ class RemoteManager(object):
             return frame
 
 class RemoteUsageFrame(object):
-    __slots__ = ['__weakref__', '_lock','_localIPs','_remoteIPs']
+    __slots__ = ['__weakref__', '_lock','_localIPs','_remoteIPs', '_timeStamp']
 
     __instance = None
 
@@ -97,9 +98,10 @@ class RemoteUsageFrame(object):
         self._lock = threading.Lock()
         self._localIPs = None
         self._remoteIPs = None
+        self._timeStamp = datetime.datetime.now()
 
     def GetFrame(self):
-        return (self._localIPs, self._remoteIPs)
+        return (self._localIPs, self._remoteIPs, self._timeStamp)
 
     def SetFrame(self, localIPs, remoteIPs):
         with self._lock:

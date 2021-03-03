@@ -8,9 +8,10 @@ import copy
 
 LOCAL_IP_SET = 0
 REMOTE_IP_SET = 1
+TIME_STAMP = 2
 
 class Analyzer(object):
-    __slots__ = ['__weakref__', 'utl', 'remoteManager', 'IpMacDic','MacMacDic','MacHostDic']
+    __slots__ = ['__weakref__', 'utl', 'remoteManager', 'IpMacDic','MacMacDic','MacHostDic', 'serverTimeStamp', 'serverRestarted']
 
     def __init__(self):
 
@@ -19,6 +20,8 @@ class Analyzer(object):
         self.IpMacDic = self.utl.GetIpMacDict()
         self.MacMacDic = self.utl.GetMacMacDict()
         self.MacHostDic = self.LoadLocalHostNames()
+        self.serverTimeStamp = None
+        self.serverRestarted = None
 
     def ReplaceMACs(self, ip, mac):
         new_mac = self.IpMacDic.get(ip, mac)
@@ -85,6 +88,15 @@ class Analyzer(object):
 
             if (usageFrame is None) or (usageFrame[LOCAL_IP_SET] is None) or (usageFrame[REMOTE_IP_SET] is None):
                 return None
+
+            newTimeStamp = usageFrame[TIME_STAMP]
+
+            if self.serverTimeStamp is None:
+                self.serverTimeStamp = newTimeStamp
+                self.serverRestarted = None
+            else:
+                self.serverRestarted = newTimeStamp > self.serverTimeStamp
+                self.serverTimeStamp = newTimeStamp  
 
             localIPs =  [tuple([self.utl.IpToHash(value[0])] + 
             [self.utl.MacToHash(key)] + value[1:] + [True]) 
@@ -261,17 +273,28 @@ class Analyzer(object):
         data["IN2"][OnlyInOld] = data["LSTDAY_IN"][OnlyInOld]
         data["OUT2"][OnlyInOld] = data["LSTDAY_OUT"][OnlyInOld]
 
-        higherInCond = ( data["IN2"] >= data["LSTDAY_IN"] )
-        data["IN1"][higherInCond] += (data["IN2"][higherInCond] - data["LSTDAY_IN"][higherInCond])
+        if self.serverRestarted is None:                
 
-        higherOutCond = ( data["OUT2"] >= data["LSTDAY_OUT"] )
-        data["OUT1"][higherOutCond] += (data["OUT2"][higherOutCond] - data["LSTDAY_OUT"][higherOutCond])
+            higherInCond = ( data["IN2"] >= data["LSTDAY_IN"] )
+            data["IN1"][higherInCond] += (data["IN2"][higherInCond] - data["LSTDAY_IN"][higherInCond])
 
-        lowerInCond = ( data["IN2"] < data["LSTDAY_IN"] )
-        data["IN1"][lowerInCond] += data["IN2"][lowerInCond]
+            higherOutCond = ( data["OUT2"] >= data["LSTDAY_OUT"] )
+            data["OUT1"][higherOutCond] += (data["OUT2"][higherOutCond] - data["LSTDAY_OUT"][higherOutCond])
 
-        lowerOutCond = ( data["OUT2"] < data["LSTDAY_OUT"] )
-        data["OUT1"][lowerOutCond] += data["OUT2"][lowerOutCond]
+            lowerInCond = ( data["IN2"] < data["LSTDAY_IN"] )
+            data["IN1"][lowerInCond] += data["IN2"][lowerInCond]
+
+            lowerOutCond = ( data["OUT2"] < data["LSTDAY_OUT"] )
+            data["OUT1"][lowerOutCond] += data["OUT2"][lowerOutCond]
+
+        else:
+            if self.serverRestarted == True:
+                data["IN1"] += data["IN2"]
+                data["OUT1"] += data["OUT2"]
+            else:
+                data["IN1"] += (data["IN2"] - data["LSTDAY_IN"])
+                data["OUT1"] += (data["OUT2"] - data["LSTDAY_OUT"])
+
 
         data["LSTDAY_IN"] = data["IN2"]
         data["LSTDAY_OUT"] = data["OUT2"]
