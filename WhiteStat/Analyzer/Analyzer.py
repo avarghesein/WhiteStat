@@ -273,7 +273,7 @@ class Analyzer(object):
         data["IN2"][OnlyInOld] = data["LSTDAY_IN"][OnlyInOld]
         data["OUT2"][OnlyInOld] = data["LSTDAY_OUT"][OnlyInOld]
 
-        if self.serverRestarted is None:                
+        if (self.serverRestarted is None) or (self.serverRestarted == False):                
 
             higherInCond = ( data["IN2"] >= data["LSTDAY_IN"] )
             data["IN1"][higherInCond] += (data["IN2"][higherInCond] - data["LSTDAY_IN"][higherInCond])
@@ -288,12 +288,8 @@ class Analyzer(object):
             data["OUT1"][lowerOutCond] += data["OUT2"][lowerOutCond]
 
         else:
-            if self.serverRestarted == True:
-                data["IN1"] += data["IN2"]
-                data["OUT1"] += data["OUT2"]
-            else:
-                data["IN1"] += (data["IN2"] - data["LSTDAY_IN"])
-                data["OUT1"] += (data["OUT2"] - data["LSTDAY_OUT"])
+            data["IN1"] += data["IN2"]
+            data["OUT1"] += data["OUT2"]
 
 
         data["LSTDAY_IN"] = data["IN2"]
