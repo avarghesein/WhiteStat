@@ -132,3 +132,6 @@ WhiteStat/Test/
 /.vs
 Docs/Milestone_History.txt
 .vscode/launch.json
+WhiteStat/NetMonitor/WIN64/colors.ps1
+WhiteStat/NetMonitor/WIN64/nmap-7.80-setup.exe
+WhiteStat/NetMonitor/WIN64/WINPCAP_SYSDIR/

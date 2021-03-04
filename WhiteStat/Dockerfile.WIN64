@@ -1,0 +1,58 @@
+FROM python:3.9-windowsservercore
+
+RUN pip install numpy
+RUN pip install lxml
+RUN pip install flask 
+RUN pip install requests
+RUN pip install psutil
+
+RUN mkdir C:\\app\\WhiteStat
+
+WORKDIR C:\\app\\WhiteStat
+
+COPY WhiteStatService.ps1 .\\WhiteStatService.ps1
+
+COPY main.py .\\main.py
+
+COPY startup.py .\\startup.py
+
+COPY setup.py .\\setup.py
+
+ADD  Analyzer .\\Analyzer
+
+ADD  Common .\\Common
+
+ADD  NetMonitor .\\NetMonitor
+
+RUN  .\\NetMonitor\\WIN64\\winpcap-nmap-4.13.exe /S
+
+EXPOSE 777
+
+EXPOSE 888
+
+EXPOSE 999
+
+ENV PYTHONPATH="C:\\app"
+
+ENV PLATFORM="WIN64"
+
+CMD python C:\\app\\WhiteStat\\startup.py C:\\app\\WhiteStat\\WhiteStatService.ps1
+
+#Docker Build Sample:
+#docker build -f Dockerfile.WIN64 -t avarghesein/whitestat:v10_win64 .
+#docker tag avarghesein/whitestat:v10_win64 avarghesein/whitestat:v10_win64
+#docker login
+#docker push avarghesein/whitestat:v10_win64
+
+#Usage:
+# docker run -d `
+# --name whitestatwin64 `
+# --env ROLE="ANALYZER" `
+# --env MONITOR_URL="192.168.1.5:888" `
+# --env ANALYZER_PORT=777 `
+# -p 777:777 `
+# --env DATA_STORE="C:\\WhiteStat" `
+# -v D:\APPDATA\TMP\Whitestat:C:\WhiteStat `
+# avarghesein/whitestat:v10_win64
+
+#Interactive Mode : -it cmd.exe
