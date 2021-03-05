@@ -2,7 +2,9 @@
 An entire Network (Internet) Bandwidth Daily Usage Analyser, in a Docker Container
 with Historic Data Persistence. Supports both IPV4 and V6 captures.
 
-Platforms Supported: RaspberryPi2/armv7l and X64 architectures.
+Platforms Supported: RaspberryPi2/armv7l and X64 Linux Container Architectures.
+
+WhiteStat also support Windows Native Containers (Analyzer Mode Only)
 
 No other dependency or installs required other than Docker CE available in Host System.
 
@@ -132,6 +134,21 @@ the Monitor instance:
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
     -d avarghesein/whitestat:v9_armhf
 
+You could also run Analyzer Only Mode, in Native Windows Containers as well. e.g.
+
+NOTE: Windows Container Version of WhiteStat also ships with WinPCap library for packet capture. 
+However, Windows Containers [does not support loading Kernel Drivers, inside a Windows Native Container](https://serverfault.com/questions/1011433/can-i-install-a-driver-in-windows-server-core-docker-container).
+Hence it is not possible to run "Monitor" role inside a Windows Native Container as of now.
+
+      docker run -d `
+      --name whitestatwin64 `
+      --env ROLE="ANALYZER" `
+      --env MONITOR_URL="192.168.1.5:888" `
+      --env ANALYZER_PORT=777 `
+      -p 777:777 `
+      --env DATA_STORE="C:\\WhiteStat" `
+      -v C:\Users\<UserName>\Documents\Whitestat:C:\WhiteStat `
+      avarghesein/whitestat:v10_win64
 
 You could view Daily Bandwidth Usage using
 
@@ -243,8 +260,13 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
  
  For Building UI, navigate to UX directory and run
  
+    npm install
     npm run build
  
+ To Debug:
+ 
+    npm run dev
+     
  ### Build Docker Images
  
  Docker files have been given in the root directory of the source, running which will create docker images, ready to be deployed.
