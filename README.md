@@ -137,7 +137,7 @@ the Monitor instance:
 You could also run Analyzer Only Mode, in Native Windows Containers as well. e.g.
 
 NOTE: Windows Container Version of WhiteStat also ships with WinPCap library for packet capture. 
-However, Windows Containers does not support loading Kernel Drivers, inside a Windows Native Container.
+However, Windows Containers [does not support loading Kernel Drivers, inside a Windows Native Container](https://serverfault.com/questions/1011433/can-i-install-a-driver-in-windows-server-core-docker-container).
 Hence it is not possible to run "Monitor" role inside a Windows Native Container as of now.
 
       docker run -d `
@@ -260,8 +260,13 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
  
  For Building UI, navigate to UX directory and run
  
+    npm install
     npm run build
  
+ To Debug:
+ 
+    npm run dev
+     
  ### Build Docker Images
  
  Docker files have been given in the root directory of the source, running which will create docker images, ready to be deployed.
