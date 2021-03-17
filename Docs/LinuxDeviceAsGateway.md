@@ -15,15 +15,15 @@ as the Default Gateway (and optionally as DNS Server)
 
 #### Option2 (Router relays DHCP requests to Pi, RaspberryPi as Default Gateway provides both DNS and DHCP)
 
-**NB: This mode also provides you Network FailOver Capability to Router (act as the secondary gateway), if Pi has not been available for some reason.**
+**NB: This mode also provides you Network FailOver Capability to Router (act as the secondary gateway), if Pi has not been available for some reason.This makes the Network Always Available.**
 
 Update Router to Relay DHCP requests to Pi.
 
 ![alt Pi](https://github.com/avarghesein/WhiteStat/blob/main/Docs/DHCPRelayMode.jpg)
 
-Configure Pi, with DNSMASQ and configure the same to return multiple default gateways (Primary: Pi, Secondary: Router)
+Setup Pi, with DNSMASQ utility and configure the same to return multiple default gateways (Primary: Pi, Secondary: Router)
 
-Configuration has been detailed [here](https://github.com/avarghesein/-NIX/blob/main/Raspberry%20Pi%20II%20(Buster)/NetworkFailoverWithMultipleGateways.md)
+Configuration Steps has been detailed [here](https://github.com/avarghesein/-NIX/blob/main/Raspberry%20Pi%20II%20(Buster)/NetworkFailoverWithMultipleGateways.md)
 
 
 ## Set Linux Device's Static IP Configuration/Gateway
