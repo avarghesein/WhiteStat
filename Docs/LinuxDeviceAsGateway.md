@@ -6,10 +6,25 @@ Here RaspberryPi2 (192.168.1.5) will be the Linux Device, being configured as th
 
 ## Update existing Router Settings.
 
+#### Option1 (Router Provides DHCP, RaspberryPi as Default Gateway provides DNS)
+
 By default your router will be the Default Gateway and serves DNS services. Change the configuration of your router so that, it will now point to the Linux Device,
 as the Default Gateway (and optionally as DNS Server)
 
 ![alt Pi](https://github.com/avarghesein/WhiteStat/blob/main/Docs/WifiRouterConfigUpdatesForRaspberryPI.png)
+
+#### Option2 (Router relays DHCP requests to Pi, RaspberryPi as Default Gateway provides both DNS and DHCP)
+
+**NB: This mode also provides you Network FailOver Capability to Router (act as the secondary gateway), if Pi has not been available for some reason.**
+
+Update Router to Relay DHCP requests to Pi.
+
+![alt Pi](https://github.com/avarghesein/WhiteStat/blob/main/Docs/DHCPRelayMode.jpg)
+
+Configure Pi, with DNSMASQ and configure the same to return multiple default gateways (Primary: Pi, Secondary: Router)
+
+Configuration has been detailed [here](https://github.com/avarghesein/-NIX/blob/main/Raspberry%20Pi%20II%20(Buster)/NetworkFailoverWithMultipleGateways.md)
+
 
 ## Set Linux Device's Static IP Configuration/Gateway
 
