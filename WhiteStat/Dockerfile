@@ -18,6 +18,7 @@ EXPOSE 777
 EXPOSE 888
 EXPOSE 999
 
+ENV PLATFORM="LINUX"
 #ENV TZ="Asia/Calcutta"
 
 #CMD ["/app/WhiteStat/WhiteStatService.sh"]

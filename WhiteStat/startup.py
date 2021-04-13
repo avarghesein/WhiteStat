@@ -12,7 +12,9 @@ import os
 def main(argv):    
     #os.system('cls' if os.name == 'nt' else 'clear') 
     #os.chdir("/media/TMP-DSK/Python/WhiteStatGit/WhiteStat/") 
-    #argv[0] = "./WhiteStatService.sh"
+    # argv = ["",""]
+    # argv[0] = ".\\WhiteStatService.sh"
+    # argv[1] = "F:\\VIRTUALzDATA\\KVM\\WIN7-VPC\\AVarghese\\Git\\Repos\\WhiteStat\\WhiteStat\\WhiteStatService.ps1"
     print(argv[1])
     utl = None
     try:
@@ -39,7 +41,11 @@ def main(argv):
                 pass
 
         def StartProcess(commandLine):
-            popen = subprocess.Popen([commandLine,"",""], start_new_session=True)
+            if utl.IsWindows():
+                popen = subprocess.Popen(["powershell.exe",commandLine,""], start_new_session=True)
+            else:
+                popen = subprocess.Popen([commandLine,"",""], start_new_session=True)
+            
             return popen.pid
 
         def KillProcessTree(pid):
@@ -60,6 +66,7 @@ def main(argv):
             return memUsage
 
         memoryLimitInMB = utl.GetMemoryLimitInMB()
+
         commandLine = argv[1]
 
         processID = -1

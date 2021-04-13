@@ -179,6 +179,10 @@ class Utility:
 
         return {}
 
+    def IsWindows(self):
+        platform = GetEnv("PLATFORM","LINUX")
+        return platform == "WIN64"
+
     def GetLANSegments(self):
         return self.lanSegMasks.split('|')
     
