@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "WhiteStat\\.venv\\Scripts\\python.exe",
+    "python.pythonPath": ".env/bin/python",
     "editor.minimap.enabled": false,
     "files.watcherExclude": {
         "**/": true

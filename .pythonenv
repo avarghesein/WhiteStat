@@ -1,4 +1,4 @@
 PYTHONPATH="."
-PLATFORM="WIN64"
-DATA_STORE="F:\VIRTUALzDATA\KVM\WIN7-VPC\AVarghese\Git\Repos\WhiteStat\WhiteStat\Test\Win64"
-DATA_STORE_LINUX="/media/TMP-DSK/Python/WhiteStatGit/WhiteStat/Test/UbuntuConfig"
+PLATFORM="LINUX"
+DATA_STORE_WIN="F:\VIRTUALzDATA\KVM\WIN7-VPC\AVarghese\Git\Repos\WhiteStat\WhiteStat\Test\Win64"
+DATA_STORE="/media/TMP-DSK/Python/WhiteStatGit/WhiteStat/Test/UbuntuConfig"
