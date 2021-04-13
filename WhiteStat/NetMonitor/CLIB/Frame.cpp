@@ -7,20 +7,20 @@ using std::string;
 
 struct Frame
 {
-    string IP;
-    string MAC;
+    int IP;
+    int MAC;
     int In;
     int Out;
     boost::posix_time::ptime lastSeen;
 
-    Frame(string ip, string mac, int in, int out);
+    Frame(int ip, int mac, int in, int out);
     void SetCurrentDateTime();
 
     ~Frame() {}
     
 };
 
-Frame::Frame(string ip, string mac, int in, int out):
+Frame::Frame(int ip, int mac, int in, int out):
 IP(ip), MAC(mac),
 In(in), Out(out)
 {

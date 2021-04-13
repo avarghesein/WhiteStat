@@ -10,8 +10,9 @@ include_directories(.)
 include(CTest)
 enable_testing()
 
-include(FindPCAP.cmake)
 add_executable(WhiteStat main.cpp)
+
+include(FindPCAP.cmake)
 target_link_libraries(WhiteStat ${PCAP_LIBRARY})
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)

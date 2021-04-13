@@ -7,16 +7,23 @@
 
 using std::string;
 using PacketQueue = std::queue<std::shared_ptr<Packet>>;
-using PacketMap = boost::container::map<std::string,std::shared_ptr<Packet>>;
+using IntHash = boost::container::map<std::string,int>;
+using FrameMap = boost::container::map<int,std::shared_ptr<Frame>>;
 
 class CPacketProcessor
 {
     private:
         PacketQueue& _queue;
-        PacketMap _map;
+        FrameMap  _localIPMap;
+        FrameMap  _remoteIPMap;
+
+        int _intHashIdx;
+        IntHash _intHash;
+
         bool _isStop;
 
     private:
+        int GetIntHash(string value);
 
 
     public:
@@ -25,8 +32,16 @@ class CPacketProcessor
         bool Stop();
 };
 
+int CPacketProcessor::GetIntHash(string value)
+{
+    if(_intHash.contains(value)) return _intHash[value];
+    ++_intHashIdx;
+    _intHash[value] = _intHashIdx;
+    return _intHashIdx;
+}
 
-CPacketProcessor::CPacketProcessor(PacketQueue& queue) : _queue(queue), _isStop(false) {}
+CPacketProcessor::CPacketProcessor(PacketQueue& queue) : _queue(queue), _isStop(false),
+_intHashIdx(-1) {}
 
 bool CPacketProcessor::Stop()
 {
@@ -46,9 +61,18 @@ std::future<bool> CPacketProcessor::Process()
                 auto val = _queue.front();
                 _queue.pop();
 
+                Packet& packet = *val;
+
+                int srcMacHash = GetIntHash(packet.sourceMAC);
+                int srcIpHash = GetIntHash(packet.sourceIP);
+                int dstMacHash = GetIntHash(packet.destMAC);
+                int dstIpHash = GetIntHash(packet.destIP);
+
+                _localIPMap[srcMacHash] = std::shared_ptr<Frame>(new Frame(srcIpHash,srcMacHash,val->dataSize,0));
+
                 using boost::format;
                 auto formatter = boost::format("IP %1%,  MAC=%2% , DATA=%3%") % val->sourceIP % 
-                val->sourceMAC % val->dataSize;
+                val->sourceMAC % _localIPMap[srcMacHash]->In;
 
                 std::cout << formatter << std::endl;
 
