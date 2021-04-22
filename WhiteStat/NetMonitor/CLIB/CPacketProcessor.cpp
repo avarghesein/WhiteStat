@@ -61,8 +61,8 @@ bool CPacketProcessor::SerializeFrames()
         for(auto framePtr: map)
         {
             Frame& frame = *(framePtr.second);
-            auto mac = _intStrHash[frame.MAC];
-            auto ip = _intStrHash[frame.IP];
+            auto mac = isLocalIPs ? _intStrHash[(framePtr.first)] : _intStrHash[frame.MAC];
+            auto ip = isLocalIPs ? _intStrHash[frame.IP] : _intStrHash[(framePtr.first)];
             auto in = frame.In;
             auto out = frame.Out;
 
@@ -115,6 +115,15 @@ bool CPacketProcessor::ProcessFrame(int mac, int ip, u_long size, bool isSource,
     }
 
     std::shared_ptr<Frame>& frame = map[key];
+
+    if(isLan)
+    {
+        (*frame).IP = ip;
+    }
+    else
+    {
+        (*frame).MAC = mac;
+    }
 
     if(isSource)
     {
