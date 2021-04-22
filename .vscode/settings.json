@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": ".env/bin/python",
+    "python.pythonPath": ".venv/bin/python",
     "editor.minimap.enabled": false,
     "files.watcherExclude": {
         "**/": true

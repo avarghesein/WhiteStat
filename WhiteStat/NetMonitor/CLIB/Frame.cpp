@@ -9,12 +9,13 @@ struct Frame
 {
     int IP;
     int MAC;
-    int In;
-    int Out;
+    long In;
+    long Out;
     boost::posix_time::ptime lastSeen;
 
     Frame(int ip, int mac, int in, int out);
     void SetCurrentDateTime();
+    string GetCurrentDateTime();
 
     ~Frame() {}
     
@@ -29,6 +30,14 @@ In(in), Out(out)
 void Frame::SetCurrentDateTime()
 {
     lastSeen = boost::posix_time::second_clock::local_time();
+}
+
+string Frame::GetCurrentDateTime()
+{
+    auto time = to_tm(lastSeen);
+    std::stringstream stream;
+    stream << std::put_time(&time,"%d-%m-%Y %H:%M:%S");
+    return stream.str();
 }
 
 

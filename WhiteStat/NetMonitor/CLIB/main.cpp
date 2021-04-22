@@ -11,6 +11,7 @@ using boost::container::deque;
 int main(int, char**) {
 
 
+    CUtility c("192.168.1|172.16|10", "",1, 10);
     // pcap_if_t *ifs = nullptr;
     // pcap_findalldevs(&ifs,nullptr);
     
@@ -23,14 +24,14 @@ int main(int, char**) {
 
     PacketQueue queue; 
 
-    CPacketProcessor processor(queue);
+    CPacketProcessor processor(queue,c);
 
     auto iface = "eth0"s;
     CPcap cap(iface, queue);
     cap.Open();
     auto futureVal = cap.CaptureLoop();
     auto procFutureVal = processor.Process();
-    std::this_thread::sleep_for(10s);
+    std::this_thread::sleep_for(20s);
     cap.Close();
     processor.Stop();
     auto val = futureVal.get();   

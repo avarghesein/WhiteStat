@@ -10,13 +10,16 @@ include_directories(.)
 include(CTest)
 enable_testing()
 
-add_executable(WhiteStat main.cpp)
+add_executable(WhiteStatProgram main.cpp)
+add_library(WhiteStat main.cpp)
 
 include(FindPCAP.cmake)
+target_link_libraries(WhiteStatProgram ${PCAP_LIBRARY})
 target_link_libraries(WhiteStat ${PCAP_LIBRARY})
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+target_link_libraries(WhiteStatProgram Threads::Threads)
 target_link_libraries(WhiteStat Threads::Threads)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})

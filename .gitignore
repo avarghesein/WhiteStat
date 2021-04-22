@@ -136,3 +136,5 @@ WhiteStat/NetMonitor/WIN64/colors.ps1
 WhiteStat/NetMonitor/WIN64/nmap-7.80-setup.exe
 WhiteStat/NetMonitor/WIN64/WINPCAP_SYSDIR/
 WhiteStat/NetMonitor/CLIB/boost/
+WhiteStat/NetMonitor/CLIB/build/
+WhiteStat/NetMonitor/CLIB/build_arm/
