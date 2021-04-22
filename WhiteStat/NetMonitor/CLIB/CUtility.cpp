@@ -19,15 +19,29 @@ class CUtility
         StringBoolHash _ipLanHash;
         int _sleepSeconds;
         int _refreshSeconds;
+        StringArray _interfaces;
+        string _pcapFilter;
 
     private:
 
     public:
-        CUtility(string lanV4Segs, string lanV6Segs, int sleepSeconds, int refreshSeconds);
+        CUtility(string interfaces, string pcapFilter, string lanV4Segs, string lanV6Segs, int sleepSeconds, int refreshSeconds);
         bool IsLANIP(string ip);
         int SleepSeconds();
         int RemoteRefreshSeconds();
+        StringArray& GetInterfaces();
+        string& GetPcapFilter();
 };
+
+StringArray& CUtility::GetInterfaces()
+{
+    return _interfaces;
+}
+
+string& CUtility::GetPcapFilter()
+{
+    return _pcapFilter;
+}
 
 int CUtility::SleepSeconds()
 {
@@ -39,10 +53,11 @@ int CUtility::RemoteRefreshSeconds()
     return _refreshSeconds;
 }
 
-CUtility::CUtility(string lanV4Segs, string lanV6Segs, int sleepSeconds, int refreshSeconds):
-_sleepSeconds(sleepSeconds), _refreshSeconds(refreshSeconds)
+CUtility::CUtility(string interfaces, string pcapFilter, string lanV4Segs, string lanV6Segs, int sleepSeconds, int refreshSeconds):
+_sleepSeconds(sleepSeconds), _refreshSeconds(refreshSeconds), _pcapFilter(pcapFilter)
 {    
     boost::algorithm::split(_lanSegs, lanV4Segs + lanV6Segs, boost::is_any_of("|"));
+    boost::algorithm::split(_interfaces, interfaces, boost::is_any_of("|"));
 }
 
 bool CUtility::IsLANIP(string ip)

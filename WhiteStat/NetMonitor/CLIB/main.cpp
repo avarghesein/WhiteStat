@@ -10,17 +10,15 @@ using boost::container::deque;
 
 int main(int, char**) {
 
-
-    CUtility c("192.168.1|172.16|10", "",1, 10);
-    // pcap_if_t *ifs = nullptr;
-    // pcap_findalldevs(&ifs,nullptr);
-    
-    // std::cout << ifs[0].name << std::endl;
-
-    // pcap_freealldevs(ifs);
-
     using namespace std::string_literals;
     using namespace std::chrono_literals;
+
+    CUtility c("eth0"s,"","192.168.1|172.16|10", "",1, 5);
+
+    // pcap_if_t *ifs = nullptr;
+    // pcap_findalldevs(&ifs,nullptr);
+    // std::cout << ifs[0].name << std::endl;
+    // pcap_freealldevs(ifs);   
 
     PacketQueue queue; 
 
@@ -30,13 +28,27 @@ int main(int, char**) {
     CPcap cap(iface, queue);
     cap.Open();
     auto futureVal = cap.CaptureLoop();
+
     auto procFutureVal = processor.Process();
-    std::this_thread::sleep_for(20s);
-    cap.Close();
-    processor.Stop();
-    auto val = futureVal.get();   
-    auto val1 = procFutureVal.get(); 
-    
+
+    for(int i = 1; i <= 10; ++i)
+    {
+        std::system("clear");
+
+        string local;
+        string remote;
+        processor.GetFrames(local,remote);
+        std::cout << local << std::endl << std::endl << remote;
+
+        std::this_thread::sleep_for(10s);
+    }
+
+
+    cap.Close();    
+    auto val = futureVal.get(); 
+
+    processor.Stop();  
+    auto val1 = procFutureVal.get();     
 
     return 0;
 

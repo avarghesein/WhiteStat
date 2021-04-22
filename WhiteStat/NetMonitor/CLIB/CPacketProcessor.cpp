@@ -20,6 +20,8 @@ class CPacketProcessor
         PacketQueue& _queue;
         FrameMap  _localIPMap;
         FrameMap  _remoteIPMap;
+        string _serializedLocalIPs;
+        string _serializedRemoteIPs;
 
         int _intHashIdx;
         IntHash _intHash;
@@ -28,37 +30,63 @@ class CPacketProcessor
 
         bool _isStop;
 
+        boost::gregorian::date _today;
+
     private:
         int GetIntHash(string value);
         bool IsLANIP(string ip);
         bool ProcessFrame(int mac, int ip, u_long size, bool isSource , bool isLan);
-        bool PrintFrames();
+        bool SerializeFrames();        
 
     public:
+        bool GetFrames(string& localIPs, string& remoteIps);
         CPacketProcessor(PacketQueue& queue, CUtility& utility);
         std::future<bool> Process();
         bool Stop();
 };
 
-bool CPacketProcessor::PrintFrames()
+bool CPacketProcessor::GetFrames(string& localIPs, string& remoteIps)
 {
-    using boost::format;
+    localIPs = _serializedLocalIPs;
+    remoteIps = _serializedRemoteIPs;
+    return true;
+}
 
-    std::system("clear");
-
-    for(auto framePtr: _localIPMap)
+bool CPacketProcessor::SerializeFrames()
+{
+    auto serializeLambda = [&](FrameMap map, bool isLocalIPs)->string
     {
-        Frame& frame = *(framePtr.second);
-        auto mac = _intStrHash[frame.MAC];
-        auto ip = _intStrHash[frame.IP];
-        auto in = frame.In;
-        auto out = frame.Out;
-        auto formatter = boost::format("%1%|%2%|%3%|%4%|%5%") % mac %ip % in % out % frame.GetCurrentDateTime();  
+        std::stringstream stream;
 
-        string s = boost::str(formatter);
+        for(auto framePtr: map)
+        {
+            Frame& frame = *(framePtr.second);
+            auto mac = _intStrHash[frame.MAC];
+            auto ip = _intStrHash[frame.IP];
+            auto in = frame.In;
+            auto out = frame.Out;
 
-        std::cout << formatter << std::endl;
-    }  
+            using boost::format;
+
+            if(isLocalIPs)
+            {
+                auto formatter = boost::format("%1%|%2%|%3%|%4%|%5%") 
+                % mac %ip % in % out % frame.GetCurrentTime();                  
+                stream << formatter << std::endl;
+            }
+            else
+            {
+                auto formatter = boost::format("%2%|%1%|%3%|%4%|%5%") 
+                % mac %ip % in % out % frame.GetCurrentTime();                  
+                stream << formatter << std::endl;                
+            }
+        }
+
+        return stream.str();          
+    };
+
+    _serializedLocalIPs = serializeLambda(_localIPMap, true);
+    _serializedRemoteIPs = serializeLambda(_remoteIPMap, false);
 
     return true;  
 }
@@ -122,7 +150,8 @@ int CPacketProcessor::GetIntHash(string value)
 }
 
 CPacketProcessor::CPacketProcessor(PacketQueue& queue,CUtility& utility) : _queue(queue),
- _isStop(false), _intHashIdx(-1), _utility(utility) {}
+ _isStop(false), _intHashIdx(-1), _utility(utility),
+ _today(boost::gregorian::day_clock::local_day()) {}
 
 bool CPacketProcessor::Stop()
 {
@@ -136,10 +165,9 @@ std::future<bool> CPacketProcessor::Process()
 
     auto looper = [&]()->bool {
 
+        int sleptSeconds = 0;
         int sleepSeconds = _utility.SleepSeconds();
         int refreshSeconds = _utility.RemoteRefreshSeconds();
-
-        auto curDate(boost::gregorian::day_clock::local_day());
         
         while(!_isStop)
         {
@@ -147,13 +175,20 @@ std::future<bool> CPacketProcessor::Process()
 
             while(!_isStop && !_queue.empty() && ++packetCount <= 2000)
             {
-                auto today(boost::gregorian::day_clock::local_day());
-                
-                if(today > curDate)
+                if(sleptSeconds >= refreshSeconds)
                 {
-                    _localIPMap.clear();
-                    _remoteIPMap.clear();
-                    curDate = today;
+                    SerializeFrames();                    
+
+                    auto curDate(boost::gregorian::day_clock::local_day());
+                    
+                    if(curDate > _today)
+                    {
+                        _localIPMap.clear();
+                        _remoteIPMap.clear();
+                        _today = curDate;
+                    }
+
+                    sleptSeconds = 0;
                 }
 
                 auto val = _queue.front();
@@ -179,7 +214,7 @@ std::future<bool> CPacketProcessor::Process()
 
             //std::this_thread::sleep_for(1s);
             std::this_thread::sleep_for(std::chrono::seconds(sleepSeconds));
-            PrintFrames();
+            sleptSeconds += sleepSeconds;
         }
 
         return true;
