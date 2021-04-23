@@ -21,6 +21,7 @@
 #include <thread>
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 
 #include <boost/format.hpp>
 #include <boost/date_time.hpp>

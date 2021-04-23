@@ -3,6 +3,7 @@
 
 #include "./Include.hpp"
 #include "./Packet.cpp"
+#include "./CUtility.cpp"
 
 using std::string;
 using PacketQueue = std::queue<std::shared_ptr<Packet>>;
@@ -10,8 +11,12 @@ using PacketQueue = std::queue<std::shared_ptr<Packet>>;
 class CPcap
 {
     private:
-        string _iface;       
+        CUtility& _utility;
+        string _iface;  
+   
         pcap_t*_handle; 
+        struct bpf_program _filterProgram; 
+        char _errbuf[256];       
         char _sourceIp[INET6_ADDRSTRLEN];
 	    char _destIp[INET6_ADDRSTRLEN];
         char _sourceMAC[20];
@@ -20,17 +25,41 @@ class CPcap
     
     private:
         bool HandlePacket(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet);
+        bool SetFilter();
 
     public:
-        CPcap(string& iface, PacketQueue& queue);
+        CPcap(string& iface, CUtility& utility, PacketQueue& queue);
+        ~CPcap();
         bool Open();
         bool Close();
         std::future<bool> CaptureLoop();
 };
 
+bool CPcap::SetFilter()
+{
+    if(_handle == nullptr ) return  false;
 
-CPcap::CPcap(string& iface, PacketQueue& queue) : _iface(iface), _handle(nullptr),
-_queue(queue) {}
+    if (pcap_compile(_handle, &_filterProgram, _utility.GetPcapFilter().c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1) 
+    {
+        _utility.Log(pcap_geterr(_handle));
+        return false;
+    }
+
+    if (pcap_setfilter(_handle, &_filterProgram) == -1) 
+    {
+        _utility.Log(pcap_geterr(_handle));
+        return false;
+    }
+    return true;
+}
+
+CPcap::~CPcap()
+{
+    Close();
+}
+
+CPcap::CPcap(string& iface, CUtility& utility, PacketQueue& queue) : _iface(iface), _handle(nullptr),
+_queue(queue), _utility(utility) {}
 
 bool CPcap::Close()
 {
@@ -38,14 +67,13 @@ bool CPcap::Close()
     {
         try
         {
-            char errbuf[256];
             pcap_breakloop(_handle);
             pcap_close(_handle);
             _handle = nullptr;
         }
         catch(const std::exception& e)
         {
-            //std::cerr << e.what() << '\n';
+            _utility.Log(e.what());
             return false;
         } 
     }
@@ -59,12 +87,11 @@ bool CPcap::Open()
     {
         try
         {
-            char errbuf[256];
-            _handle = pcap_open_live(_iface.c_str(), 65536 , 1 , 1000, errbuf);
+            _handle = pcap_open_live(_iface.c_str(), 65536 , 1 , 1000, _errbuf);
         }
         catch(const std::exception& e)
         {
-            //std::cerr << e.what() << '\n';
+            _utility.Log(e.what());
         }        
 
         if(!_handle) return false;
@@ -86,17 +113,19 @@ std::future<bool> CPcap::CaptureLoop()
 
         try
         {
+            SetFilter();
+
             auto looper = [&]()->bool {
                 return pcap_loop(_handle,-1, handler,(u_char*)(this)) != 0;
             };
 
-            std::future<bool> loopFun = std::async(std::launch::async,looper);
+            auto captureFuture = std::async(std::launch::async,looper);
 
-            return loopFun;
+            return captureFuture;
         }
         catch(const std::exception& e)
         {
-            //std::cerr << e.what() << '\n';
+            _utility.Log(e.what());
         }        
 
         if(!_handle) throw std::invalid_argument( "Invalid Handle" );

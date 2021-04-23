@@ -31,6 +31,7 @@ class CPacketProcessor
         bool _isStop;
 
         boost::gregorian::date _today;
+        string _todayDateString;
 
     private:
         int GetIntHash(string value);
@@ -39,16 +40,27 @@ class CPacketProcessor
         bool SerializeFrames();        
 
     public:
-        bool GetFrames(string& localIPs, string& remoteIps);
+        bool GetFrames(string*& localIPs, string*& remoteIps);
+        string& GetCurrentDate();
         CPacketProcessor(PacketQueue& queue, CUtility& utility);
         std::future<bool> Process();
         bool Stop();
 };
 
-bool CPacketProcessor::GetFrames(string& localIPs, string& remoteIps)
+string& CPacketProcessor::GetCurrentDate()
 {
-    localIPs = _serializedLocalIPs;
-    remoteIps = _serializedRemoteIPs;
+    boost::gregorian::date_facet *df = new boost::gregorian::date_facet("%d-%m-%Y %H:%M:%S");     
+    std::ostringstream is;
+    is.imbue(std::locale(is.getloc(), df));
+    is << _today;
+    _todayDateString = is.str();
+    return _todayDateString;
+}
+
+bool CPacketProcessor::GetFrames(string*& localIPs, string*& remoteIps)
+{
+    localIPs = &_serializedLocalIPs;
+    remoteIps = &_serializedRemoteIPs;
     return true;
 }
 
