@@ -11,7 +11,7 @@ include(CTest)
 enable_testing()
 
 add_executable(WhiteStatProgram main.cpp)
-add_library(WhiteStat main.cpp)
+add_library(WhiteStat SHARED main.cpp)
 
 include(FindPCAP.cmake)
 target_link_libraries(WhiteStatProgram ${PCAP_LIBRARY})

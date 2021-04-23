@@ -2,7 +2,7 @@ import requests
 import numpy as np
 from datetime import datetime, timedelta
 import WhiteStat.Common.Utility as UTL
-import WhiteStat.NetMonitor.RemoteServer as RS
+import WhiteStat.NetMonitor.RemoteServerEx as RS
 import numpy.lib.recfunctions as NF
 import copy
 
@@ -77,6 +77,41 @@ class Analyzer(object):
         return np.array(usageList, dtype=dtypes)
 
 
+    def DeSerializeFrame(self, usageFrame):
+        DATE_OFFSET = 0
+        LOCAL_IP_OFFSET = 1
+        REMOTE_IP_OFFSET = 2
+        TIME_STAMP_OFFSET = 3
+
+        if ((usageFrame is None) or 
+            (usageFrame[DATE_OFFSET] is None) or 
+            (usageFrame[LOCAL_IP_OFFSET] is None) or
+            (usageFrame[REMOTE_IP_OFFSET] is None) or
+            (usageFrame[TIME_STAMP_OFFSET] is None)):
+
+            return None
+        
+        date = usageFrame[DATE_OFFSET] + " "
+
+        utl = self.utl
+
+        localIPs = { utl.PackMacToInt(rec[0]) : [ utl.PackIpToInt(rec[1]), rec[2], rec[3], date + rec[4] ] 
+                        for rec in [ rec.split("|") 
+                        for rec in 
+                        [frame for frame in usageFrame[LOCAL_IP_OFFSET].splitlines()]]
+                    }
+
+        remoteIPs = { utl.PackIpToInt(rec[0]) : [ utl.PackMacToInt(rec[1]), rec[2], rec[3], date + rec[4] ] 
+                        for rec in [ rec.split("|") 
+                        for rec in 
+                        [frame for frame in usageFrame[REMOTE_IP_OFFSET].splitlines()]]
+                    }
+
+        timeStamp = usageFrame[TIME_STAMP_OFFSET]
+
+        return (localIPs,remoteIPs,timeStamp)
+
+
     def GetUsageFrame(self,date):
         try:
             usageFrame = None
@@ -85,6 +120,8 @@ class Analyzer(object):
                 usageFrame = self.remoteManager.FetchFrame()
             else:
                 usageFrame = RS.RemoteUsageFrame.getInstance().GetFrame()
+
+            usageFrame = self.DeSerializeFrame(usageFrame)
 
             if (usageFrame is None) or (usageFrame[LOCAL_IP_SET] is None) or (usageFrame[REMOTE_IP_SET] is None):
                 return None

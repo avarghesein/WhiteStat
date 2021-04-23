@@ -18,7 +18,7 @@ CPacketProcessor* Processor = nullptr;
 FutureQueue FutureList;
 CapList PcapList;
 
-void StartCapture(
+extern "C" void StartCapture(
     const char* ifaces, const char* pcapFilter, 
     const char* v4LanMask, const char* v6LanMask,
     int sleepSeconds,
@@ -50,7 +50,7 @@ void StartCapture(
     FutureList.push(std::shared_ptr<std::future<bool>>(new std::future<bool>(Processor->Process())));
 }
 
-const char* FetchLocalFrame()
+extern "C" const char* FetchLocalFrame()
 {
     string* local;
     string* remote;
@@ -58,7 +58,7 @@ const char* FetchLocalFrame()
     return local->c_str();
 }
 
-const char* FetchRemoteFrame()
+extern "C" const char* FetchRemoteFrame()
 {
     string* local;
     string* remote;
@@ -66,13 +66,16 @@ const char* FetchRemoteFrame()
     return remote->c_str();
 }
 
-const char* GetCurrentDate()
+extern "C" const char* GetCurrentDate()
 {
     return Processor->GetCurrentDate().c_str();
 }
 
-void EndCapture()
+extern "C" void EndCapture()
 {
+    PacketQueue empty;
+    std::swap( *Queue, empty );
+
     while(!PcapList.empty()) 
     {
         auto pcap = PcapList.back();
@@ -97,8 +100,8 @@ void EndCapture()
     Utility = nullptr;
 }
 
-int main(int, char**) {
-
+extern "C" int main(int, char**) 
+{
     auto ifaces = "eth0"s;
     auto lanOnlyFilter = "not ( ( src net 0.0.0.0 or src net 10 or src net 192.168 or src net 172.16 or src net 172.17 ) and ( dst net 0.0.0.0 or dst net 10 or dst net 192.168 or dst net 172.16 or dst net 172.17 ) ) and not (multicast or ip multicast or ip6 multicast)"s;
 

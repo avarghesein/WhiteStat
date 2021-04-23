@@ -49,7 +49,7 @@ class CPacketProcessor
 
 string& CPacketProcessor::GetCurrentDate()
 {
-    boost::gregorian::date_facet *df = new boost::gregorian::date_facet("%d-%m-%Y %H:%M:%S");     
+    boost::gregorian::date_facet *df = new boost::gregorian::date_facet("%Y-%m-%d");     
     std::ostringstream is;
     is.imbue(std::locale(is.getloc(), df));
     is << _today;

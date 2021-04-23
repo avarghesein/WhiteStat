@@ -6,7 +6,7 @@ import os
 import sys
 import time
 import WhiteStat.Common.Utility as UTL
-import WhiteStat.NetMonitor.Monitor as MTR
+import WhiteStat.NetMonitor.MonitorEx as MTR
 import WhiteStat.Analyzer.Manager as MR
 import WhiteStat.Analyzer.WebServer as WS
 

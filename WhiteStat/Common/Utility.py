@@ -236,7 +236,7 @@ class Utility:
     def GetDB(self):
         return self.db
 
-    def GeLog(self):
+    def GetLog(self):
         return self.log
 
     def GetTrace(self):

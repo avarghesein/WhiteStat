@@ -24,6 +24,7 @@ class CPcap
         PacketQueue& _queue;
     
     private:
+        char* ConvertToMACString(const struct ether_addr *addr, char *buf);
         bool HandlePacket(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet);
         bool SetFilter();
 
@@ -134,13 +135,24 @@ std::future<bool> CPcap::CaptureLoop()
     throw std::invalid_argument( "Already started Capturing" );
 }
 
+char* CPcap::ConvertToMACString(const struct ether_addr *addr, char *buf)
+{
+    sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x",
+            addr->ether_addr_octet[0], addr->ether_addr_octet[1],
+            addr->ether_addr_octet[2], addr->ether_addr_octet[3],
+            addr->ether_addr_octet[4], addr->ether_addr_octet[5]);
+    return buf;
+}
+
 bool CPcap::HandlePacket(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet)
 {
 	const struct ether_header* eHeader = (struct ether_header*) packet;
     int len = sizeof(struct ether_header);
 
-    snprintf(_sourceMAC, 20, "%s", ether_ntoa((struct ether_addr *)eHeader->ether_shost));
-    snprintf(_destMAC, 20, "%s", ether_ntoa((struct ether_addr *)eHeader->ether_dhost));
+    ConvertToMACString((const struct ether_addr *)eHeader->ether_shost, _sourceMAC);
+    ConvertToMACString((const struct ether_addr *)eHeader->ether_dhost, _destMAC);
+    //snprintf(_sourceMAC, 20, "%s", ether_ntoa((struct ether_addr *)eHeader->ether_shost));
+    //snprintf(_destMAC, 20, "%s", ether_ntoa((struct ether_addr *)eHeader->ether_dhost));
 
     if (ntohs(eHeader->ether_type) == ETHERTYPE_IP)
     {
