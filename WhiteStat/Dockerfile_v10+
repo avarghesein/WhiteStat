@@ -1,0 +1,28 @@
+#FROM python:3.9-slim-buster
+FROM avarghesein/whitestat:v9
+
+#RUN apt-get update -y && pip install numpy && pip install lxml && pip install flask && pip install requests
+#RUN pip install psutil
+#RUN apt-get install libpcap0.8
+#RUN mkdir -p /app/WhiteStat/
+WORKDIR /app/WhiteStat/
+COPY WhiteStatService.sh ./WhiteStatService.sh
+COPY main.py ./main.py
+COPY startup.py ./startup.py
+COPY setup.py ./setup.py
+ADD  Analyzer ./Analyzer
+ADD  Common ./Common
+ADD  NetMonitor ./NetMonitor
+COPY NetMonitor/CLIB/Wrapper.py ./NetMonitor/CLIB/Wrapper.py
+COPY NetMonitor/CLIB/build/libWhiteStat.so ./NetMonitor/CLIB/libWhiteStat.so
+RUN  chmod a+x /app/WhiteStat/WhiteStatService.sh
+
+EXPOSE 777
+EXPOSE 888
+EXPOSE 999
+
+ENV PLATFORM="LINUX"
+#ENV TZ="Asia/Calcutta"
+
+#CMD ["/app/WhiteStat/WhiteStatService.sh"]
+CMD PYTHONPATH=/app/ python /app/WhiteStat/startup.py /app/WhiteStat/WhiteStatService.sh

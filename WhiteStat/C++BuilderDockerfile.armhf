@@ -8,18 +8,17 @@ FROM arm32v7/python:3.9-slim-buster
 RUN apt update --fix-missing -y
 RUN apt install cmake -y
 RUN apt install build-essential -y
+RUN apt install libpcap-dev -y
 
-#docker build -f DockerModernC++.txt -t avarghesein/pi_builder_image:v7_armhf .
+#docker build -f C++BuilderDockerfile.armhf -t avarghesein/armhf_cpp_builder:v7_armhf .
 
-#docker run --name "PiBuilder" -it \
+#docker run --name "PiBuilder" -d \
 #--privileged \
 #--mount type=bind,source="/home/cpp_source/",target="/mnt/cpp_source/"  \
-#-it avarghesein/pi_builder_image:v7_armhf /bin/bash
+#-it avarghesein/armhf_cpp_builder:v7_armhf
 
 #Now Within container run the below commands to build the C++ program for RaspberryPI
-#cd /mnt/cpp_source/build_arm
-#cmake ..
-#make
+#docker exec PiBuilder bash -c "mkdir -p /mnt/cpp_source/build_arm;cd /mnt/cpp_source/build_arm;cmake ..;make"
 #Now run the built program
 #exit
 

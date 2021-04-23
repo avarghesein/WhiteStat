@@ -11,3 +11,8 @@
 **/UX/package.json
 **/UX/postcss.config.js
 **/UX/config
+
+**/CLIB
+!./NetMonitor/CLIB/Wrapper.py
+!./NetMonitor/CLIB/build/libWhiteStat.so
+!./NetMonitor/CLIB/build_arm/libWhiteStat.so

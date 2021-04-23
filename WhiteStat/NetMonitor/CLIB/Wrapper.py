@@ -2,7 +2,7 @@ import ctypes
 
 class Wrapper:
     def __init__(self):
-        self._libPath = "./WhiteStat/NetMonitor/CLIB/build/libWhiteStat.so"
+        self._libPath = "./WhiteStat/NetMonitor/CLIB/libWhiteStat.so"
         self._clib = ctypes.CDLL(self._libPath)
 
         CHAR_P = ctypes.c_char_p

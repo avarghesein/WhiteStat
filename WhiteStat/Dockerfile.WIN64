@@ -24,6 +24,8 @@ ADD  Common .\\Common
 
 ADD  NetMonitor .\\NetMonitor
 
+COPY NetMonitor\\CLIB\\Wrapper.py .\\NetMonitor\\CLIB\\Wrapper.py
+
 RUN  .\\NetMonitor\\WIN64\\winpcap-nmap-4.13.exe /S
 
 EXPOSE 777
