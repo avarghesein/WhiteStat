@@ -280,7 +280,7 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
 
 Front End(UX): Python Flask, BootStrap, JQuery, SASS
 
-Middle Ware: C++17, Boost (C++), Python, Pcap System Library, Python Numpy/Pandas, Python Threads
+Middle Ware: C++17, Boost (C++), Python CTypes, Pcap System Library, Python Numpy/Pandas, Python Threads
 
 BackEnd: SQLite
 
