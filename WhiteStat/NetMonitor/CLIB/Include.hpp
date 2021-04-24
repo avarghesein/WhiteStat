@@ -19,9 +19,11 @@
 #include <future>
 #include <chrono>
 #include <thread>
+#include <mutex>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+
 
 #include <boost/format.hpp>
 #include <boost/date_time.hpp>
@@ -31,6 +33,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/algorithm/string.hpp>
 
 
 #endif

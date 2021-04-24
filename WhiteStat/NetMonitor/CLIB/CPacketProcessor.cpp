@@ -20,8 +20,12 @@ class CPacketProcessor
         PacketQueue& _queue;
         FrameMap  _localIPMap;
         FrameMap  _remoteIPMap;
+
+        std::mutex _mutex; 
         string _serializedLocalIPs;
         string _serializedRemoteIPs;
+        string _serializedLocalIPsCopy;
+        string _serializedRemoteIPsCopy;
 
         int _intHashIdx;
         IntHash _intHash;
@@ -52,15 +56,27 @@ string& CPacketProcessor::GetCurrentDate()
     boost::gregorian::date_facet *df = new boost::gregorian::date_facet("%Y-%m-%d");     
     std::ostringstream is;
     is.imbue(std::locale(is.getloc(), df));
-    is << _today;
+
+    {
+        const std::lock_guard<std::mutex> lock(_mutex);
+        is << _today;
+    }
+
     _todayDateString = is.str();
     return _todayDateString;
 }
 
 bool CPacketProcessor::GetFrames(string*& localIPs, string*& remoteIps)
 {
-    localIPs = &_serializedLocalIPs;
-    remoteIps = &_serializedRemoteIPs;
+    {
+        const std::lock_guard<std::mutex> lock(_mutex);
+        _serializedLocalIPsCopy = _serializedLocalIPs;
+        _serializedRemoteIPsCopy = _serializedRemoteIPs;
+    }
+
+    localIPs = &_serializedLocalIPsCopy;
+    remoteIps = &_serializedRemoteIPsCopy;
+
     return true;
 }
 
@@ -97,8 +113,11 @@ bool CPacketProcessor::SerializeFrames()
         return stream.str();          
     };
 
-    _serializedLocalIPs = serializeLambda(_localIPMap, true);
-    _serializedRemoteIPs = serializeLambda(_remoteIPMap, false);
+    {
+        const std::lock_guard<std::mutex> lock(_mutex);
+        _serializedLocalIPs = serializeLambda(_localIPMap, true);
+        _serializedRemoteIPs = serializeLambda(_remoteIPMap, false);
+    }
 
     return true;  
 }
@@ -206,7 +225,11 @@ std::future<bool> CPacketProcessor::Process()
                     {
                         _localIPMap.clear();
                         _remoteIPMap.clear();
-                        _today = curDate;
+
+                        {
+                            const std::lock_guard<std::mutex> lock(_mutex);
+                            _today = curDate;
+                        }
                     }
 
                     sleptSeconds = 0;
@@ -222,10 +245,17 @@ std::future<bool> CPacketProcessor::Process()
                     continue;
                 }
 
+                boost::algorithm::to_lower(packet.sourceMAC); 
                 int srcMacHash = GetIntHash(packet.sourceMAC);
+
+                boost::algorithm::to_lower(packet.sourceIP); 
                 bool isSrcLan = IsLANIP(packet.sourceIP);
                 int srcIpHash = GetIntHash(packet.sourceIP);
+
+                boost::algorithm::to_lower(packet.destMAC); 
                 int dstMacHash = GetIntHash(packet.destMAC);
+
+                boost::algorithm::to_lower(packet.destIP); 
                 bool isDstLan = IsLANIP(packet.destIP);
                 int dstIpHash = GetIntHash(packet.destIP);
 

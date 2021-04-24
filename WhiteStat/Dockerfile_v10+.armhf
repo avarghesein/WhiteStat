@@ -15,7 +15,8 @@ FROM avarghesein/whitestat:v9_armhf
 #RUN apt-get install python3-psutil -y
 #RUN apt-get install libpcap0.8
 
-#RUN mkdir -p /app/WhiteStat/
+RUN rm -r /app/WhiteStat/
+RUN mkdir -p /app/WhiteStat/
 WORKDIR /app/WhiteStat/
 COPY WhiteStatServiceArmhf.sh ./WhiteStatServiceArmhf.sh
 COPY main.py ./main.py
@@ -26,6 +27,7 @@ ADD  Common ./Common
 ADD  NetMonitor ./NetMonitor
 COPY NetMonitor/CLIB/Wrapper.py ./NetMonitor/CLIB/Wrapper.py
 COPY NetMonitor/CLIB/build_arm/libWhiteStat.so ./NetMonitor/CLIB/libWhiteStat.so
+ENV CLIB_PATH="/app/WhiteStat/NetMonitor/CLIB/libWhiteStat.so"
 RUN  chmod a+x /app/WhiteStat/WhiteStatServiceArmhf.sh
 
 EXPOSE 777

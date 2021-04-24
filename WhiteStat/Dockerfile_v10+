@@ -4,7 +4,8 @@ FROM avarghesein/whitestat:v9
 #RUN apt-get update -y && pip install numpy && pip install lxml && pip install flask && pip install requests
 #RUN pip install psutil
 #RUN apt-get install libpcap0.8
-#RUN mkdir -p /app/WhiteStat/
+RUN rm -r /app/WhiteStat/
+RUN mkdir -p /app/WhiteStat/
 WORKDIR /app/WhiteStat/
 COPY WhiteStatService.sh ./WhiteStatService.sh
 COPY main.py ./main.py
@@ -15,6 +16,7 @@ ADD  Common ./Common
 ADD  NetMonitor ./NetMonitor
 COPY NetMonitor/CLIB/Wrapper.py ./NetMonitor/CLIB/Wrapper.py
 COPY NetMonitor/CLIB/build/libWhiteStat.so ./NetMonitor/CLIB/libWhiteStat.so
+ENV CLIB_PATH="/app/WhiteStat/NetMonitor/CLIB/libWhiteStat.so"
 RUN  chmod a+x /app/WhiteStat/WhiteStatService.sh
 
 EXPOSE 777

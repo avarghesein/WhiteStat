@@ -2,7 +2,7 @@
 
 docker container stop whitestatpi
 docker container rm whitestatpi
-docker image rm $(docker image list | grep "avarghesein/whitestat" | grep v9 |  tr -s " " | cut -d " " -f 3)
+docker image rm $(docker image list | grep "avarghesein/whitestat" | grep v10 |  tr -s " " | cut -d " " -f 3)
 
 docker run --name whitestatpi --restart always \
 --network host --privileged \
@@ -13,4 +13,4 @@ docker run --name whitestatpi --restart always \
 --env ANALYZER_PORT=777 \
 --env DATA_STORE="/mnt/whitestat/" \
 --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
--d avarghesein/whitestat:v9_armhf
+-d avarghesein/whitestat:v10_armhf

@@ -95,7 +95,11 @@ bool CPcap::Open()
             _utility.Log(e.what());
         }        
 
-        if(!_handle) return false;
+        if(!_handle) 
+        {
+            _utility.Log(_errbuf);
+            return false;
+        }
     }
 
     return true;

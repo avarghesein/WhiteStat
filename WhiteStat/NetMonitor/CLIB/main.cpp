@@ -32,21 +32,27 @@ extern "C" void StartCapture(
         sleepSeconds, frameRefreshSeconds,
         logFile,traceFile);
     
-    Queue = new PacketQueue();
-
-    Processor = new CPacketProcessor(*Queue, *Utility);
-
-    std::future<bool>* ft;
+    Queue = new PacketQueue();    
 
     for(auto iface : Utility->GetInterfaces())
     {
         auto capPtr = std::shared_ptr<CPcap>(new CPcap(iface, *Utility, *Queue));
-        capPtr->Open();  
+
+        if(!capPtr->Open())
+        {
+            delete Queue;
+            Queue = nullptr;
+            delete Utility;
+            Utility = nullptr;
+            throw std::invalid_argument( "Unable to open interface for capture" );
+        }
+
         FutureList.push(
             std::shared_ptr<std::future<bool>>(new std::future<bool>(capPtr->CaptureLoop())));
         PcapList.push_back(capPtr);
     }
 
+    Processor = new CPacketProcessor(*Queue, *Utility);
     FutureList.push(std::shared_ptr<std::future<bool>>(new std::future<bool>(Processor->Process())));
 }
 

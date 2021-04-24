@@ -1,8 +1,9 @@
 import ctypes
+import WhiteStat.Common.Utility as UTL
 
 class Wrapper:
     def __init__(self):
-        self._libPath = "./WhiteStat/NetMonitor/CLIB/libWhiteStat.so"
+        self._libPath = UTL.GetEnv("CLIB_PATH",".")
         self._clib = ctypes.CDLL(self._libPath)
 
         CHAR_P = ctypes.c_char_p

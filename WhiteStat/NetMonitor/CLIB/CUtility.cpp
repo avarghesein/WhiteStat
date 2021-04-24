@@ -104,6 +104,7 @@ _sleepSeconds(sleepSeconds), _refreshSeconds(refreshSeconds),
 _pcapFilter(pcapFilter),
 _logFile(logFile), _traceFile(traceFile)
 {    
+    boost::algorithm::to_lower(lanV6Segs); 
     boost::algorithm::split(_lanSegs, lanV4Segs + lanV6Segs, boost::is_any_of("|"));
     boost::algorithm::split(_interfaces, interfaces, boost::is_any_of("|"));
 }

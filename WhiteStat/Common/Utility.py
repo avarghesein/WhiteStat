@@ -251,7 +251,7 @@ class Utility:
                     logFile.write(date + ":" +message +"\n")
                     logFile.close()
         except Exception as e:
-            Log(e) 
+           self.Log(e) 
 
     def Log(self, exception):
         try:

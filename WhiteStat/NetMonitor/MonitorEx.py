@@ -56,9 +56,12 @@ class Monitor(threading.Thread):
             self.utl.Log(e)
 
     def RefreshFrames(self):
-        (date, localFrame, remoteFrame) = self.pcapyWrapper.GetFrames()
-        usageFrame = RS.RemoteUsageFrame.getInstance()
-        usageFrame.SetFrame(date, localFrame, remoteFrame)
+        try:
+            (date, localFrame, remoteFrame) = self.pcapyWrapper.GetFrames()
+            usageFrame = RS.RemoteUsageFrame.getInstance()
+            usageFrame.SetFrame(date, localFrame, remoteFrame)
+        except Exception as e:
+            self.utl.Log(e)
 
     def stop(self):     
         self.remoteServer.stop()   
