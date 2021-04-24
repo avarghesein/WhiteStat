@@ -25,7 +25,7 @@ Open ports 777, 888 in firewall
     --env ANALYZER_PORT=777 \
     --env DATA_STORE="/mnt/whitestat/" \
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
-    -d avarghesein/whitestat:v9_armhf
+    -d avarghesein/whitestat:v10_armhf
 
 Now Access the Usage Reports at 
 
@@ -91,11 +91,11 @@ For RaspberryPi2 (ARMV7 or armhf) Hardware: e.g.
     --env ANALYZER_PORT=777 \
     --env DATA_STORE="/mnt/whitestat/" \
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
-    -d avarghesein/whitestat:v9_armhf
+    -d avarghesein/whitestat:v10_armhf
 
 For X64 Hardware:
 
-    -d avarghesein/whitestat:v9
+    -d avarghesein/whitestat:v10
 
 Need to Capture from multiple Network Interfaces?
 
@@ -120,7 +120,7 @@ Run WhiteStat as Monitor only in default gateway sample: (say in 192.168.1.5)
     --env MONITOR_URL=":888" \
     --env DATA_STORE="/mnt/whitestat/" \
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
-    -d avarghesein/whitestat:v9_armhf
+    -d avarghesein/whitestat:v10_armhf
 
 Now Run Analyzer role in another machine (192.168.1.6) which does most of the heavy duty, pointing it to
 the Monitor instance:
@@ -132,7 +132,7 @@ the Monitor instance:
     --env ANALYZER_PORT=777 \
     --env DATA_STORE="/mnt/whitestat/" \
     --mount type=bind,source="/home/pi/whitestat/",target="/mnt/whitestat/"  \
-    -d avarghesein/whitestat:v9_armhf
+    -d avarghesein/whitestat:v10_armhf
 
 You could also run Analyzer Only Mode, in Native Windows Containers as well. e.g.
 
@@ -183,7 +183,7 @@ A sample instance has been given below;
     {
       "ROLE": "MONITOR|ANALYZER",
 
-      "DATA_STORE": "./WhiteStat/RunConfig",
+      "DATA_STORE": "/mnt/whitestat/",
 
       "DBFile": "WhiteStat.db",
       
@@ -248,15 +248,17 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
      
  ## How to Build
  
- ### Auto Build & Deploy
+ ### Auto Build & Deploy Docker Images
  
- Refer :
+ Linux Builds : Refer [WhitestatAutoBuildPublish.sh](https://github.com/avarghesein/WhiteStat/blob/main/WhiteStat/WhitestatAutoBuildPublish.sh)
  
- WhitestatAutoBuildPublish.sh
+ Windows Builds: Refer [WhitestatAutoBuildPublish.ps1](https://github.com/avarghesein/WhiteStat/blob/main/WhiteStat/WhitestatAutoBuildPublish.ps1)
  
- WhitestatAutoDockerDeploy.sh
+ Linux Deployment: Multi Role, Refer [WhitestatAutoDockerDeploy.sh](https://github.com/avarghesein/WhiteStat/blob/main/WhiteStat/WhitestatAutoDockerDeploy.sh)
  
- ### Build UX
+ Linux Deployment: Single Role Per Container, Refer [WhitestatAutoDockerDeployMultiHost.sh](https://github.com/avarghesein/WhiteStat/blob/main/WhiteStat/WhitestatAutoDockerDeployMultiHost.sh)
+  
+ ### Build & Debug UX Alone
  
  For Building UI, navigate to UX directory and run
  
@@ -267,28 +269,18 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
  
     npm run dev
      
- ### Build Docker Images
+ ### Build & Debug C++ Alone
  
- Docker files have been given in the root directory of the source, running which will create docker images, ready to be deployed.
+ For Building C++, navigate to CLIB/build directory and run
  
- For X64 machines
- 
-    docker build -f Dockerfile -t avarghesein/whitestat:v9 .
-  
-(Cross Platform Build) For arm/armhf/armv7 (or RaspberryPi2) machines
-
-    docker run --rm --privileged fkrull/qemu-user-static enable
-    docker build -f Dockerfile.armhf -t avarghesein/whitestat:v9_armhf .
-
- Note: The first docker command (for arm platform only) is to enable arm to X64 translations through [Qemu-User-Static](https://ownyourbits.com/2018/06/13/transparently-running-binaries-from-any-architecture-in-linux-with-qemu-and-binfmt_misc/)
- 
- Earlier I was trying to build Qemu Virtual machines for ARMV7 architectures, which is painstaking and much slower. By using qemu-User-Static, build your ARM Container images at least 2x faster (when compared to building the same in the original armv7 devices like RaspberryPi)
-
+    cmake ..
+    make
+    
  #### Tools Used 
 
 Front End(UX): Python Flask, BootStrap, JQuery, SASS
 
-Middle Ware: Python, Pcap System Library, Python Numpy/Pandas, Python Threads
+Middle Ware: C++17, Boost (C++), Python, Pcap System Library, Python Numpy/Pandas, Python Threads
 
 BackEnd: SQLite
 
