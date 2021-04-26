@@ -270,6 +270,9 @@ class Utility:
             print(e)  
 
 
+    def PackHexToInt(self, hexString):
+        return self.PackBytesToInt(bytearray.fromhex(hexString.strip()))
+
     def PackMacToInt(self, macString):
         return self.PackBytesToInt(bytearray.fromhex(macString.strip().replace(':','')))
 

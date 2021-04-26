@@ -111,7 +111,7 @@ extern "C" int main(int, char**)
     auto ifaces = "eth0"s;
     auto lanOnlyFilter = "not ( ( src net 0.0.0.0 or src net 10 or src net 192.168 or src net 172.16 or src net 172.17 ) and ( dst net 0.0.0.0 or dst net 10 or dst net 192.168 or dst net 172.16 or dst net 172.17 ) ) and not (multicast or ip multicast or ip6 multicast)"s;
 
-    StartCapture(ifaces.c_str(),lanOnlyFilter.c_str(),"192.168.1|172.16|10", "",
+    StartCapture(ifaces.c_str(),lanOnlyFilter.c_str(),"192.168.1|172.16|10", "fe80|fec0|fd",
     1,5,"/media/TMP-DSK/HOME/WhiteStat/WhiteStat/Common/RunConfig/WhiteStatLog.txt",
     "/media/TMP-DSK/HOME/WhiteStat/WhiteStat/Common/RunConfig/WhiteStatTrace.txt");
 

@@ -17,10 +17,10 @@ class CPcap
         pcap_t*_handle; 
         struct bpf_program _filterProgram; 
         char _errbuf[256];       
-        char _sourceIp[INET6_ADDRSTRLEN];
-	    char _destIp[INET6_ADDRSTRLEN];
-        char _sourceMAC[20];
-	    char _destMAC[20];
+        //char _sourceIp[INET6_ADDRSTRLEN];
+	    //char _destIp[INET6_ADDRSTRLEN];
+        //char _sourceMAC[20];
+	    //char _destMAC[20];
         PacketQueue& _queue;
     
     private:
@@ -153,27 +153,37 @@ bool CPcap::HandlePacket(u_char *userData, const struct pcap_pkthdr* pkthdr, con
 	const struct ether_header* eHeader = (struct ether_header*) packet;
     int len = sizeof(struct ether_header);
 
-    ConvertToMACString((const struct ether_addr *)eHeader->ether_shost, _sourceMAC);
-    ConvertToMACString((const struct ether_addr *)eHeader->ether_dhost, _destMAC);
+    //ConvertToMACString((const struct ether_addr *)eHeader->ether_shost, _sourceMAC);
+    //ConvertToMACString((const struct ether_addr *)eHeader->ether_dhost, _destMAC);
     //snprintf(_sourceMAC, 20, "%s", ether_ntoa((struct ether_addr *)eHeader->ether_shost));
     //snprintf(_destMAC, 20, "%s", ether_ntoa((struct ether_addr *)eHeader->ether_dhost));
+
+    BYTE* srcMac = const_cast<BYTE*>(eHeader->ether_shost);
+    BYTE* dstMac = const_cast<BYTE*>(eHeader->ether_dhost);
 
     if (ntohs(eHeader->ether_type) == ETHERTYPE_IP)
     {
         const struct ip* ipHeader = (struct ip*)(packet + sizeof(struct ether_header));
-		inet_ntop(AF_INET, &(ipHeader->ip_src), _sourceIp, INET_ADDRSTRLEN);
-		inet_ntop(AF_INET, &(ipHeader->ip_dst), _destIp, INET_ADDRSTRLEN);
+        IPV4 srcV4, dstV4;
+        srcV4.address.address = ipHeader->ip_src.s_addr;
+        dstV4.address.address = ipHeader->ip_dst.s_addr;
+		//inet_ntop(AF_INET, &(ipHeader->ip_src), _sourceIp, INET_ADDRSTRLEN);
+		//inet_ntop(AF_INET, &(ipHeader->ip_dst), _destIp, INET_ADDRSTRLEN);
         len += ntohs(ipHeader->ip_len);
+
+        _queue.push(std::shared_ptr<Packet>(new Packet(false,srcV4.address.bytes,dstV4.address.bytes,srcMac,dstMac,len)));
     }
     if (ntohs(eHeader->ether_type) == ETHERTYPE_IPV6)
     {        
         const struct ip6_hdr* ipHeader = (struct ip6_hdr*)(packet + sizeof(struct ether_header));
-		inet_ntop(AF_INET6, &(ipHeader->ip6_src), _sourceIp, INET6_ADDRSTRLEN);
-		inet_ntop(AF_INET6, &(ipHeader->ip6_dst), _destIp, INET6_ADDRSTRLEN);
+        auto srcIp = const_cast<BYTE*>(ipHeader->ip6_src.__in6_u.__u6_addr8);
+        auto dstIp = const_cast<BYTE*>(ipHeader->ip6_dst.__in6_u.__u6_addr8);
+		//inet_ntop(AF_INET6, &(ipHeader->ip6_src), _sourceIp, INET6_ADDRSTRLEN);
+		//inet_ntop(AF_INET6, &(ipHeader->ip6_dst), _destIp, INET6_ADDRSTRLEN);
         len += ntohs(ipHeader->ip6_ctlun.ip6_un1.ip6_un1_plen);
-    }
 
-    _queue.push(std::shared_ptr<Packet>(new Packet(_sourceIp,_destIp,_sourceMAC,_destMAC,len)));
+        _queue.push(std::shared_ptr<Packet>(new Packet(true,srcIp,dstIp,srcMac,dstMac,len)));
+    }
 
     return true;
 }

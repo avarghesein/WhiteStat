@@ -95,13 +95,13 @@ class Analyzer(object):
 
         utl = self.utl
 
-        localIPs = { utl.PackMacToInt(rec[0]) : [ utl.PackIpToInt(rec[1]), rec[2], rec[3], date + rec[4] ] 
+        localIPs = { utl.PackHexToInt(rec[0]) : [ utl.PackHexToInt(rec[1]), rec[2], rec[3], date + rec[4] ] 
                         for rec in [ rec.split("|") 
                         for rec in 
                         [frame for frame in usageFrame[LOCAL_IP_OFFSET].splitlines()]]
                     }
 
-        remoteIPs = { utl.PackIpToInt(rec[0]) : [ utl.PackMacToInt(rec[1]), rec[2], rec[3], date + rec[4] ] 
+        remoteIPs = { utl.PackHexToInt(rec[0]) : [ utl.PackHexToInt(rec[1]), rec[2], rec[3], date + rec[4] ] 
                         for rec in [ rec.split("|") 
                         for rec in 
                         [frame for frame in usageFrame[REMOTE_IP_OFFSET].splitlines()]]

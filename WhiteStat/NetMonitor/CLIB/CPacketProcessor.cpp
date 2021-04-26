@@ -9,8 +9,9 @@
 using std::string;
 using IntBoolHash = boost::container::map<int,bool>;
 using PacketQueue = std::queue<std::shared_ptr<Packet>>;
-using IntHash = boost::container::map<std::string,int>;
-using IntStringHash = boost::container::map<int,std::string>;
+using BytesIntHash = boost::container::map<BYTES,int>;
+using BytesStrHash = boost::container::map<BYTES,string>;
+using IntBytesHash = boost::container::map<int,BYTES>;
 using FrameMap = boost::container::map<int,std::shared_ptr<Frame>>;
 
 class CPacketProcessor
@@ -27,10 +28,11 @@ class CPacketProcessor
         string _serializedLocalIPsCopy;
         string _serializedRemoteIPsCopy;
 
-        int _intHashIdx;
-        IntHash _intHash;
-        IntStringHash _intStrHash;
+        int _bytesIntHashIdx;
+        BytesIntHash _bytesIntHash;
+        IntBytesHash _intBytesHash;
         IntBoolHash _ipLanHash;
+        BytesStrHash _bytesStrHash;
 
         bool _isStop;
 
@@ -38,8 +40,8 @@ class CPacketProcessor
         string _todayDateString;
 
     private:
-        int GetIntHash(string value);
-        bool IsLANIP(string ip);
+        int GetBytesIntHash(BYTES& value);
+        bool IsLANIP(BYTES& ip);
         bool ProcessFrame(int mac, int ip, u_long size, bool isSource , bool isLan);
         bool SerializeFrames();        
 
@@ -52,9 +54,9 @@ class CPacketProcessor
 };
 
 string& CPacketProcessor::GetCurrentDate()
-{
-    boost::gregorian::date_facet *df = new boost::gregorian::date_facet("%Y-%m-%d");     
+{  
     std::ostringstream is;
+    auto df = new boost::gregorian::date_facet("%Y-%m-%d");
     is.imbue(std::locale(is.getloc(), df));
 
     {
@@ -89,8 +91,40 @@ bool CPacketProcessor::SerializeFrames()
         for(auto framePtr: map)
         {
             Frame& frame = *(framePtr.second);
-            auto mac = isLocalIPs ? _intStrHash[(framePtr.first)] : _intStrHash[frame.MAC];
-            auto ip = isLocalIPs ? _intStrHash[frame.IP] : _intStrHash[(framePtr.first)];
+            auto macBytes = isLocalIPs ? _intBytesHash[(framePtr.first)] : _intBytesHash[frame.MAC];
+            auto ipBytes = isLocalIPs ? _intBytesHash[frame.IP] : _intBytesHash[(framePtr.first)];
+
+            auto lambdaBytesToStr = [](BYTES& bytes)
+            {
+                std::ostringstream ss;
+                ss << std::hex << std::uppercase << std::setfill( '0' );
+                std::for_each( bytes.cbegin(), bytes.cend(), [&]( int c ) { ss << std::setw( 2 ) << c; } );
+                return ss.str();
+            };
+
+            string mac;
+            string ip;
+
+            if(_bytesStrHash.contains(macBytes))
+            {
+                mac = _bytesStrHash[macBytes];
+            }
+            else
+            {
+                mac = lambdaBytesToStr(macBytes);
+                _bytesStrHash[macBytes] = mac;
+            }
+
+            if(_bytesStrHash.contains(ipBytes))
+            {
+                ip = _bytesStrHash[ipBytes];
+            }
+            else
+            {
+                ip = lambdaBytesToStr(ipBytes);
+                _bytesStrHash[ipBytes] = ip;
+            }
+
             auto in = frame.In;
             auto out = frame.Out;
 
@@ -170,9 +204,9 @@ bool CPacketProcessor::ProcessFrame(int mac, int ip, u_long size, bool isSource,
     return true;
 }
 
-bool CPacketProcessor::IsLANIP(string ip)
+bool CPacketProcessor::IsLANIP(BYTES& ip)
 {
-    int ipHash = GetIntHash(ip);
+    int ipHash = GetBytesIntHash(ip);
     if(_ipLanHash.contains(ipHash)) return _ipLanHash[ipHash];
 
     bool isLan = _utility.IsLANIP(ip);
@@ -180,21 +214,21 @@ bool CPacketProcessor::IsLANIP(string ip)
     return isLan;
 }
 
-int CPacketProcessor::GetIntHash(string value)
+int CPacketProcessor::GetBytesIntHash(BYTES& value)
 {
-    if(_intHash.contains(value)) return _intHash[value];
-    ++_intHashIdx;
-    _intHash[value] = _intHashIdx;
-    _intStrHash[_intHashIdx] = value;
-    return _intHashIdx;
+    if(_bytesIntHash.contains(value)) return _bytesIntHash[value];
+    ++_bytesIntHashIdx;
+    _bytesIntHash[value] = _bytesIntHashIdx;
+    _intBytesHash[_bytesIntHashIdx] = value;
+    return _bytesIntHashIdx;
 }
 
 CPacketProcessor::CPacketProcessor(PacketQueue& queue,CUtility& utility) : _queue(queue),
- _isStop(false), _intHashIdx(-1), _utility(utility),
+ _isStop(false), _bytesIntHashIdx(-1), _utility(utility),
  _today(boost::gregorian::day_clock::local_day()) {}
 
 bool CPacketProcessor::Stop()
-{
+{    
     _isStop = true;
     return true;
 }
@@ -240,24 +274,20 @@ std::future<bool> CPacketProcessor::Process()
 
                 Packet& packet = *val;
 
-                if(packet.sourceIP == "" || packet.destIP == "")
+                if(packet.sourceIP.empty() || packet.destIP.empty())
                 {
                     continue;
                 }
 
-                boost::algorithm::to_lower(packet.sourceMAC); 
-                int srcMacHash = GetIntHash(packet.sourceMAC);
+                int srcMacHash = GetBytesIntHash(packet.sourceMAC);
 
-                boost::algorithm::to_lower(packet.sourceIP); 
                 bool isSrcLan = IsLANIP(packet.sourceIP);
-                int srcIpHash = GetIntHash(packet.sourceIP);
+                int srcIpHash = GetBytesIntHash(packet.sourceIP);
 
-                boost::algorithm::to_lower(packet.destMAC); 
-                int dstMacHash = GetIntHash(packet.destMAC);
+                int dstMacHash = GetBytesIntHash(packet.destMAC);
 
-                boost::algorithm::to_lower(packet.destIP); 
                 bool isDstLan = IsLANIP(packet.destIP);
-                int dstIpHash = GetIntHash(packet.destIP);
+                int dstIpHash = GetBytesIntHash(packet.destIP);
 
                 ProcessFrame(srcMacHash,srcIpHash,val->dataSize,true,isSrcLan);
                 ProcessFrame(dstMacHash,dstIpHash,val->dataSize,false,isDstLan); 

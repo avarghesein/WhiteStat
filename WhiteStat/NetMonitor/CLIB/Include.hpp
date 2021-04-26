@@ -34,6 +34,9 @@
 #include <boost/thread/thread.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/numeric/ublas/vector.hpp>
 
+using BYTE = unsigned char;
+using BYTES = std::vector<BYTE>;
 
 #endif
