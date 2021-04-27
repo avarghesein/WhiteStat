@@ -32,6 +32,8 @@ extern "C" void StartCapture(
         sleepSeconds, frameRefreshSeconds,
         logFile,traceFile);
     
+    Utility->Log("Starting Capture...",true);
+
     Queue = new PacketQueue();    
 
     for(auto iface : Utility->GetInterfaces())
@@ -54,6 +56,8 @@ extern "C" void StartCapture(
 
     Processor = new CPacketProcessor(*Queue, *Utility);
     FutureList.push(std::shared_ptr<std::future<bool>>(new std::future<bool>(Processor->Process())));
+
+    Utility->Log("Started Capture.",true);
 }
 
 extern "C" const char* FetchLocalFrame()
@@ -79,6 +83,7 @@ extern "C" const char* GetCurrentDate()
 
 extern "C" void EndCapture()
 {
+    Utility->Log("Ending Capture...",true);
     PacketQueue empty;
     std::swap( *Queue, empty );
 
@@ -102,20 +107,26 @@ extern "C" void EndCapture()
     Processor = nullptr;
     delete Queue;
     Queue = nullptr;
+    Utility->Log("Ended Capture.",true);
     delete Utility;
     Utility = nullptr;
 }
 
 extern "C" int main(int, char**) 
 {
-    auto ifaces = "eth0"s;
+    //auto ifaces = "eth0"s;
+    string ifaces = std::getenv("IFACE");
+    int runSeconds = std::atoi( std::getenv("RUN_FOR"));
     auto lanOnlyFilter = "not ( ( src net 0.0.0.0 or src net 10 or src net 192.168 or src net 172.16 or src net 172.17 ) and ( dst net 0.0.0.0 or dst net 10 or dst net 192.168 or dst net 172.16 or dst net 172.17 ) ) and not (multicast or ip multicast or ip6 multicast)"s;
 
-    StartCapture(ifaces.c_str(),lanOnlyFilter.c_str(),"192.168.1|172.16|10", "fe80|fec0|fd",
-    1,5,"/media/TMP-DSK/HOME/WhiteStat/WhiteStat/Common/RunConfig/WhiteStatLog.txt",
-    "/media/TMP-DSK/HOME/WhiteStat/WhiteStat/Common/RunConfig/WhiteStatTrace.txt");
+    string logDir = std::getenv("LOG_DIR");
 
-    for(int i = 1; i <= 10; ++i)
+    StartCapture(ifaces.c_str(),lanOnlyFilter.c_str(),"192.168.1|172.16|10", "fe80|fec0|fd",
+    1,5,(logDir + "/WhiteStatLog.txt").c_str(),(logDir + "/WhiteStatTrace.txt").c_str());
+
+    Processor->SetPrintableFormat();
+
+    for(int i = 1; i <=  (runSeconds / 10); ++i)
     {
         std::system("clear");
 
@@ -124,7 +135,6 @@ extern "C" int main(int, char**)
 
         std::this_thread::sleep_for(10s);
     }
-
 
     EndCapture();     
 

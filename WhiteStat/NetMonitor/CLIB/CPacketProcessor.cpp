@@ -27,6 +27,7 @@ class CPacketProcessor
         string _serializedRemoteIPs;
         string _serializedLocalIPsCopy;
         string _serializedRemoteIPsCopy;
+        bool _printInReadableFormat;
 
         int _bytesIntHashIdx;
         BytesIntHash _bytesIntHash;
@@ -46,12 +47,18 @@ class CPacketProcessor
         bool SerializeFrames();        
 
     public:
+        void SetPrintableFormat(bool isEnable  = true);
         bool GetFrames(string*& localIPs, string*& remoteIps);
         string& GetCurrentDate();
         CPacketProcessor(PacketQueue& queue, CUtility& utility);
         std::future<bool> Process();
         bool Stop();
 };
+
+void CPacketProcessor::SetPrintableFormat(bool isEnable)
+{
+    _printInReadableFormat = isEnable;
+}
 
 string& CPacketProcessor::GetCurrentDate()
 {  
@@ -97,10 +104,17 @@ bool CPacketProcessor::SerializeFrames()
             auto lambdaBytesToStr = [](BYTES& bytes)
             {
                 std::ostringstream ss;
-                ss << std::hex << std::uppercase << std::setfill( '0' );
+                ss << std::hex << /*std::uppercase << */std::setfill( '0' );
                 std::for_each( bytes.cbegin(), bytes.cend(), [&]( int c ) { ss << std::setw( 2 ) << c; } );
                 return ss.str();
             };
+
+            auto lambdaBytesToReadableStr = [](BYTES& bytes)
+            {
+                return CPcap::AddressToString(bytes);
+            };
+
+            auto lambdaStr = _printInReadableFormat ? lambdaBytesToReadableStr : lambdaBytesToStr;
 
             string mac;
             string ip;
@@ -111,7 +125,7 @@ bool CPacketProcessor::SerializeFrames()
             }
             else
             {
-                mac = lambdaBytesToStr(macBytes);
+                mac = lambdaStr(macBytes);
                 _bytesStrHash[macBytes] = mac;
             }
 
@@ -121,7 +135,7 @@ bool CPacketProcessor::SerializeFrames()
             }
             else
             {
-                ip = lambdaBytesToStr(ipBytes);
+                ip = lambdaStr(ipBytes);
                 _bytesStrHash[ipBytes] = ip;
             }
 
@@ -225,7 +239,8 @@ int CPacketProcessor::GetBytesIntHash(BYTES& value)
 
 CPacketProcessor::CPacketProcessor(PacketQueue& queue,CUtility& utility) : _queue(queue),
  _isStop(false), _bytesIntHashIdx(-1), _utility(utility),
- _today(boost::gregorian::day_clock::local_day()) {}
+ _today(boost::gregorian::day_clock::local_day()),
+ _printInReadableFormat(false) {}
 
 bool CPacketProcessor::Stop()
 {    

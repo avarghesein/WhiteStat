@@ -24,7 +24,7 @@ class CPcap
         PacketQueue& _queue;
     
     private:
-        char* ConvertToMACString(const struct ether_addr *addr, char *buf);
+        static char* ConvertToMACString(const struct ether_addr *addr, char *buf);
         bool HandlePacket(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet);
         bool SetFilter();
 
@@ -32,8 +32,9 @@ class CPcap
         CPcap(string& iface, CUtility& utility, PacketQueue& queue);
         ~CPcap();
         bool Open();
-        bool Close();
+        bool Close();        
         std::future<bool> CaptureLoop();
+        static string AddressToString(BYTES& bytes);
 };
 
 bool CPcap::SetFilter()
@@ -137,6 +138,32 @@ std::future<bool> CPcap::CaptureLoop()
     }
 
     throw std::invalid_argument( "Already started Capturing" );
+}
+
+string CPcap::AddressToString(BYTES& bytes)
+{
+    char address[INET6_ADDRSTRLEN];
+    BYTE* pAddress = bytes.data();
+
+    switch (bytes.size())
+    {
+        case 4:
+            inet_ntop(AF_INET, pAddress, address, INET_ADDRSTRLEN);
+            break;
+
+        case 6:
+            ConvertToMACString((const struct ether_addr *)pAddress, address);
+            break;
+
+        case 16:
+            inet_ntop(AF_INET6, pAddress, address, INET6_ADDRSTRLEN);
+            break;
+
+        default:
+            break;
+    }
+
+    return address;
 }
 
 char* CPcap::ConvertToMACString(const struct ether_addr *addr, char *buf)

@@ -13,7 +13,11 @@
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
+            "environment": [
+                { "name": "IFACE", "value": "eth0" },
+                { "name": "RUN_FOR", "value": "60" },
+                { "name": "LOG_DIR", "value": "/media/TMP-DSK/HOME/WhiteStat/WhiteStat/Common/RunConfig" }
+            ],
             "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
