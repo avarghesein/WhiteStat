@@ -9,7 +9,6 @@ struct Packet;
 using std::string;
 using BytesArray = std::vector<BYTES>;
 using StringArray = std::vector<string>;
-using PacketQueue = std::queue<std::shared_ptr<Packet>>;
 
 class CUtility
 {

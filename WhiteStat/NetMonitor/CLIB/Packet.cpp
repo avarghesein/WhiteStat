@@ -15,11 +15,17 @@ struct IPV4
     } address;
 };
 
+struct HashedPacket
+{
+    ushort sourceIP;
+    ushort destIP;
+    ushort  sourceMAC;
+    ushort  destMAC;
+    uint dataSize;    
+};
+
 struct Packet
 {
-private:
-
-
 public:
     bool IsV6;
     BYTES sourceIP;

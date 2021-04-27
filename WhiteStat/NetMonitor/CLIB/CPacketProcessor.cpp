@@ -7,7 +7,7 @@
 #include "./CUtility.cpp"
 
 using std::string;
-using PacketQueue = std::queue<std::shared_ptr<Packet>>;
+using PacketQueue = std::queue<std::shared_ptr<HashedPacket>>;
 
 using BytesIntHash = boost::bimap<BYTES,ushort>;
 using IntStrHash = boost::container::map<ushort,string>;
@@ -41,14 +41,17 @@ class CPacketProcessor
         string _todayDateString;
 
     private:
-        int GetBytesIntHash(BYTES& value);
-        bool IsLANIP(BYTES& ip);
+        static string AddressToString(BYTES& bytes);
+        static char* ConvertToMACString(const struct ether_addr *addr, char *buf);
+        ushort GetBytesIntHash(BYTES& value);
+        bool IsLANIP(ushort ipHash);
         bool ProcessFrame(ushort mac, ushort ip, u_long size, bool isSource , bool isLan);
         bool SerializeFrames();        
 
     public:
         void SetPrintableFormat(bool isEnable  = true);
         bool GetFrames(string*& localIPs, string*& remoteIps);
+        std::shared_ptr<HashedPacket> HashPacket(Packet& packet);
         string& GetCurrentDate();
         CPacketProcessor(PacketQueue& queue, CUtility& utility);
         std::future<bool> Process();
@@ -112,7 +115,7 @@ bool CPacketProcessor::SerializeFrames()
 
             auto lambdaBytesToReadableStr = [](BYTES& bytes)
             {
-                return CPcap::AddressToString(bytes);
+                return CPacketProcessor::AddressToString(bytes);
             };
 
             auto lambdaStr = _printInReadableFormat ? lambdaBytesToReadableStr : lambdaBytesToStr;
@@ -222,17 +225,17 @@ bool CPacketProcessor::ProcessFrame(ushort mac, ushort ip, u_long size, bool isS
     return true;
 }
 
-bool CPacketProcessor::IsLANIP(BYTES& ip)
+bool CPacketProcessor::IsLANIP(ushort ipHash)
 {
-    int ipHash = GetBytesIntHash(ip);
     if(_ipLanHash.contains(ipHash)) return _ipLanHash[ipHash];
 
+    auto ip = (_bytesIntHash.right.find(ipHash)->second);
     bool isLan = _utility.IsLANIP(ip);
     _ipLanHash[ipHash] = isLan;
     return isLan;
 }
 
-int CPacketProcessor::GetBytesIntHash(BYTES& value)
+ushort CPacketProcessor::GetBytesIntHash(BYTES& value)
 {
     auto itr = _bytesIntHash.left.find(value);
     if(itr != _bytesIntHash.left.end())
@@ -254,6 +257,22 @@ bool CPacketProcessor::Stop()
 {    
     _isStop = true;
     return true;
+}
+
+std::shared_ptr<HashedPacket> CPacketProcessor::HashPacket(Packet& packet)
+{
+    if(packet.sourceIP.empty() || packet.destIP.empty())
+    {
+        nullptr;
+    }
+
+    return std::shared_ptr<HashedPacket>( new HashedPacket { 
+        .sourceIP = GetBytesIntHash(packet.sourceIP),
+        .destIP = GetBytesIntHash(packet.destIP),
+        .sourceMAC = GetBytesIntHash(packet.sourceMAC),
+        .destMAC = GetBytesIntHash(packet.destMAC),
+        .dataSize = packet.dataSize 
+    });
 }
 
 std::future<bool> CPacketProcessor::Process()
@@ -295,22 +314,15 @@ std::future<bool> CPacketProcessor::Process()
                 auto val = _queue.front();
                 _queue.pop();
 
-                Packet& packet = *val;
+                HashedPacket& packet = *val;
 
-                if(packet.sourceIP.empty() || packet.destIP.empty())
-                {
-                    continue;
-                }
-
-                int srcMacHash = GetBytesIntHash(packet.sourceMAC);
-
+                int srcMacHash = packet.sourceMAC;                
+                int srcIpHash = packet.sourceIP;
                 bool isSrcLan = IsLANIP(packet.sourceIP);
-                int srcIpHash = GetBytesIntHash(packet.sourceIP);
 
-                int dstMacHash = GetBytesIntHash(packet.destMAC);
-
+                int dstMacHash = packet.destMAC;                
+                int dstIpHash = packet.destIP;
                 bool isDstLan = IsLANIP(packet.destIP);
-                int dstIpHash = GetBytesIntHash(packet.destIP);
 
                 ProcessFrame(srcMacHash,srcIpHash,val->dataSize,true,isSrcLan);
                 ProcessFrame(dstMacHash,dstIpHash,val->dataSize,false,isDstLan); 
@@ -327,6 +339,42 @@ std::future<bool> CPacketProcessor::Process()
     std::future<bool> loopFun = std::async(std::launch::async,looper);
 
     return loopFun;
+}
+
+string CPacketProcessor::AddressToString(BYTES& bytes)
+{
+    char address[INET6_ADDRSTRLEN];
+    BYTE* pAddress = bytes.data();
+
+    switch (bytes.size())
+    {
+        case 4:
+            inet_ntop(AF_INET, pAddress, address, INET_ADDRSTRLEN);
+            break;
+
+        case 6:
+            //snprintf(_sourceMAC, 20, "%s", ether_ntoa((struct ether_addr *)eHeader->ether_shost));
+            ConvertToMACString((const struct ether_addr *)pAddress, address);
+            break;
+
+        case 16:
+            inet_ntop(AF_INET6, pAddress, address, INET6_ADDRSTRLEN);
+            break;
+
+        default:
+            break;
+    }
+
+    return address;
+}
+
+char* CPacketProcessor::ConvertToMACString(const struct ether_addr *addr, char *buf)
+{
+    sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x",
+            addr->ether_addr_octet[0], addr->ether_addr_octet[1],
+            addr->ether_addr_octet[2], addr->ether_addr_octet[3],
+            addr->ether_addr_octet[4], addr->ether_addr_octet[5]);
+    return buf;
 }
 
 #endif

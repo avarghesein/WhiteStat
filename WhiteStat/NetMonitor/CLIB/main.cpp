@@ -8,7 +8,7 @@ using namespace std::chrono_literals;
 
 using std::string;
 using FutureQueue = std::queue<std::shared_ptr<std::future<bool>>>;
-using PacketQueue = std::queue<std::shared_ptr<Packet>>;
+using PacketQueue = std::queue<std::shared_ptr<HashedPacket>>;
 using CapList = std::vector<std::shared_ptr<CPcap>>;
 using boost::container::deque;
 
@@ -34,14 +34,17 @@ extern "C" void StartCapture(
     
     Utility->Log("Starting Capture...",true);
 
-    Queue = new PacketQueue();    
+    Queue = new PacketQueue();  
+    Processor = new CPacketProcessor(*Queue, *Utility);  
 
     for(auto iface : Utility->GetInterfaces())
     {
-        auto capPtr = std::shared_ptr<CPcap>(new CPcap(iface, *Utility, *Queue));
+        auto capPtr = std::shared_ptr<CPcap>(new CPcap(iface, *Utility, *Queue, *Processor));
 
         if(!capPtr->Open())
         {
+            delete Processor;
+            Processor = nullptr;
             delete Queue;
             Queue = nullptr;
             delete Utility;
@@ -53,8 +56,7 @@ extern "C" void StartCapture(
             std::shared_ptr<std::future<bool>>(new std::future<bool>(capPtr->CaptureLoop())));
         PcapList.push_back(capPtr);
     }
-
-    Processor = new CPacketProcessor(*Queue, *Utility);
+    
     FutureList.push(std::shared_ptr<std::future<bool>>(new std::future<bool>(Processor->Process())));
 
     Utility->Log("Started Capture.",true);

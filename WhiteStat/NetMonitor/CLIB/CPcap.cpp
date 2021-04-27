@@ -4,9 +4,10 @@
 #include "./Include.hpp"
 #include "./Packet.cpp"
 #include "./CUtility.cpp"
+#include "./CPacketProcessor.cpp"
 
 using std::string;
-using PacketQueue = std::queue<std::shared_ptr<Packet>>;
+using PacketQueue = std::queue<std::shared_ptr<HashedPacket>>;
 
 class CPcap
 {
@@ -17,24 +18,19 @@ class CPcap
         pcap_t*_handle; 
         struct bpf_program _filterProgram; 
         char _errbuf[256];       
-        //char _sourceIp[INET6_ADDRSTRLEN];
-	    //char _destIp[INET6_ADDRSTRLEN];
-        //char _sourceMAC[20];
-	    //char _destMAC[20];
         PacketQueue& _queue;
+        CPacketProcessor& _processor;
     
     private:
-        static char* ConvertToMACString(const struct ether_addr *addr, char *buf);
         bool HandlePacket(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet);
         bool SetFilter();
 
     public:
-        CPcap(string& iface, CUtility& utility, PacketQueue& queue);
+        CPcap(string& iface, CUtility& utility, PacketQueue& queue,CPacketProcessor& processor);
         ~CPcap();
         bool Open();
         bool Close();        
-        std::future<bool> CaptureLoop();
-        static string AddressToString(BYTES& bytes);
+        std::future<bool> CaptureLoop();        
 };
 
 bool CPcap::SetFilter()
@@ -60,8 +56,8 @@ CPcap::~CPcap()
     Close();
 }
 
-CPcap::CPcap(string& iface, CUtility& utility, PacketQueue& queue) : _iface(iface), _handle(nullptr),
-_queue(queue), _utility(utility) {}
+CPcap::CPcap(string& iface, CUtility& utility, PacketQueue& queue, CPacketProcessor& processor) : _iface(iface), _handle(nullptr),
+_queue(queue), _utility(utility), _processor(processor) {}
 
 bool CPcap::Close()
 {
@@ -140,50 +136,10 @@ std::future<bool> CPcap::CaptureLoop()
     throw std::invalid_argument( "Already started Capturing" );
 }
 
-string CPcap::AddressToString(BYTES& bytes)
-{
-    char address[INET6_ADDRSTRLEN];
-    BYTE* pAddress = bytes.data();
-
-    switch (bytes.size())
-    {
-        case 4:
-            inet_ntop(AF_INET, pAddress, address, INET_ADDRSTRLEN);
-            break;
-
-        case 6:
-            ConvertToMACString((const struct ether_addr *)pAddress, address);
-            break;
-
-        case 16:
-            inet_ntop(AF_INET6, pAddress, address, INET6_ADDRSTRLEN);
-            break;
-
-        default:
-            break;
-    }
-
-    return address;
-}
-
-char* CPcap::ConvertToMACString(const struct ether_addr *addr, char *buf)
-{
-    sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x",
-            addr->ether_addr_octet[0], addr->ether_addr_octet[1],
-            addr->ether_addr_octet[2], addr->ether_addr_octet[3],
-            addr->ether_addr_octet[4], addr->ether_addr_octet[5]);
-    return buf;
-}
-
 bool CPcap::HandlePacket(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet)
 {
 	const struct ether_header* eHeader = (struct ether_header*) packet;
     int len = sizeof(struct ether_header);
-
-    //ConvertToMACString((const struct ether_addr *)eHeader->ether_shost, _sourceMAC);
-    //ConvertToMACString((const struct ether_addr *)eHeader->ether_dhost, _destMAC);
-    //snprintf(_sourceMAC, 20, "%s", ether_ntoa((struct ether_addr *)eHeader->ether_shost));
-    //snprintf(_destMAC, 20, "%s", ether_ntoa((struct ether_addr *)eHeader->ether_dhost));
 
     BYTE* srcMac = const_cast<BYTE*>(eHeader->ether_shost);
     BYTE* dstMac = const_cast<BYTE*>(eHeader->ether_dhost);
@@ -194,22 +150,26 @@ bool CPcap::HandlePacket(u_char *userData, const struct pcap_pkthdr* pkthdr, con
         IPV4 srcV4, dstV4;
         srcV4.address.address = ipHeader->ip_src.s_addr;
         dstV4.address.address = ipHeader->ip_dst.s_addr;
-		//inet_ntop(AF_INET, &(ipHeader->ip_src), _sourceIp, INET_ADDRSTRLEN);
-		//inet_ntop(AF_INET, &(ipHeader->ip_dst), _destIp, INET_ADDRSTRLEN);
+
         len += ntohs(ipHeader->ip_len);
 
-        _queue.push(std::shared_ptr<Packet>(new Packet(false,srcV4.address.bytes,dstV4.address.bytes,srcMac,dstMac,len)));
+        auto packet = Packet(false,srcV4.address.bytes,dstV4.address.bytes,srcMac,dstMac,len);
+
+        auto hashedPacket = _processor.HashPacket(packet);
+        if(hashedPacket != nullptr) _queue.push(hashedPacket);
     }
     if (ntohs(eHeader->ether_type) == ETHERTYPE_IPV6)
     {        
         const struct ip6_hdr* ipHeader = (struct ip6_hdr*)(packet + sizeof(struct ether_header));
         auto srcIp = const_cast<BYTE*>(ipHeader->ip6_src.__in6_u.__u6_addr8);
         auto dstIp = const_cast<BYTE*>(ipHeader->ip6_dst.__in6_u.__u6_addr8);
-		//inet_ntop(AF_INET6, &(ipHeader->ip6_src), _sourceIp, INET6_ADDRSTRLEN);
-		//inet_ntop(AF_INET6, &(ipHeader->ip6_dst), _destIp, INET6_ADDRSTRLEN);
-        len += ntohs(ipHeader->ip6_ctlun.ip6_un1.ip6_un1_plen);
 
-        _queue.push(std::shared_ptr<Packet>(new Packet(true,srcIp,dstIp,srcMac,dstMac,len)));
+        len += ntohs(ipHeader->ip6_ctlun.ip6_un1.ip6_un1_plen);
+        
+        auto packet = Packet(true,srcIp,dstIp,srcMac,dstMac,len);
+
+        auto hashedPacket = _processor.HashPacket(packet);
+        if(hashedPacket != nullptr) _queue.push(hashedPacket);
     }
 
     return true;
