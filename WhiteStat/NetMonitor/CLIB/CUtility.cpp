@@ -3,24 +3,20 @@
 
 #include "./Include.hpp"
 #include "./Packet.cpp"
-#include "./Frame.cpp"
 
 struct Packet;
 
 using std::string;
 using BytesArray = std::vector<BYTES>;
 using StringArray = std::vector<string>;
-using BytesBoolHash = boost::container::map<BYTES,bool>;
 using PacketQueue = std::queue<std::shared_ptr<Packet>>;
-using FrameMap = boost::container::map<int,std::shared_ptr<Frame>>;
 
 class CUtility
 {
     private:
         BytesArray _lanSegs;
-        BytesBoolHash _ipLanHash;
-        int _sleepSeconds;
-        int _refreshSeconds;
+        ushort _sleepSeconds;
+        ushort _refreshSeconds;
         StringArray _interfaces;
         string _pcapFilter;
         string _logFile;
@@ -32,7 +28,7 @@ class CUtility
     public:
         CUtility(string interfaces, string pcapFilter,
         string lanV4Segs, string lanV6Segs, 
-        int sleepSeconds, int refreshSeconds,
+        ushort sleepSeconds, ushort refreshSeconds,
         string logFile, string traceFile);
 
         void Log(string message, bool isTrace = false);
@@ -108,7 +104,7 @@ int CUtility::RemoteRefreshSeconds()
 CUtility::CUtility(
         string interfaces, string pcapFilter,
         string lanV4Segs, string lanV6Segs, 
-        int sleepSeconds, int refreshSeconds,
+        ushort sleepSeconds, ushort refreshSeconds,
         string logFile, string traceFile):
 _sleepSeconds(sleepSeconds), _refreshSeconds(refreshSeconds),
 _pcapFilter(pcapFilter),
@@ -171,8 +167,6 @@ _logFile(logFile), _traceFile(traceFile)
 
 bool CUtility::IsLANIP(BYTES& ip)
 {
-    if(_ipLanHash.contains(ip)) return _ipLanHash[ip];
-
     bool isLan = false;
 
     for(auto lanSeg: _lanSegs)
@@ -191,9 +185,7 @@ bool CUtility::IsLANIP(BYTES& ip)
                 break;
             }
         }
-    }    
-
-    _ipLanHash[ip] = isLan;
+    }
 
     return isLan;
 }

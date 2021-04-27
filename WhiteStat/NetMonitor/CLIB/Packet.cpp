@@ -21,20 +21,20 @@ private:
 
 
 public:
-    int IsV6;
+    bool IsV6;
     BYTES sourceIP;
     BYTES destIP;
     BYTES  sourceMAC;
     BYTES  destMAC;
-    unsigned int dataSize;
+    uint dataSize;
 
-    Packet(int isV6, BYTE* srcIP, BYTE* dstIP, BYTE* srcMAC, BYTE* dstMAC,unsigned int length);
+    Packet(bool isV6, BYTE* srcIP, BYTE* dstIP, BYTE* srcMAC, BYTE* dstMAC,uint length);
 
     ~Packet() {}
     
 };
 
-Packet::Packet(int isV6, BYTE* srcIP, BYTE* dstIP, BYTE* srcMAC, BYTE* dstMAC,unsigned int length):
+Packet::Packet(bool isV6, BYTE* srcIP, BYTE* dstIP, BYTE* srcMAC, BYTE* dstMAC,uint length):
 IsV6(isV6),
 dataSize(length) 
 { 

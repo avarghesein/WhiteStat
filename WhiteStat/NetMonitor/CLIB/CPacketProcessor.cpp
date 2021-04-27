@@ -7,12 +7,13 @@
 #include "./CUtility.cpp"
 
 using std::string;
-using IntBoolHash = boost::container::map<int,bool>;
 using PacketQueue = std::queue<std::shared_ptr<Packet>>;
-using BytesIntHash = boost::container::map<BYTES,int>;
-using BytesStrHash = boost::container::map<BYTES,string>;
-using IntBytesHash = boost::container::map<int,BYTES>;
-using FrameMap = boost::container::map<int,std::shared_ptr<Frame>>;
+
+using BytesIntHash = boost::bimap<BYTES,ushort>;
+using IntStrHash = boost::container::map<ushort,string>;
+using IntBoolHash = boost::container::map<ushort,bool>;
+
+using FrameMap = boost::container::map<ushort,std::shared_ptr<Frame>>;
 
 class CPacketProcessor
 {
@@ -29,11 +30,10 @@ class CPacketProcessor
         string _serializedRemoteIPsCopy;
         bool _printInReadableFormat;
 
-        int _bytesIntHashIdx;
+        ushort _bytesIntHashIdx;
         BytesIntHash _bytesIntHash;
-        IntBytesHash _intBytesHash;
         IntBoolHash _ipLanHash;
-        BytesStrHash _bytesStrHash;
+        IntStrHash _intStrHash;
 
         bool _isStop;
 
@@ -43,7 +43,7 @@ class CPacketProcessor
     private:
         int GetBytesIntHash(BYTES& value);
         bool IsLANIP(BYTES& ip);
-        bool ProcessFrame(int mac, int ip, u_long size, bool isSource , bool isLan);
+        bool ProcessFrame(ushort mac, ushort ip, u_long size, bool isSource , bool isLan);
         bool SerializeFrames();        
 
     public:
@@ -98,8 +98,9 @@ bool CPacketProcessor::SerializeFrames()
         for(auto framePtr: map)
         {
             Frame& frame = *(framePtr.second);
-            auto macBytes = isLocalIPs ? _intBytesHash[(framePtr.first)] : _intBytesHash[frame.MAC];
-            auto ipBytes = isLocalIPs ? _intBytesHash[frame.IP] : _intBytesHash[(framePtr.first)];
+
+            auto mac = isLocalIPs ? framePtr.first: frame.MAC;
+            auto ip = isLocalIPs ? frame.IP : framePtr.first;
 
             auto lambdaBytesToStr = [](BYTES& bytes)
             {
@@ -116,27 +117,30 @@ bool CPacketProcessor::SerializeFrames()
 
             auto lambdaStr = _printInReadableFormat ? lambdaBytesToReadableStr : lambdaBytesToStr;
 
-            string mac;
-            string ip;
+            string macStr;
+            string ipStr;
 
-            if(_bytesStrHash.contains(macBytes))
+            if(_intStrHash.contains(mac))
             {
-                mac = _bytesStrHash[macBytes];
+                macStr = _intStrHash[mac];
             }
             else
             {
-                mac = lambdaStr(macBytes);
-                _bytesStrHash[macBytes] = mac;
+                auto macBytes = (_bytesIntHash.right.find(mac)->second);
+
+                macStr = lambdaStr(macBytes);
+                _intStrHash[mac] = macStr;
             }
 
-            if(_bytesStrHash.contains(ipBytes))
+            if(_intStrHash.contains(ip))
             {
-                ip = _bytesStrHash[ipBytes];
+                ipStr = _intStrHash[ip];
             }
             else
             {
-                ip = lambdaStr(ipBytes);
-                _bytesStrHash[ipBytes] = ip;
+                auto ipBytes = (_bytesIntHash.right.find(ip)->second);
+                ipStr = lambdaStr(ipBytes);
+                _intStrHash[ip] = ipStr;
             }
 
             auto in = frame.In;
@@ -147,13 +151,13 @@ bool CPacketProcessor::SerializeFrames()
             if(isLocalIPs)
             {
                 auto formatter = boost::format("%1%|%2%|%3%|%4%|%5%") 
-                % mac %ip % in % out % frame.GetCurrentTime();                  
+                % macStr %ipStr % in % out % frame.GetCurrentTime();                  
                 stream << formatter << std::endl;
             }
             else
             {
                 auto formatter = boost::format("%2%|%1%|%3%|%4%|%5%") 
-                % mac %ip % in % out % frame.GetCurrentTime();                  
+                % macStr %ipStr % in % out % frame.GetCurrentTime();                  
                 stream << formatter << std::endl;                
             }
         }
@@ -170,7 +174,7 @@ bool CPacketProcessor::SerializeFrames()
     return true;  
 }
 
-bool CPacketProcessor::ProcessFrame(int mac, int ip, u_long size, bool isSource, bool isLan )
+bool CPacketProcessor::ProcessFrame(ushort mac, ushort ip, u_long size, bool isSource, bool isLan )
 {
     FrameMap* mapPtr = nullptr;    
     int key = 0;
@@ -230,15 +234,19 @@ bool CPacketProcessor::IsLANIP(BYTES& ip)
 
 int CPacketProcessor::GetBytesIntHash(BYTES& value)
 {
-    if(_bytesIntHash.contains(value)) return _bytesIntHash[value];
+    auto itr = _bytesIntHash.left.find(value);
+    if(itr != _bytesIntHash.left.end())
+    {
+        return itr->second;
+    }
+
     ++_bytesIntHashIdx;
-    _bytesIntHash[value] = _bytesIntHashIdx;
-    _intBytesHash[_bytesIntHashIdx] = value;
+    _bytesIntHash.insert({value, _bytesIntHashIdx});
     return _bytesIntHashIdx;
 }
 
 CPacketProcessor::CPacketProcessor(PacketQueue& queue,CUtility& utility) : _queue(queue),
- _isStop(false), _bytesIntHashIdx(-1), _utility(utility),
+ _isStop(false), _bytesIntHashIdx(0), _utility(utility),
  _today(boost::gregorian::day_clock::local_day()),
  _printInReadableFormat(false) {}
 
@@ -254,13 +262,13 @@ std::future<bool> CPacketProcessor::Process()
 
     auto looper = [&]()->bool {
 
-        int sleptSeconds = 0;
-        int sleepSeconds = _utility.SleepSeconds();
-        int refreshSeconds = _utility.RemoteRefreshSeconds();
+        ushort sleptSeconds = 0;
+        ushort sleepSeconds = _utility.SleepSeconds();
+        ushort refreshSeconds = _utility.RemoteRefreshSeconds();
         
         while(!_isStop)
         {
-            int packetCount = 0;
+            ushort packetCount = 0;
 
             while(!_isStop && !_queue.empty() && ++packetCount <= 2000)
             {

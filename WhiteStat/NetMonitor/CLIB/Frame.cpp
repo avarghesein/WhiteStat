@@ -7,13 +7,13 @@ using std::string;
 
 struct Frame
 {
-    int IP;
-    int MAC;
-    long In;
-    long Out;
+    ushort IP;
+    ushort MAC;
+    ulong In;
+    ulong Out;
     boost::posix_time::ptime lastSeen;
 
-    Frame(int ip, int mac, int in, int out);
+    Frame(ushort ip, ushort mac, ulong in, ulong out);
     void SetCurrentDateTime();
     string GetCurrentTime();
 
@@ -21,7 +21,7 @@ struct Frame
     
 };
 
-Frame::Frame(int ip, int mac, int in, int out):
+Frame::Frame(ushort ip, ushort mac, ulong in, ulong out):
 IP(ip), MAC(mac),
 In(in), Out(out)
 {
