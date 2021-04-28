@@ -6,7 +6,7 @@
 
 using std::string;
 
-struct IPV4
+struct IPV4_addr
 {
     union
     {
@@ -17,11 +17,23 @@ struct IPV4
 
 struct HashedPacket
 {
-    ushort sourceIP;
-    ushort destIP;
-    ushort  sourceMAC;
-    ushort  destMAC;
-    uint dataSize;    
+    uint dataSize;
+    ether_addr  sourceMAC;
+    ether_addr  destMAC;
+
+    virtual ~HashedPacket() {};
+};
+
+struct HashedPacketV4 : public HashedPacket
+{
+    IPV4_addr sourceIP;
+    IPV4_addr destIP;
+};
+
+struct HashedPacketV6 : public HashedPacket
+{
+    in6_addr sourceIP;
+    in6_addr destIP;
 };
 
 struct Packet

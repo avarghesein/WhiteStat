@@ -80,7 +80,7 @@ bool CPcap::Close()
 }
 
 bool CPcap::Open()
-{
+{    
     if(_handle == nullptr)
     {
         try
@@ -141,35 +141,37 @@ bool CPcap::HandlePacket(u_char *userData, const struct pcap_pkthdr* pkthdr, con
 	const struct ether_header* eHeader = (struct ether_header*) packet;
     int len = sizeof(struct ether_header);
 
-    BYTE* srcMac = const_cast<BYTE*>(eHeader->ether_shost);
-    BYTE* dstMac = const_cast<BYTE*>(eHeader->ether_dhost);
-
     if (ntohs(eHeader->ether_type) == ETHERTYPE_IP)
     {
         const struct ip* ipHeader = (struct ip*)(packet + sizeof(struct ether_header));
-        IPV4 srcV4, dstV4;
-        srcV4.address.address = ipHeader->ip_src.s_addr;
-        dstV4.address.address = ipHeader->ip_dst.s_addr;
-
         len += ntohs(ipHeader->ip_len);
 
-        auto packet = Packet(false,srcV4.address.bytes,dstV4.address.bytes,srcMac,dstMac,len);
+        auto hashedPacket = new HashedPacketV4();
+        hashedPacket->dataSize = len;
 
-        auto hashedPacket = _processor.HashPacket(packet);
-        if(hashedPacket != nullptr) _queue.push(hashedPacket);
+        std::memcpy(&(hashedPacket->sourceMAC),&(eHeader->ether_shost),sizeof(struct ether_addr));
+        std::memcpy(&(hashedPacket->destMAC),&(eHeader->ether_dhost),sizeof(struct ether_addr));
+
+        std::memcpy(&(hashedPacket->sourceIP),&(ipHeader->ip_src),sizeof(struct IPV4_addr));
+        std::memcpy(&(hashedPacket->destIP),&(ipHeader->ip_dst),sizeof(struct IPV4_addr));
+
+        _queue.push(std::shared_ptr<HashedPacket>(hashedPacket));
     }
     if (ntohs(eHeader->ether_type) == ETHERTYPE_IPV6)
     {        
         const struct ip6_hdr* ipHeader = (struct ip6_hdr*)(packet + sizeof(struct ether_header));
-        auto srcIp = const_cast<BYTE*>(ipHeader->ip6_src.__in6_u.__u6_addr8);
-        auto dstIp = const_cast<BYTE*>(ipHeader->ip6_dst.__in6_u.__u6_addr8);
-
         len += ntohs(ipHeader->ip6_ctlun.ip6_un1.ip6_un1_plen);
-        
-        auto packet = Packet(true,srcIp,dstIp,srcMac,dstMac,len);
 
-        auto hashedPacket = _processor.HashPacket(packet);
-        if(hashedPacket != nullptr) _queue.push(hashedPacket);
+        auto hashedPacket = new HashedPacketV6();
+        hashedPacket->dataSize = len;
+
+        std::memcpy(&(hashedPacket->sourceMAC),&(eHeader->ether_shost),sizeof(struct ether_addr));
+        std::memcpy(&(hashedPacket->destMAC),&(eHeader->ether_dhost),sizeof(struct ether_addr));
+
+        std::memcpy(&(hashedPacket->sourceIP),&(ipHeader->ip6_src),sizeof(struct in6_addr));
+        std::memcpy(&(hashedPacket->destIP),&(ipHeader->ip6_dst),sizeof(struct in6_addr));
+
+        _queue.push(std::shared_ptr<HashedPacket>(hashedPacket));
     }
 
     return true;

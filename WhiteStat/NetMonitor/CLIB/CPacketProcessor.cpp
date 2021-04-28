@@ -51,7 +51,6 @@ class CPacketProcessor
     public:
         void SetPrintableFormat(bool isEnable  = true);
         bool GetFrames(string*& localIPs, string*& remoteIps);
-        std::shared_ptr<HashedPacket> HashPacket(Packet& packet);
         string& GetCurrentDate();
         CPacketProcessor(PacketQueue& queue, CUtility& utility);
         std::future<bool> Process();
@@ -259,22 +258,6 @@ bool CPacketProcessor::Stop()
     return true;
 }
 
-std::shared_ptr<HashedPacket> CPacketProcessor::HashPacket(Packet& packet)
-{
-    if(packet.sourceIP.empty() || packet.destIP.empty())
-    {
-        nullptr;
-    }
-
-    return std::shared_ptr<HashedPacket>( new HashedPacket { 
-        .sourceIP = GetBytesIntHash(packet.sourceIP),
-        .destIP = GetBytesIntHash(packet.destIP),
-        .sourceMAC = GetBytesIntHash(packet.sourceMAC),
-        .destMAC = GetBytesIntHash(packet.destMAC),
-        .dataSize = packet.dataSize 
-    });
-}
-
 std::future<bool> CPacketProcessor::Process()
 {
     using namespace std::chrono_literals;
@@ -314,18 +297,49 @@ std::future<bool> CPacketProcessor::Process()
                 auto val = _queue.front();
                 _queue.pop();
 
-                HashedPacket& packet = *val;
+                HashedPacket& hashedPacket = *val;
+                std::shared_ptr<Packet> packetPtr(nullptr);
 
-                int srcMacHash = packet.sourceMAC;                
-                int srcIpHash = packet.sourceIP;
-                bool isSrcLan = IsLANIP(packet.sourceIP);
+                if (typeid(hashedPacket) == typeid(HashedPacketV4)) 
+                {
+                    auto v4Packet = (HashedPacketV4&)hashedPacket;
+                    
+                    auto packet = new Packet(false,
+                    v4Packet.sourceIP.address.bytes,
+                    v4Packet.destIP.address.bytes,
+                    v4Packet.sourceMAC.ether_addr_octet,
+                    v4Packet.destMAC.ether_addr_octet,
+                    v4Packet.dataSize);
 
-                int dstMacHash = packet.destMAC;                
-                int dstIpHash = packet.destIP;
-                bool isDstLan = IsLANIP(packet.destIP);
+                    packetPtr.reset(packet);                    
+                }
+                else
+                {
+                    auto v6Packet = (HashedPacketV6&)hashedPacket;
+                    
+                    auto packet = new Packet(true,
+                    const_cast<BYTE*>(v6Packet.sourceIP.__in6_u.__u6_addr8),
+                    const_cast<BYTE*>(v6Packet.destIP.__in6_u.__u6_addr8),
+                    v6Packet.sourceMAC.ether_addr_octet,
+                    v6Packet.destMAC.ether_addr_octet,
+                    v6Packet.dataSize);
 
-                ProcessFrame(srcMacHash,srcIpHash,val->dataSize,true,isSrcLan);
-                ProcessFrame(dstMacHash,dstIpHash,val->dataSize,false,isDstLan); 
+                    packetPtr.reset(packet);
+                }
+
+                Packet& packet = *packetPtr;
+
+                uint dataSize = packet.dataSize;
+                ushort srcMacHash = GetBytesIntHash(packet.sourceMAC);                
+                ushort srcIpHash = GetBytesIntHash(packet.sourceIP);
+                bool isSrcLan = IsLANIP(srcIpHash);
+
+                ushort dstMacHash = GetBytesIntHash(packet.destMAC);                
+                ushort dstIpHash = GetBytesIntHash(packet.destIP);
+                bool isDstLan = IsLANIP(dstIpHash);
+
+                ProcessFrame(srcMacHash,srcIpHash,dataSize,true,isSrcLan);
+                ProcessFrame(dstMacHash,dstIpHash,dataSize,false,isDstLan); 
             }
 
             //std::this_thread::sleep_for(1s);

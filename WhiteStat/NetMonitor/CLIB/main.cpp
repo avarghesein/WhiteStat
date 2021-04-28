@@ -138,7 +138,8 @@ extern "C" int main(int, char**)
         std::this_thread::sleep_for(10s);
     }
 
-    EndCapture();     
+    EndCapture();  
+    
 
     return 0;
 
