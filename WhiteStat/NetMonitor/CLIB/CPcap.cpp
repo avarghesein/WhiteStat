@@ -48,6 +48,9 @@ bool CPcap::SetFilter()
         _utility.Log(pcap_geterr(_handle));
         return false;
     }
+
+    pcap_freecode(&_filterProgram);
+
     return true;
 }
 
@@ -85,7 +88,8 @@ bool CPcap::Open()
     {
         try
         {
-            _handle = pcap_open_live(_iface.c_str(), 65536 , 1 , 1000, _errbuf);
+            int snapLen = sizeof(struct ether_header) + sizeof(struct ip6_hdr) + 12;//65536
+            _handle = pcap_open_live(_iface.c_str(), snapLen , 1 , 1000, _errbuf);
         }
         catch(const std::exception& e)
         {
