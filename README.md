@@ -275,7 +275,9 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
  
     cmake ..
     make
-    
+ 
+ To cross compile for RaspberryPi or architectures other than X64, refer [Cross Compilation Guide](https://github.com/avarghesein/-NIX/blob/main/Lubuntu%2020.04/Virtualization/Docker/RaspberryPI_CrossCompileC++.md)
+ 
  #### Tools Used 
 
 Front End(UX): Python Flask, BootStrap, JQuery, SASS
