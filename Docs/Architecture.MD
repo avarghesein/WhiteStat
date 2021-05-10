@@ -26,3 +26,6 @@ However, if the Gateway Device is less in system resources, it is recommended to
 ![alt arch](https://github.com/avarghesein/WhiteStat/blob/main/Docs/WhiteStatRolePerDevice.png)
 
 
+## Detailed Technical Architecture
+
+![alt tech arch](https://github.com/avarghesein/WhiteStat/blob/main/Docs/WhiteStatArch.png)
