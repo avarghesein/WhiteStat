@@ -148,7 +148,7 @@ Hence it is not possible to run "Monitor" role inside a Windows Native Container
       -p 777:777 `
       --env DATA_STORE="C:\\WhiteStat" `
       -v C:\Users\<UserName>\Documents\Whitestat:C:\WhiteStat `
-      avarghesein/whitestat:v10_win64
+      avarghesein/whitestat:v11_win64
 
 You could view Daily Bandwidth Usage using
 
