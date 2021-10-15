@@ -7,8 +7,8 @@ FROM avarghesein/whitestat:v10_win64
 #RUN pip install requests
 #RUN pip install psutil
 
-RUN RMDIR C:\\app\\WhiteStat
-RUN mkdir C:\\app\\WhiteStat
+#RUN rd -r "C:\\app\\WhiteStat"
+#RUN mkdir C:\\app\\WhiteStat
 
 WORKDIR C:\\app\\WhiteStat
 
