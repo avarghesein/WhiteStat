@@ -276,6 +276,8 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
      
  ### Build & Debug C++ Alone
  
+ Ensure GCC with version 8.3+ and CMAKE with version 3.13.4+ installed in the build environment.
+ 
  For Building C++, navigate to CLIB/build directory and run
  
     cmake ..
