@@ -1,5 +1,6 @@
 const paths = require('./paths');
 const webpack = require('webpack');
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   entry: {
@@ -19,10 +20,17 @@ module.exports = {
     }
 },
 plugins: [ new webpack.ProvidePlugin({
-  $: 'jquery',
-  jQuery: 'jquery',
-  'window.jQuery': 'jquery'
-}) ],
+    $: 'jquery',
+    jQuery: 'jquery',
+    'window.jQuery': 'jquery'
+    }),
+    new CopyPlugin({
+      patterns: [
+        { from: "src/scripts/External", to: "scripts/External" },
+        { from: "src/scripts/fonts", to: "scripts/fonts" }
+      ],
+    })
+  ],
   module: {
     rules: [
       {

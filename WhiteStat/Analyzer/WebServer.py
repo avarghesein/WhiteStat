@@ -63,7 +63,7 @@ def root():
 
 @app.route('/<path:path>')
 def send_static(path):
-    if not bool(re.search('\.[^\./]{2,4}$', path)):
+    if not bool(re.search('\.[^\./]{2,5}$', path)):
         path += "/index.html"
     return send_from_directory('./UX/dist', path)
 
