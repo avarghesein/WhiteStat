@@ -248,6 +248,8 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
      
  ## How to Build
  
+ Ensure PYTHON with version 3.7.3+ and 'requirement.txt' has been installed in the build environment.
+ 
  ### Auto Build & Deploy Docker Images
  
  Linux Builds : Refer [WhitestatAutoBuildPublish.sh](https://github.com/avarghesein/WhiteStat/blob/main/WhiteStat/WhitestatAutoBuildPublish.sh)
@@ -275,6 +277,8 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
     npm run dev
      
  ### Build & Debug C++ Alone
+ 
+ Ensure GCC with version 8.3+ and CMAKE with version 3.13.4+ installed in the build environment.
  
  For Building C++, navigate to CLIB/build directory and run
  
