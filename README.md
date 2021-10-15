@@ -260,9 +260,14 @@ The default values for all parameters will be filled by WhiteStat. You've to edi
   
  ### Build & Debug UX Alone
  
- For Building UI, navigate to UX directory and run
+ Ensure NODEJS with version 10.24+ and NPM with version 5.8+ installed in the build environment.
+ 
+ To install required packages (during the initial setup) navigate to UX directory and run the below command
  
     npm install
+ 
+ For Building UI, navigate to UX directory and run
+ 
     npm run build
  
  To Debug:
