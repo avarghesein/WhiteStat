@@ -8,5 +8,5 @@ WhiteStat also support Windows Native Containers (Analyzer Mode Only)
 
 No other dependency or installs required other than Docker CE available in Host System.
 
-<img src="https://github.com/avarghesein/WhiteStat/blob/main/Docs/UX3.png" alt="hi" class="inline"/>
+<img src="https://github.com/avarghesein/WhiteStat/blob/gh-pages/UX3.png" alt="hi" class="inline"/>
 
